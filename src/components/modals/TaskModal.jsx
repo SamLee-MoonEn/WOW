@@ -18,9 +18,10 @@ export default function TaskModal({ isEdit, task, onSave, onClose }) {
   const [style, setStyle] = useState(task?.style || '')
   const [dividerBefore, setDividerBefore] = useState(task?.dividerBefore || false)
   const [memo, setMemo] = useState(task?.memo || '')
+  const [textError, setTextError] = useState(false)
 
   const handleSave = () => {
-    if (!text.trim()) { alert('업무 내용을 입력해주세요.'); return }
+    if (!text.trim()) { setTextError(true); return }
     onSave({ text: text.trim(), status, style, dividerBefore, memo })
   }
 
@@ -38,12 +39,14 @@ export default function TaskModal({ isEdit, task, onSave, onClose }) {
       <FormField label="업무 내용" required>
         <Textarea
           value={text}
-          onChange={e => setText(e.target.value)}
+          onChange={e => { setText(e.target.value); if (textError) setTextError(false) }}
           placeholder="업무 내용을 입력하세요..."
           rows={3}
           autoFocus
           onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleSave() }}
+          className={textError ? 'border-red-400 focus:ring-red-300' : ''}
         />
+        {textError && <p className="text-[11px] text-red-500 mt-1">업무 내용을 입력해주세요.</p>}
       </FormField>
 
       <div className="grid grid-cols-2 gap-3">

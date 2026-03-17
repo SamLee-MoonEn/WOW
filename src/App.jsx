@@ -109,6 +109,7 @@ function Board() {
           onPrev={() => wow.shiftWeeks(-1)}
           onNext={() => wow.shiftWeeks(1)}
           onToday={wow.goToCurrentWeek}
+          isCurrentWeek={wow.state.baseWeekOffset === 0}
         />
 
         {sortedMembers.length === 0 ? (

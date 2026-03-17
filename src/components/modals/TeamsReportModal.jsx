@@ -35,7 +35,7 @@ export default function TeamsReportModal({ memberName, todayTasks, onClose }) {
         <span className="text-sm text-jira-red font-medium mr-auto">❌ 전송 실패. 복사 후 수동으로 붙여넣기 해주세요.</span>
       ) : null}
 
-      <Button variant="secondary" size="sm" onClick={handleCopy}>
+      <Button variant="outline" size="sm" onClick={handleCopy}>
         {copied ? '✓ 복사됨' : '📋 복사'}
       </Button>
       {webhookUrl && (

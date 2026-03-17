@@ -1,7 +1,7 @@
 import Button from './ui/Button'
 import { getWeekDates, formatDate } from '../utils/weekUtils'
 
-export default function WeekNav({ wk, onPrev, onNext, onToday }) {
+export default function WeekNav({ wk, onPrev, onNext, onToday, isCurrentWeek }) {
   const prevDates = getWeekDates(wk.prevMonday)
   const curDates = getWeekDates(wk.currentMonday)
   const label =
@@ -14,7 +14,14 @@ export default function WeekNav({ wk, onPrev, onNext, onToday }) {
       <Button variant="outline" size="sm" onClick={onPrev}>◀ 이전</Button>
       <span className="text-sm font-bold text-jira-dark min-w-[260px] text-center">{label}</span>
       <Button variant="outline" size="sm" onClick={onNext}>다음 ▶</Button>
-      <Button variant="outline" size="sm" onClick={onToday}>오늘로</Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onToday}
+        className={isCurrentWeek ? 'opacity-40 cursor-default pointer-events-none' : ''}
+      >
+        오늘로
+      </Button>
     </div>
   )
 }

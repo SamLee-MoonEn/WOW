@@ -11,17 +11,17 @@ export function FormField({ label, required, children }) {
 
 const inputBase = 'w-full px-2.5 py-2 border-2 border-jira-border rounded text-[13px] text-jira-dark bg-white transition-colors font-[inherit] focus:outline-none focus:border-jira-blue focus:bg-blue-50'
 
-export function Input({ ...props }) {
-  return <input className={inputBase} {...props} />
+export function Input({ className = '', ...props }) {
+  return <input className={`${inputBase} ${className}`} {...props} />
 }
 
-export function Textarea({ ...props }) {
-  return <textarea className={`${inputBase} min-h-[80px] resize-y`} {...props} />
+export function Textarea({ className = '', ...props }) {
+  return <textarea className={`${inputBase} min-h-[80px] resize-y ${className}`} {...props} />
 }
 
-export function Select({ children, ...props }) {
+export function Select({ children, className = '', ...props }) {
   return (
-    <select className={inputBase} {...props}>
+    <select className={`${inputBase} ${className}`} {...props}>
       {children}
     </select>
   )

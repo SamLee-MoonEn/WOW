@@ -92,13 +92,14 @@ export default function StatusBoard({ members, myMemberId, onUpdatePresence, onE
                               onUpdatePresence(member.id, key)
                               if (key === 'off' && onEndOfDay) onEndOfDay()
                             }}
+                            title={key === 'off' && onEndOfDay ? '클릭 시 업무 종료 보고 화면이 열립니다' : undefined}
                             className={`text-[11px] px-2.5 py-0.5 rounded-full border transition-colors ${
                               p === key
                                 ? `${cfg.badge} border font-semibold`
                                 : 'border-jira-border text-jira-muted hover:bg-jira-bg'
                             }`}
                           >
-                            {cfg.label}
+                            {key === 'off' && onEndOfDay ? `${cfg.label} 📤` : cfg.label}
                           </button>
                         ))}
                       </div>
