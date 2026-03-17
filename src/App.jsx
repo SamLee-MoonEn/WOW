@@ -61,7 +61,6 @@ function Board() {
         onAddMember={() => setModal({ type: 'addMember' })}
         displayName={displayName}
         onLogout={logout}
-        onEndOfDay={myMemberId ? () => setModal({ type: 'teamsReport' }) : undefined}
       />
 
       <div className="max-w-[1600px] mx-auto px-4 py-5">
@@ -71,6 +70,7 @@ function Board() {
           members={wow.state.members}
           myMemberId={myMemberId}
           onUpdatePresence={wow.updatePresence}
+          onEndOfDay={myMemberId ? () => setModal({ type: 'teamsReport' }) : undefined}
         />
 
         <WeekNav

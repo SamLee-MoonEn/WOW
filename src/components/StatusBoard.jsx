@@ -17,7 +17,7 @@ function PresenceBadge({ presence }) {
   )
 }
 
-export default function StatusBoard({ members, myMemberId, onUpdatePresence }) {
+export default function StatusBoard({ members, myMemberId, onUpdatePresence, onEndOfDay }) {
   // 업무 중 먼저, 그 다음 이름순
   const sorted = [...members].sort((a, b) => {
     const pa = a.presence || 'working'
@@ -88,7 +88,10 @@ export default function StatusBoard({ members, myMemberId, onUpdatePresence }) {
                         {Object.entries(PRESENCE).map(([key, cfg]) => (
                           <button
                             key={key}
-                            onClick={() => onUpdatePresence(member.id, key)}
+                            onClick={() => {
+                              onUpdatePresence(member.id, key)
+                              if (key === 'off' && onEndOfDay) onEndOfDay()
+                            }}
                             className={`text-[11px] px-2.5 py-0.5 rounded-full border transition-colors ${
                               p === key
                                 ? `${cfg.badge} border font-semibold`
