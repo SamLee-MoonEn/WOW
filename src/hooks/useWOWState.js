@@ -1,26 +1,47 @@
-import { useState, useCallback, useEffect } from 'react'
-import { subscribeState, saveState } from '../utils/storage'
-import { uid, getWeekKeys } from '../utils/weekUtils'
+import { useState, useCallback, useEffect, useRef } from 'react'
+import {
+  subscribeMembers,
+  subscribeMemberTasks,
+  saveMembers,
+  saveMemberTasks,
+} from '../utils/storage'
+import { uid } from '../utils/weekUtils'
 import { nextStatus } from '../utils/statusUtils'
 
-const DEFAULT_SHARED = { members: [], tasks: {} }
+// 전체 tasks 맵에서 특정 멤버의 tasks를 short key(prefix 없음)로 추출
+function extractMemberTasks(memberId, allTasks) {
+  const prefix = memberId + '_'
+  const result = {}
+  for (const [key, val] of Object.entries(allTasks)) {
+    if (key.startsWith(prefix)) result[key.slice(prefix.length)] = val
+  }
+  return result
+}
+
+// key의 첫 '_' 이전이 memberId
+function memberIdFromKey(key) {
+  return key.slice(0, key.indexOf('_'))
+}
 
 export function useWOWState() {
-  // baseWeekOffset은 화면 탐색용 로컬 상태 (Firestore에 저장 안 함)
   const [baseWeekOffset, setBaseWeekOffset] = useState(0)
-  const [shared, setSharedRaw] = useState(DEFAULT_SHARED)
+  const [members, setMembers] = useState([])
+  const [tasks, setTasks] = useState({})
   const [loading, setLoading] = useState(true)
   const [fsError, setFsError] = useState(null)
 
-  // Firestore 실시간 구독
+  // 멤버별 tasks 구독 해제 함수 보관
+  const taskUnsubsRef = useRef({})
+
+  // ── 멤버 구독 ──────────────────────────────────────────────────────
   useEffect(() => {
-    const unsub = subscribeState(
+    return subscribeMembers(
       (data) => {
-        if (data) {
-          setSharedRaw({ members: data.members ?? [], tasks: data.tasks ?? {} })
+        if (data !== null) {
+          setMembers(data)
         } else {
-          // 최초 실행: 빈 상태로 Firestore 문서 생성
-          saveState(DEFAULT_SHARED)
+          // 최초 실행: 빈 멤버 문서 생성
+          saveMembers([])
         }
         setLoading(false)
       },
@@ -29,114 +50,173 @@ export function useWOWState() {
         setLoading(false)
       }
     )
-    return unsub
   }, [])
 
-  // 외부에서 사용하는 state (로컬 + Firestore 합산)
-  const state = { baseWeekOffset, ...shared }
+  // ── 멤버별 tasks 구독 (멤버 목록 변경 시 동기화) ───────────────────
+  useEffect(() => {
+    const currentIds = new Set(members.map((m) => m.id))
 
-  // shared 상태 변경 + Firestore 저장
-  const setShared = useCallback((updater) => {
-    setSharedRaw(prev => {
-      const next = typeof updater === 'function' ? updater(prev) : updater
-      saveState(next)
-      return next
-    })
+    // 제거된 멤버 구독 해제 + tasks 삭제
+    for (const [id, unsub] of Object.entries(taskUnsubsRef.current)) {
+      if (!currentIds.has(id)) {
+        unsub()
+        delete taskUnsubsRef.current[id]
+        setTasks((prev) => {
+          const next = { ...prev }
+          for (const k of Object.keys(next)) {
+            if (k.startsWith(id + '_')) delete next[k]
+          }
+          return next
+        })
+      }
+    }
+
+    // 새 멤버 구독 추가
+    for (const member of members) {
+      if (taskUnsubsRef.current[member.id]) continue
+      taskUnsubsRef.current[member.id] = subscribeMemberTasks(
+        member.id,
+        (shortKeyTasks) => {
+          setTasks((prev) => {
+            const next = { ...prev }
+            // 이 멤버의 기존 키 제거
+            for (const k of Object.keys(next)) {
+              if (k.startsWith(member.id + '_')) delete next[k]
+            }
+            // short key → full key로 복원
+            for (const [k, v] of Object.entries(shortKeyTasks)) {
+              next[`${member.id}_${k}`] = v
+            }
+            return next
+          })
+        }
+      )
+    }
+  }, [members])
+
+  // 언마운트 시 전체 구독 해제
+  useEffect(() => {
+    return () => Object.values(taskUnsubsRef.current).forEach((u) => u())
+  }, [])
+
+  // ── 외부에 노출하는 state ──────────────────────────────────────────
+  const state = { baseWeekOffset, members, tasks }
+
+  // 특정 멤버의 tasks를 Firestore에 저장
+  const persistTasks = useCallback((memberId, newAllTasks) => {
+    saveMemberTasks(memberId, extractMemberTasks(memberId, newAllTasks))
   }, [])
 
   // ── 주간 탐색 (로컬) ──────────────────────────────────────────────
-  const shiftWeeks = useCallback((delta) => {
-    setBaseWeekOffset(o => o + delta)
-  }, [])
-
-  const goToCurrentWeek = useCallback(() => {
-    setBaseWeekOffset(0)
-  }, [])
+  const shiftWeeks = useCallback((delta) => setBaseWeekOffset((o) => o + delta), [])
+  const goToCurrentWeek = useCallback(() => setBaseWeekOffset(0), [])
 
   // ── Tasks ─────────────────────────────────────────────────────────
   const addTask = useCallback((key, data) => {
-    setShared(s => ({
-      ...s,
-      tasks: { ...s.tasks, [key]: [...(s.tasks[key] || []), { id: uid(), ...data }] },
-    }))
-  }, [setShared])
+    const memberId = memberIdFromKey(key)
+    setTasks((prev) => {
+      const next = { ...prev, [key]: [...(prev[key] || []), { id: uid(), ...data }] }
+      persistTasks(memberId, next)
+      return next
+    })
+  }, [persistTasks])
 
   const updateTask = useCallback((key, taskId, data) => {
-    setShared(s => ({
-      ...s,
-      tasks: {
-        ...s.tasks,
-        [key]: (s.tasks[key] || []).map(t => t.id === taskId ? { ...t, ...data } : t),
-      },
-    }))
-  }, [setShared])
+    const memberId = memberIdFromKey(key)
+    setTasks((prev) => {
+      const next = {
+        ...prev,
+        [key]: (prev[key] || []).map((t) => (t.id === taskId ? { ...t, ...data } : t)),
+      }
+      persistTasks(memberId, next)
+      return next
+    })
+  }, [persistTasks])
 
   const deleteTask = useCallback((key, taskId) => {
-    setShared(s => ({
-      ...s,
-      tasks: {
-        ...s.tasks,
-        [key]: (s.tasks[key] || []).filter(t => t.id !== taskId),
-      },
-    }))
-  }, [setShared])
+    const memberId = memberIdFromKey(key)
+    setTasks((prev) => {
+      const next = { ...prev, [key]: (prev[key] || []).filter((t) => t.id !== taskId) }
+      persistTasks(memberId, next)
+      return next
+    })
+  }, [persistTasks])
 
   const cycleStatus = useCallback((key, taskId) => {
-    setShared(s => ({
-      ...s,
-      tasks: {
-        ...s.tasks,
-        [key]: (s.tasks[key] || []).map(t =>
+    const memberId = memberIdFromKey(key)
+    setTasks((prev) => {
+      const next = {
+        ...prev,
+        [key]: (prev[key] || []).map((t) =>
           t.id === taskId ? { ...t, status: nextStatus(t.status) } : t
         ),
-      },
-    }))
-  }, [setShared])
+      }
+      persistTasks(memberId, next)
+      return next
+    })
+  }, [persistTasks])
 
   const moveTask = useCallback((fromKey, toKey, taskId, insertBeforeId = null) => {
-    setShared(s => {
-      const task = (s.tasks[fromKey] || []).find(t => t.id === taskId)
-      if (!task) return s
-      const fromList = (s.tasks[fromKey] || []).filter(t => t.id !== taskId)
-      let toList = fromKey === toKey
-        ? [...fromList]
-        : (s.tasks[toKey] || []).filter(t => t.id !== taskId)
+    const fromMemberId = memberIdFromKey(fromKey)
+    const toMemberId = memberIdFromKey(toKey)
+    setTasks((prev) => {
+      const task = (prev[fromKey] || []).find((t) => t.id === taskId)
+      if (!task) return prev
+      const fromList = (prev[fromKey] || []).filter((t) => t.id !== taskId)
+      let toList =
+        fromKey === toKey ? [...fromList] : (prev[toKey] || []).filter((t) => t.id !== taskId)
       if (insertBeforeId) {
-        const idx = toList.findIndex(t => t.id === insertBeforeId)
+        const idx = toList.findIndex((t) => t.id === insertBeforeId)
         toList.splice(idx >= 0 ? idx : toList.length, 0, task)
       } else {
         toList.push(task)
       }
-      return { ...s, tasks: { ...s.tasks, [fromKey]: fromList, [toKey]: toList } }
+      const next = { ...prev, [fromKey]: fromList, [toKey]: toList }
+      persistTasks(fromMemberId, next)
+      if (fromMemberId !== toMemberId) persistTasks(toMemberId, next)
+      return next
     })
-  }, [setShared])
+  }, [persistTasks])
 
   // ── Members ───────────────────────────────────────────────────────
   const addMember = useCallback((data) => {
-    setShared(s => ({ ...s, members: [...s.members, { id: uid(), ...data }] }))
-  }, [setShared])
+    setMembers((prev) => {
+      const next = [...prev, { id: uid(), ...data }]
+      saveMembers(next)
+      return next
+    })
+  }, [])
 
   const updateMember = useCallback((memberId, data) => {
-    setShared(s => ({
-      ...s,
-      members: s.members.map(m => m.id === memberId ? { ...m, ...data } : m),
-    }))
-  }, [setShared])
+    setMembers((prev) => {
+      const next = prev.map((m) => (m.id === memberId ? { ...m, ...data } : m))
+      saveMembers(next)
+      return next
+    })
+  }, [])
 
   const updatePresence = useCallback((memberId, presence) => {
-    setShared(s => ({
-      ...s,
-      members: s.members.map(m => m.id === memberId ? { ...m, presence } : m),
-    }))
-  }, [setShared])
+    setMembers((prev) => {
+      const next = prev.map((m) => (m.id === memberId ? { ...m, presence } : m))
+      saveMembers(next)
+      return next
+    })
+  }, [])
 
   const deleteMember = useCallback((memberId) => {
-    setShared(s => {
-      const tasks = { ...s.tasks }
-      Object.keys(tasks).forEach(k => { if (k.startsWith(memberId + '_')) delete tasks[k] })
-      return { ...s, members: s.members.filter(m => m.id !== memberId), tasks }
+    setMembers((prev) => {
+      const next = prev.filter((m) => m.id !== memberId)
+      saveMembers(next)
+      return next
     })
-  }, [setShared])
+    setTasks((prev) => {
+      const next = { ...prev }
+      for (const k of Object.keys(next)) {
+        if (k.startsWith(memberId + '_')) delete next[k]
+      }
+      return next
+    })
+  }, [])
 
   return {
     state,

@@ -1,27 +1,34 @@
 import { doc, onSnapshot, setDoc } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 
-const STATE_REF = doc(db, 'wow', 'state')
+const membersRef = doc(db, 'wow', 'members')
+const taskRef = (memberId) => doc(db, 'wow', `tasks_${memberId}`)
 
-/**
- * Firestore 실시간 구독. 변경 시 callback(data) 호출.
- * data가 null이면 문서가 없는 상태 (최초 실행).
- * 반환값은 unsubscribe 함수.
- */
-export function subscribeState(callback, onError) {
+export function subscribeMembers(callback, onError) {
   return onSnapshot(
-    STATE_REF,
-    (snap) => { callback(snap.exists() ? snap.data() : null) },
+    membersRef,
+    (snap) => callback(snap.exists() ? snap.data().members ?? [] : null),
     (err) => {
-      console.error('[Firestore] 구독 실패:', err.code, err.message)
+      console.error('[Firestore] members 구독 실패:', err.code, err.message)
       if (onError) onError(err)
     }
   )
 }
 
-/**
- * Firestore에 상태 저장 (members, tasks만 — baseWeekOffset은 제외)
- */
-export function saveState({ members, tasks }) {
-  setDoc(STATE_REF, { members, tasks })
+export function subscribeMemberTasks(memberId, callback) {
+  return onSnapshot(
+    taskRef(memberId),
+    (snap) => callback(snap.exists() ? snap.data() : {}),
+    (err) => console.error('[Firestore] tasks 구독 실패:', memberId, err.code)
+  )
+}
+
+export function saveMembers(members) {
+  setDoc(membersRef, { members })
+}
+
+// shortKeyTasks: memberId prefix 없는 키 맵
+// e.g. { "2026_W11_0": [...], "2026_W11_carryover": [...] }
+export function saveMemberTasks(memberId, shortKeyTasks) {
+  setDoc(taskRef(memberId), shortKeyTasks)
 }
