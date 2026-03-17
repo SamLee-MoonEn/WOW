@@ -26,6 +26,20 @@ function Board() {
 
   const wk = getWeekKeys(wow.state.baseWeekOffset)
 
+  // 로그인 시 현재 유저를 멤버 목록에 자동 등록/매칭 (훅은 early return 전에 위치해야 함)
+  useEffect(() => {
+    if (!displayName || wow.loading || wow.fsError) return
+    const exists = wow.state.members.find(
+      m => m.email === email || m.name === displayName
+    )
+    if (!exists) {
+      wow.addMember({ name: displayName, rank: '팀원', emoji: '👤', email })
+    } else if (exists.email !== email) {
+      wow.updateMember(exists.id, { ...exists, email })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayName, email, wow.loading])
+
   if (wow.loading) {
     return (
       <div className="min-h-screen bg-jira-bg flex items-center justify-center">
@@ -55,21 +69,8 @@ function Board() {
       </div>
     )
   }
-  const openConfirm = (title, message, onConfirm) => setConfirm({ title, message, onConfirm })
 
-  // 로그인 시 현재 유저를 멤버 목록에 자동 등록/매칭
-  useEffect(() => {
-    if (!displayName) return
-    const exists = wow.state.members.find(
-      m => m.email === email || m.name === displayName
-    )
-    if (!exists) {
-      wow.addMember({ name: displayName, rank: '팀원', emoji: '👤', email })
-    } else if (exists.email !== email) {
-      wow.updateMember(exists.id, { ...exists, email })
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [displayName, email])
+  const openConfirm = (title, message, onConfirm) => setConfirm({ title, message, onConfirm })
 
   // 현재 로그인한 유저의 멤버 ID
   const myMemberId = wow.state.members.find(
