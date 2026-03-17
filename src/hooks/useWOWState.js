@@ -1,76 +1,81 @@
-import { useState, useCallback } from 'react'
-import { loadState, saveState } from '../utils/storage'
+import { useState, useCallback, useEffect } from 'react'
+import { subscribeState, saveState } from '../utils/storage'
 import { uid, getWeekKeys } from '../utils/weekUtils'
 import { nextStatus } from '../utils/statusUtils'
 
-function createDefaultState() {
-  const wk = getWeekKeys(0)
-  const tasks = {}
-  tasks[`m1_${wk.current}_0`] = [
-    { id: uid(), text: '주간 보고 마감', status: 'done', style: '', dividerBefore: false },
-    { id: uid(), text: '기획안 Review', status: 'done', style: 'bold', dividerBefore: false },
-  ]
-  tasks[`m1_${wk.current}_carryover`] = [
-    { id: uid(), text: '차주 이월 업무 정리', status: 'progress', style: 'blue-text', date: '' },
-  ]
-  return {
-    baseWeekOffset: 0,
-    members: [
-      { id: 'm1', name: '홍길동', rank: '차장', emoji: '🚹' },
-      { id: 'm2', name: '김철수', rank: '과장', emoji: '🚹' },
-    ],
-    tasks,
-  }
-}
+const DEFAULT_SHARED = { members: [], tasks: {} }
 
 export function useWOWState() {
-  const [state, setStateRaw] = useState(() => loadState() || createDefaultState())
+  // baseWeekOffset은 화면 탐색용 로컬 상태 (Firestore에 저장 안 함)
+  const [baseWeekOffset, setBaseWeekOffset] = useState(0)
+  const [shared, setSharedRaw] = useState(DEFAULT_SHARED)
+  const [loading, setLoading] = useState(true)
 
-  const setState = useCallback((updater) => {
-    setStateRaw(prev => {
+  // Firestore 실시간 구독
+  useEffect(() => {
+    const unsub = subscribeState((data) => {
+      if (data) {
+        setSharedRaw({ members: data.members ?? [], tasks: data.tasks ?? {} })
+      } else {
+        // 최초 실행: 빈 상태로 Firestore 문서 생성
+        saveState(DEFAULT_SHARED)
+      }
+      setLoading(false)
+    })
+    return unsub
+  }, [])
+
+  // 외부에서 사용하는 state (로컬 + Firestore 합산)
+  const state = { baseWeekOffset, ...shared }
+
+  // shared 상태 변경 + Firestore 저장
+  const setShared = useCallback((updater) => {
+    setSharedRaw(prev => {
       const next = typeof updater === 'function' ? updater(prev) : updater
       saveState(next)
       return next
     })
   }, [])
 
+  // ── 주간 탐색 (로컬) ──────────────────────────────────────────────
   const shiftWeeks = useCallback((delta) => {
-    setState(s => ({ ...s, baseWeekOffset: s.baseWeekOffset + delta }))
-  }, [setState])
+    setBaseWeekOffset(o => o + delta)
+  }, [])
 
   const goToCurrentWeek = useCallback(() => {
-    setState(s => ({ ...s, baseWeekOffset: 0 }))
-  }, [setState])
+    setBaseWeekOffset(0)
+  }, [])
 
+  // ── Tasks ─────────────────────────────────────────────────────────
   const addTask = useCallback((key, data) => {
-    setState(s => ({
+    setShared(s => ({
       ...s,
       tasks: { ...s.tasks, [key]: [...(s.tasks[key] || []), { id: uid(), ...data }] },
     }))
-  }, [setState])
+  }, [setShared])
 
   const updateTask = useCallback((key, taskId, data) => {
-    setState(s => ({
+    setShared(s => ({
       ...s,
       tasks: {
         ...s.tasks,
         [key]: (s.tasks[key] || []).map(t => t.id === taskId ? { ...t, ...data } : t),
       },
     }))
-  }, [setState])
+  }, [setShared])
 
   const deleteTask = useCallback((key, taskId) => {
-    setState(s => ({
+    setShared(s => ({
       ...s,
       tasks: {
         ...s.tasks,
         [key]: (s.tasks[key] || []).filter(t => t.id !== taskId),
       },
     }))
-  }, [setState])
+  }, [setShared])
 
   const cycleStatus = useCallback((key, taskId) => {
-    setState(s => ({
+    setShared(s => ({
       ...s,
       tasks: {
         ...s.tasks,
@@ -79,36 +84,10 @@ export function useWOWState() {
         ),
       },
     }))
-  }, [setState])
-
-  const addMember = useCallback((data) => {
-    setState(s => ({ ...s, members: [...s.members, { id: uid(), ...data }] }))
-  }, [setState])
-
-  const updateMember = useCallback((memberId, data) => {
-    setState(s => ({
-      ...s,
-      members: s.members.map(m => m.id === memberId ? { ...m, ...data } : m),
-    }))
-  }, [setState])
-
-  const updatePresence = useCallback((memberId, presence) => {
-    setState(s => ({
-      ...s,
-      members: s.members.map(m => m.id === memberId ? { ...m, presence } : m),
-    }))
-  }, [setState])
-
-  const deleteMember = useCallback((memberId) => {
-    setState(s => {
-      const tasks = { ...s.tasks }
-      Object.keys(tasks).forEach(k => { if (k.startsWith(memberId + '_')) delete tasks[k] })
-      return { ...s, members: s.members.filter(m => m.id !== memberId), tasks }
-    })
-  }, [setState])
+  }, [setShared])
 
   const moveTask = useCallback((fromKey, toKey, taskId, insertBeforeId = null) => {
-    setState(s => {
+    setShared(s => {
       const task = (s.tasks[fromKey] || []).find(t => t.id === taskId)
       if (!task) return s
       const fromList = (s.tasks[fromKey] || []).filter(t => t.id !== taskId)
@@ -123,7 +102,48 @@ export function useWOWState() {
       }
       return { ...s, tasks: { ...s.tasks, [fromKey]: fromList, [toKey]: toList } }
     })
-  }, [setState])
+  }, [setShared])
 
-  return { state, shiftWeeks, goToCurrentWeek, addTask, updateTask, deleteTask, cycleStatus, addMember, updateMember, deleteMember, moveTask, updatePresence }
+  // ── Members ───────────────────────────────────────────────────────
+  const addMember = useCallback((data) => {
+    setShared(s => ({ ...s, members: [...s.members, { id: uid(), ...data }] }))
+  }, [setShared])
+
+  const updateMember = useCallback((memberId, data) => {
+    setShared(s => ({
+      ...s,
+      members: s.members.map(m => m.id === memberId ? { ...m, ...data } : m),
+    }))
+  }, [setShared])
+
+  const updatePresence = useCallback((memberId, presence) => {
+    setShared(s => ({
+      ...s,
+      members: s.members.map(m => m.id === memberId ? { ...m, presence } : m),
+    }))
+  }, [setShared])
+
+  const deleteMember = useCallback((memberId) => {
+    setShared(s => {
+      const tasks = { ...s.tasks }
+      Object.keys(tasks).forEach(k => { if (k.startsWith(memberId + '_')) delete tasks[k] })
+      return { ...s, members: s.members.filter(m => m.id !== memberId), tasks }
+    })
+  }, [setShared])
+
+  return {
+    state,
+    loading,
+    shiftWeeks,
+    goToCurrentWeek,
+    addTask,
+    updateTask,
+    deleteTask,
+    cycleStatus,
+    addMember,
+    updateMember,
+    deleteMember,
+    moveTask,
+    updatePresence,
+  }
 }

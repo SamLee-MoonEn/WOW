@@ -25,6 +25,17 @@ function Board() {
   const [confirm, setConfirm] = useState(null)
 
   const wk = getWeekKeys(wow.state.baseWeekOffset)
+
+  if (wow.loading) {
+    return (
+      <div className="min-h-screen bg-jira-bg flex items-center justify-center">
+        <div className="text-center text-jira-muted">
+          <div className="text-4xl mb-3">🗂</div>
+          <div className="text-sm">데이터를 불러오는 중...</div>
+        </div>
+      </div>
+    )
+  }
   const openConfirm = (title, message, onConfirm) => setConfirm({ title, message, onConfirm })
 
   // 로그인 시 현재 유저를 멤버 목록에 자동 등록/매칭
