@@ -1,6 +1,6 @@
 import Button from './ui/Button'
 
-export default function Header({ onManageMembers, onAddMember, displayName, onLogout }) {
+export default function Header({ onManageMembers, onAddMember, displayName, onLogout, onEndOfDay }) {
   return (
     <header className="bg-jira-blue text-white px-6 py-3.5 flex items-center justify-between shadow-md sticky top-0 z-40">
       <div>
@@ -11,6 +11,9 @@ export default function Header({ onManageMembers, onAddMember, displayName, onLo
         <Button variant="secondary" size="sm" onClick={onManageMembers}>👤 담당자 관리</Button>
         <Button variant="secondary" size="sm" onClick={onAddMember}>➕ 담당자 추가</Button>
         <Button variant="primary" size="sm" onClick={() => window.print()}>🖨 인쇄</Button>
+        {onEndOfDay && (
+          <Button variant="danger" size="sm" onClick={onEndOfDay}>📤 업무 종료</Button>
+        )}
 
         {displayName && (
           <>

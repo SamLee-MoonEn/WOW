@@ -10,6 +10,8 @@ import CarryoverModal from './components/modals/CarryoverModal'
 import MemberModal from './components/modals/MemberModal'
 import MemberManageModal from './components/modals/MemberManageModal'
 import ConfirmDialog from './components/modals/ConfirmDialog'
+import TeamsReportModal from './components/modals/TeamsReportModal'
+import { getTodayTasks } from './utils/teamsUtils'
 import { useWOWState } from './hooks/useWOWState'
 import { useAuth } from './auth/useAuth'
 import { getWeekKeys } from './utils/weekUtils'
@@ -59,6 +61,7 @@ function Board() {
         onAddMember={() => setModal({ type: 'addMember' })}
         displayName={displayName}
         onLogout={logout}
+        onEndOfDay={myMemberId ? () => setModal({ type: 'teamsReport' }) : undefined}
       />
 
       <div className="max-w-[1600px] mx-auto px-4 py-5">
@@ -181,6 +184,14 @@ function Board() {
           message={confirm.message}
           onConfirm={() => { confirm.onConfirm(); setConfirm(null) }}
           onCancel={() => setConfirm(null)}
+        />
+      )}
+
+      {modal?.type === 'teamsReport' && (
+        <TeamsReportModal
+          memberName={displayName}
+          todayTasks={getTodayTasks(myMemberId, wow.state.tasks)}
+          onClose={() => setModal(null)}
         />
       )}
     </div>

@@ -9,7 +9,7 @@ export function useAuth() {
   const login = () => instance.loginRedirect(loginRequest)
 
   const logout = () =>
-    instance.logoutRedirect({ postLogoutRedirectUri: window.location.origin })
+    instance.logoutPopup({ postLogoutRedirectUri: window.location.origin })
 
   return {
     isAuthenticated,
