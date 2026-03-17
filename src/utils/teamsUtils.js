@@ -54,12 +54,18 @@ export function formatTeamsText(memberName, todayTasks, dateLabel) {
 export async function sendToTeamsWebhook(webhookUrl, memberName, todayTasks, dateLabel) {
   const text = formatTeamsText(memberName, todayTasks, dateLabel)
 
-  // Power Automate HTTP 트리거에 전달할 JSON 페이로드
+  // Power Automate의 For_each가 attachments 배열을 순회하는 구조에 맞춤
   const payload = {
     title: `${memberName} 업무 종료 보고`,
     date: dateLabel,
     memberName,
     message: text,
+    attachments: [
+      {
+        contentType: 'text/plain',
+        content: text,
+      },
+    ],
   }
 
   const res = await fetch(webhookUrl, {
