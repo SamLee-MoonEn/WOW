@@ -10,18 +10,25 @@ export function useWOWState() {
   const [baseWeekOffset, setBaseWeekOffset] = useState(0)
   const [shared, setSharedRaw] = useState(DEFAULT_SHARED)
   const [loading, setLoading] = useState(true)
+  const [fsError, setFsError] = useState(null)
 
   // Firestore 실시간 구독
   useEffect(() => {
-    const unsub = subscribeState((data) => {
-      if (data) {
-        setSharedRaw({ members: data.members ?? [], tasks: data.tasks ?? {} })
-      } else {
-        // 최초 실행: 빈 상태로 Firestore 문서 생성
-        saveState(DEFAULT_SHARED)
+    const unsub = subscribeState(
+      (data) => {
+        if (data) {
+          setSharedRaw({ members: data.members ?? [], tasks: data.tasks ?? {} })
+        } else {
+          // 최초 실행: 빈 상태로 Firestore 문서 생성
+          saveState(DEFAULT_SHARED)
+        }
+        setLoading(false)
+      },
+      (err) => {
+        setFsError(err.code || err.message)
+        setLoading(false)
       }
-      setLoading(false)
-    })
+    )
     return unsub
   }, [])
 
@@ -134,6 +141,7 @@ export function useWOWState() {
   return {
     state,
     loading,
+    fsError,
     shiftWeeks,
     goToCurrentWeek,
     addTask,

@@ -8,10 +8,15 @@ const STATE_REF = doc(db, 'wow', 'state')
  * data가 null이면 문서가 없는 상태 (최초 실행).
  * 반환값은 unsubscribe 함수.
  */
-export function subscribeState(callback) {
-  return onSnapshot(STATE_REF, (snap) => {
-    callback(snap.exists() ? snap.data() : null)
-  })
+export function subscribeState(callback, onError) {
+  return onSnapshot(
+    STATE_REF,
+    (snap) => { callback(snap.exists() ? snap.data() : null) },
+    (err) => {
+      console.error('[Firestore] 구독 실패:', err.code, err.message)
+      if (onError) onError(err)
+    }
+  )
 }
 
 /**

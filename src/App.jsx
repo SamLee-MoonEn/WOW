@@ -36,6 +36,25 @@ function Board() {
       </div>
     )
   }
+
+  if (wow.fsError) {
+    return (
+      <div className="min-h-screen bg-jira-bg flex items-center justify-center">
+        <div className="text-center max-w-md px-6">
+          <div className="text-4xl mb-3">⚠️</div>
+          <div className="text-base font-bold text-jira-dark mb-2">Firestore 연결 실패</div>
+          <div className="text-sm text-jira-muted mb-1">Firestore 보안 규칙을 확인해주세요.</div>
+          <div className="text-xs font-mono bg-white border border-jira-border rounded px-3 py-2 text-red-600 mt-2">
+            {wow.fsError}
+          </div>
+          <div className="text-xs text-jira-muted mt-3">
+            Firebase 콘솔 → Firestore → 규칙 탭에서<br />
+            <code className="bg-white px-1 rounded">allow read, write: if true;</code> 로 임시 허용
+          </div>
+        </div>
+      </div>
+    )
+  }
   const openConfirm = (title, message, onConfirm) => setConfirm({ title, message, onConfirm })
 
   // 로그인 시 현재 유저를 멤버 목록에 자동 등록/매칭
