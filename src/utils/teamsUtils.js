@@ -17,36 +17,34 @@ export function getTodayLabel() {
 
 export function formatTeamsText(memberName, todayTasks, dateLabel) {
   const groups = {
-    done: todayTasks.filter(t => t.status === 'done'),
+    done:     todayTasks.filter(t => t.status === 'done'),
     progress: todayTasks.filter(t => t.status === 'progress'),
-    none: todayTasks.filter(t => t.status === 'none'),
+    none:     todayTasks.filter(t => t.status === 'none'),
     canceled: todayTasks.filter(t => t.status === 'canceled'),
   }
 
-  const lines = [`📋 ${memberName} · 업무 종료 보고 · ${dateLabel}`, '']
+  const lines = [`${memberName} 업무 종료 · ${dateLabel}`, '']
 
   const sections = [
-    { emoji: '✅', label: '완료', tasks: groups.done },
-    { emoji: '🔄', label: '진행 중', tasks: groups.progress },
-    { emoji: '⬜', label: '대기', tasks: groups.none },
-    { emoji: '❌', label: '취소', tasks: groups.canceled },
+    { label: '완료',    tasks: groups.done },
+    { label: '진행 중', tasks: groups.progress },
+    { label: '대기',    tasks: groups.none },
+    { label: '취소',    tasks: groups.canceled },
   ]
 
   let hasAny = false
-  for (const { emoji, label, tasks } of sections) {
+  for (const { label, tasks } of sections) {
     if (tasks.length === 0) continue
     hasAny = true
-    lines.push(`${emoji} ${label}`)
+    lines.push(label)
     tasks.forEach(t => {
       const memo = t.memo ? ` (${t.memo})` : ''
-      lines.push(`• ${t.text}${memo}`)
+      lines.push(`  ${t.text}${memo}`)
     })
     lines.push('')
   }
 
-  if (!hasAny) {
-    lines.push('등록된 업무가 없습니다.')
-  }
+  if (!hasAny) lines.push('등록된 업무가 없습니다.')
 
   return lines.join('\n').trimEnd()
 }
