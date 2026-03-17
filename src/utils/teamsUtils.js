@@ -39,7 +39,7 @@ export function formatTeamsText(memberName, todayTasks, dateLabel) {
     lines.push(label)
     tasks.forEach(t => {
       const memo = t.memo ? ` (${t.memo})` : ''
-      lines.push(`  ${t.text}${memo}`)
+      lines.push(`· ${t.text}${memo}`)
     })
     lines.push('')
   }
