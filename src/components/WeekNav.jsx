@@ -11,9 +11,9 @@ export default function WeekNav({ wk, onPrev, onNext, onToday, isCurrentWeek }) 
   return (
     <div className="flex flex-wrap items-center gap-3 mb-5 bg-white px-4 py-3 rounded-lg shadow-sm">
       <span className="text-[13px] font-semibold text-jira-mid">📅 기준 기간:</span>
-      <Button variant="outline" size="sm" onClick={onPrev}>◀ 이전</Button>
+      <Button variant="outline" size="sm" onClick={onNext}>◀ 다음</Button>
       <span className="text-sm font-bold text-jira-dark min-w-[260px] text-center">{label}</span>
-      <Button variant="outline" size="sm" onClick={onNext}>다음 ▶</Button>
+      <Button variant="outline" size="sm" onClick={onPrev}>이전 ▶</Button>
       <Button
         variant="outline"
         size="sm"
