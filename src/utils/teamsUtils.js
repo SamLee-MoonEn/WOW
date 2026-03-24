@@ -49,8 +49,8 @@ export function formatTeamsText(memberName, todayTasks, dateLabel) {
   return lines.join('\n').trimEnd()
 }
 
-export async function sendToTeamsWebhook(webhookUrl, memberName, todayTasks, dateLabel) {
-  const text = formatTeamsText(memberName, todayTasks, dateLabel)
+export async function sendToTeamsWebhook(webhookUrl, memberName, todayTasks, dateLabel, customText) {
+  const text = customText ?? formatTeamsText(memberName, todayTasks, dateLabel)
 
   // Power Automate의 For_each가 attachments 배열을 순회하는 구조에 맞춤
   const payload = {

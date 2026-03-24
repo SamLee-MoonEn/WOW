@@ -8,13 +8,20 @@ export default function TeamsReportModal({ memberName, todayTasks, onClose }) {
   const [copied, setCopied] = useState(false)
 
   const dateLabel = getTodayLabel()
-  const text = formatTeamsText(memberName, todayTasks, dateLabel)
-  const webhookUrl = import.meta.env.VITE_TEAMS_WEBHOOK_URL
+  const defaultText = formatTeamsText(memberName, todayTasks, dateLabel)
+  const [text, setText] = useState(defaultText)
+
+  const isEdited = text !== defaultText
+
+  const handleReset = () => {
+    setText(defaultText)
+    setSendStatus('idle')
+  }
 
   const handleSend = async () => {
     setSendStatus('sending')
     try {
-      await sendToTeamsWebhook(webhookUrl, memberName, todayTasks, dateLabel)
+      await sendToTeamsWebhook(import.meta.env.VITE_TEAMS_WEBHOOK_URL, memberName, todayTasks, dateLabel, text)
       setSendStatus('success')
     } catch {
       setSendStatus('error')
@@ -27,6 +34,8 @@ export default function TeamsReportModal({ memberName, todayTasks, onClose }) {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const webhookUrl = import.meta.env.VITE_TEAMS_WEBHOOK_URL
+
   const footer = (
     <>
       {sendStatus === 'success' ? (
@@ -35,6 +44,9 @@ export default function TeamsReportModal({ memberName, todayTasks, onClose }) {
         <span className="text-sm text-jira-red font-medium mr-auto">❌ 전송 실패. 복사 후 수동으로 붙여넣기 해주세요.</span>
       ) : null}
 
+      {isEdited && (
+        <Button variant="ghost" size="sm" onClick={handleReset}>↺ 초기화</Button>
+      )}
       <Button variant="outline" size="sm" onClick={handleCopy}>
         {copied ? '✓ 복사됨' : '📋 복사'}
       </Button>
@@ -54,17 +66,26 @@ export default function TeamsReportModal({ memberName, todayTasks, onClose }) {
 
   return (
     <Modal title="📤 업무 종료 보고" onClose={onClose} footer={footer} size="md">
-      <p className="text-xs text-jira-muted mb-3">
-        오늘({dateLabel}) 업무 목록을 Teams로 전송합니다.
-        {!webhookUrl && (
-          <span className="ml-1 text-amber-600 font-medium">
-            (VITE_TEAMS_WEBHOOK_URL 미설정 — 복사 후 수동 전송)
-          </span>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-xs text-jira-muted">
+          오늘({dateLabel}) 업무 목록을 Teams로 전송합니다.
+          {!webhookUrl && (
+            <span className="ml-1 text-amber-600 font-medium">
+              (VITE_TEAMS_WEBHOOK_URL 미설정 — 복사 후 수동 전송)
+            </span>
+          )}
+        </p>
+        {isEdited && (
+          <span className="text-[11px] text-amber-600 font-medium shrink-0 ml-2">수정됨</span>
         )}
-      </p>
-      <pre className="bg-jira-bg border border-jira-border rounded p-4 text-[13px] text-jira-dark whitespace-pre-wrap leading-relaxed font-sans">
-        {text}
-      </pre>
+      </div>
+      <textarea
+        value={text}
+        onChange={e => { setText(e.target.value); setSendStatus('idle') }}
+        className="w-full bg-jira-bg border border-jira-border rounded p-4 text-[13px] text-jira-dark leading-relaxed font-sans resize-none focus:outline-none focus:ring-2 focus:ring-jira-blue focus:border-transparent"
+        rows={Math.max(8, text.split('\n').length + 1)}
+        spellCheck={false}
+      />
     </Modal>
   )
 }
