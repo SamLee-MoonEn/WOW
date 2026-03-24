@@ -92,8 +92,12 @@ export default function StatusBoard({ members, myMemberId, isAdmin, onUpdatePres
                           <button
                             key={key}
                             onClick={() => {
-                              onUpdatePresence(member.id, key)
-                              if (key === 'off' && onEndOfDay) onEndOfDay()
+                              if (key === 'off' && onEndOfDay) {
+                                // 모달에서 종료 처리 — 여기서는 상태 변경 안 함
+                                onEndOfDay()
+                              } else {
+                                onUpdatePresence(member.id, key)
+                              }
                             }}
                             title={key === 'off' && onEndOfDay ? '클릭 시 업무 종료 보고 화면이 열립니다' : undefined}
                             className={`text-[11px] px-2.5 py-0.5 rounded-full border transition-colors ${

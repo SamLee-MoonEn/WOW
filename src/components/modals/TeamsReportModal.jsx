@@ -3,7 +3,7 @@ import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import { formatTeamsText, getTodayLabel, sendToTeamsWebhook } from '../../utils/teamsUtils'
 
-export default function TeamsReportModal({ memberName, todayTasks, onClose }) {
+export default function TeamsReportModal({ memberName, todayTasks, onClose, onConfirmEnd }) {
   const [sendStatus, setSendStatus] = useState('idle') // idle | sending | success | error
   const [copied, setCopied] = useState(false)
 
@@ -23,6 +23,7 @@ export default function TeamsReportModal({ memberName, todayTasks, onClose }) {
     try {
       await sendToTeamsWebhook(import.meta.env.VITE_TEAMS_WEBHOOK_URL, memberName, todayTasks, dateLabel, text)
       setSendStatus('success')
+      onConfirmEnd?.()
     } catch {
       setSendStatus('error')
     }
@@ -34,33 +35,44 @@ export default function TeamsReportModal({ memberName, todayTasks, onClose }) {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const handleConfirmEnd = () => {
+    onConfirmEnd?.()
+  }
+
   const webhookUrl = import.meta.env.VITE_TEAMS_WEBHOOK_URL
 
   const footer = (
     <>
       {sendStatus === 'success' ? (
-        <span className="text-sm text-jira-green font-medium mr-auto">✅ Teams로 전송되었습니다!</span>
+        <span className="text-sm text-jira-green font-medium mr-auto">✅ 전송 완료 · 업무 종료 처리되었습니다.</span>
       ) : sendStatus === 'error' ? (
         <span className="text-sm text-jira-red font-medium mr-auto">❌ 전송 실패. 복사 후 수동으로 붙여넣기 해주세요.</span>
       ) : null}
 
-      {isEdited && (
+      {isEdited && sendStatus === 'idle' && (
         <Button variant="ghost" size="sm" onClick={handleReset}>↺ 초기화</Button>
       )}
       <Button variant="outline" size="sm" onClick={handleCopy}>
         {copied ? '✓ 복사됨' : '📋 복사'}
       </Button>
-      {webhookUrl && (
+      {webhookUrl && sendStatus !== 'success' && (
         <Button
           variant="primary"
           size="sm"
           onClick={handleSend}
-          disabled={sendStatus === 'sending' || sendStatus === 'success'}
+          disabled={sendStatus === 'sending'}
         >
-          {sendStatus === 'sending' ? '전송 중...' : 'Teams로 전송'}
+          {sendStatus === 'sending' ? '전송 중...' : 'Teams 전송 후 종료'}
         </Button>
       )}
-      <Button variant="ghost" size="sm" onClick={onClose}>닫기</Button>
+      {sendStatus !== 'success' && (
+        <Button variant="outline" size="sm" onClick={handleConfirmEnd}>
+          종료만 처리
+        </Button>
+      )}
+      <Button variant="ghost" size="sm" onClick={onClose}>
+        {sendStatus === 'success' ? '닫기' : '취소'}
+      </Button>
     </>
   )
 
@@ -86,6 +98,13 @@ export default function TeamsReportModal({ memberName, todayTasks, onClose }) {
         rows={Math.max(8, text.split('\n').length + 1)}
         spellCheck={false}
       />
+      {sendStatus !== 'success' && (
+        <p className="text-[11px] text-jira-muted mt-2">
+          · <strong>Teams 전송 후 종료</strong>: 전송 성공 시 자동으로 업무 종료 처리됩니다.<br />
+          · <strong>종료만 처리</strong>: Teams 전송 없이 상태만 종료로 변경합니다.<br />
+          · <strong>취소</strong>: 닫아도 업무 중 상태가 유지됩니다.
+        </p>
+      )}
     </Modal>
   )
 }

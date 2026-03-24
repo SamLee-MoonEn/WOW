@@ -26,6 +26,45 @@ function Board() {
 
   const wk = getWeekKeys(wow.state.baseWeekOffset)
 
+  // 평일 아침 자동 근무중 복귀: 전날(평일) 퇴근 처리된 경우 오늘(평일)이면 자동 복귀
+  useEffect(() => {
+    if (wow.loading || !myMemberId) return
+    const me = wow.state.members.find(m => m.id === myMemberId)
+    if (!me || me.presence !== 'off' || !me.offAt) return
+
+    const offDate = new Date(me.offAt)
+    const today = new Date()
+    const isNewDay = offDate.toDateString() !== today.toDateString()
+    const isWeekday = today.getDay() >= 1 && today.getDay() <= 5
+
+    if (isNewDay && isWeekday) {
+      wow.updatePresence(myMemberId, 'working')
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myMemberId, wow.loading])
+
+  // 탭이 다시 보일 때도 자동 복귀 체크
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState !== 'visible') return
+      if (wow.loading || !myMemberId) return
+      const me = wow.state.members.find(m => m.id === myMemberId)
+      if (!me || me.presence !== 'off' || !me.offAt) return
+
+      const offDate = new Date(me.offAt)
+      const today = new Date()
+      const isNewDay = offDate.toDateString() !== today.toDateString()
+      const isWeekday = today.getDay() >= 1 && today.getDay() <= 5
+
+      if (isNewDay && isWeekday) {
+        wow.updatePresence(myMemberId, 'working')
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myMemberId, wow.loading, wow.state.members])
+
   // 로그인 시 현재 유저를 멤버 목록에 자동 등록/매칭 (훅은 early return 전에 위치해야 함)
   useEffect(() => {
     if (!displayName || wow.loading || wow.fsError) return
@@ -241,6 +280,7 @@ function Board() {
           memberName={displayName}
           todayTasks={getTodayTasks(myMemberId, wow.state.tasks)}
           onClose={() => setModal(null)}
+          onConfirmEnd={() => { wow.updatePresence(myMemberId, 'off'); setModal(null) }}
         />
       )}
     </div>

@@ -197,7 +197,8 @@ export function useWOWState() {
 
   const updatePresence = useCallback((memberId, presence) => {
     setMembers((prev) => {
-      const next = prev.map((m) => (m.id === memberId ? { ...m, presence } : m))
+      const extra = presence === 'off' ? { offAt: Date.now() } : { offAt: null }
+      const next = prev.map((m) => (m.id === memberId ? { ...m, presence, ...extra } : m))
       saveMembers(next)
       return next
     })
