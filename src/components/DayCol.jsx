@@ -2,7 +2,7 @@ import { useState } from 'react'
 import TaskItem from './TaskItem'
 import { DAYS, formatDate, formatDateFull } from '../utils/weekUtils'
 
-export default function DayCol({ member, weekKey, dayIndex, date, canEdit, isAdmin, tasks, onAddTask, onEditTask, onDeleteTask, onCycleStatus, onMoveTask }) {
+export default function DayCol({ member, weekKey, dayIndex, date, canEdit, isAdmin, tasks, onAddTask, onEditTask, onDeleteTask, onCycleStatus, onMoveTask, onCopyTask }) {
   const [isDragOver, setIsDragOver] = useState(false)
   const key = `${member.id}_${weekKey}_${dayIndex}`
   const items = tasks[key] || []
@@ -59,6 +59,7 @@ export default function DayCol({ member, weekKey, dayIndex, date, canEdit, isAdm
             onDelete={onDeleteTask}
             onCycleStatus={onCycleStatus}
             onDropBefore={(dragId, fromKey) => onMoveTask(fromKey, key, dragId, task.id)}
+            onCopy={isAdmin ? () => onCopyTask(key, task) : undefined}
           />
         ))}
         {canEdit && (

@@ -11,6 +11,7 @@ import MemberModal from './components/modals/MemberModal'
 import MemberManageModal from './components/modals/MemberManageModal'
 import ConfirmDialog from './components/modals/ConfirmDialog'
 import TeamsReportModal from './components/modals/TeamsReportModal'
+import CopyTaskModal from './components/modals/CopyTaskModal'
 import { getTodayTasks } from './utils/teamsUtils'
 import { useWOWState } from './hooks/useWOWState'
 import { useAuth } from './auth/useAuth'
@@ -127,12 +128,31 @@ function Board() {
 
   // 외부인은 섹션 미표시, 내 섹션이 맨 위로 오도록 정렬
   const visibleMembers = wow.state.members.filter(m => m.role !== 'external')
-  const sortedMembers = myMemberId && !isExternal
-    ? [
-        ...visibleMembers.filter(m => m.id === myMemberId),
-        ...visibleMembers.filter(m => m.id !== myMemberId),
-      ]
-    : visibleMembers
+
+  // Build board items with group headers
+  const myM = myMemberId && !isExternal ? visibleMembers.find(m => m.id === myMemberId) : null
+  const otherMembers = visibleMembers.filter(m => m.id !== myMemberId || isExternal)
+
+  const groupMap = {}
+  for (const m of otherMembers) {
+    const g = m.group || ''
+    if (!groupMap[g]) groupMap[g] = []
+    groupMap[g].push(m)
+  }
+
+  const boardItems = []
+  if (myM) boardItems.push({ type: 'member', member: myM })
+
+  const groupKeys = Object.keys(groupMap).sort((a, b) => {
+    if (!a && b) return 1
+    if (a && !b) return -1
+    return a.localeCompare(b, 'ko')
+  })
+
+  for (const g of groupKeys) {
+    if (g) boardItems.push({ type: 'header', label: g })
+    for (const m of groupMap[g]) boardItems.push({ type: 'member', member: m })
+  }
 
   return (
     <div className="min-h-screen bg-jira-bg">
@@ -161,45 +181,53 @@ function Board() {
           isCurrentWeek={wow.state.baseWeekOffset === 0}
         />
 
-        {sortedMembers.length === 0 ? (
+        {boardItems.length === 0 ? (
           <div className="text-center py-16 text-jira-muted">
             <div className="text-5xl mb-3">👤</div>
             <div className="text-sm">담당자를 추가해주세요</div>
           </div>
         ) : (
-          sortedMembers.map(member => (
-            <MemberSection
-              key={member.id}
-              member={member}
-              isMe={member.id === myMemberId}
-              isAdmin={isAdmin}
-              showDayGrid={!isExternal}
-              wk={wk}
-              tasks={wow.state.tasks}
-              onMoveTask={wow.moveTask}
-              onEditMember={() => setModal({ type: 'editMember', member })}
-              onDeleteMember={() => openConfirm(
-                '담당자 삭제',
-                `'${member.name}'님의 모든 업무 데이터가 삭제됩니다. 계속하시겠습니까?`,
-                () => wow.deleteMember(member.id)
-              )}
-              onAddTask={(key) => setModal({ type: 'addTask', key })}
-              onEditTask={(key, task) => setModal({ type: 'editTask', key, task })}
-              onDeleteTask={(key, taskId) => openConfirm(
-                '업무 삭제',
-                '이 업무를 삭제하시겠습니까?',
-                () => wow.deleteTask(key, taskId)
-              )}
-              onCycleTaskStatus={wow.cycleStatus}
-              onAddCarryover={(key) => setModal({ type: 'addCarryover', key })}
-              onEditCarryover={(key, item) => setModal({ type: 'editCarryover', key, item })}
-              onDeleteCarryover={(key, itemId) => openConfirm(
-                '이월 업무 삭제',
-                '이 이월 업무를 삭제하시겠습니까?',
-                () => wow.deleteTask(key, itemId)
-              )}
-            />
-          ))
+          boardItems.map((item, idx) =>
+            item.type === 'header' ? (
+              <div key={`grp-${item.label}`} className="flex items-center gap-3 mb-2 mt-4 first:mt-0">
+                <span className="text-[12px] font-bold text-jira-muted uppercase tracking-wide">{item.label}</span>
+                <div className="flex-1 h-px bg-jira-border" />
+              </div>
+            ) : (
+              <MemberSection
+                key={item.member.id}
+                member={item.member}
+                isMe={item.member.id === myMemberId}
+                isAdmin={isAdmin}
+                showDayGrid={!isExternal}
+                wk={wk}
+                tasks={wow.state.tasks}
+                onMoveTask={wow.moveTask}
+                onCopyTask={(fromKey, task) => setModal({ type: 'copyTask', fromKey, task })}
+                onEditMember={() => setModal({ type: 'editMember', member: item.member })}
+                onDeleteMember={() => openConfirm(
+                  '담당자 삭제',
+                  `'${item.member.name}'님의 모든 업무 데이터가 삭제됩니다. 계속하시겠습니까?`,
+                  () => wow.deleteMember(item.member.id)
+                )}
+                onAddTask={(key) => setModal({ type: 'addTask', key })}
+                onEditTask={(key, task) => setModal({ type: 'editTask', key, task })}
+                onDeleteTask={(key, taskId) => openConfirm(
+                  '업무 삭제',
+                  '이 업무를 삭제하시겠습니까?',
+                  () => wow.deleteTask(key, taskId)
+                )}
+                onCycleTaskStatus={wow.cycleStatus}
+                onAddCarryover={(key) => setModal({ type: 'addCarryover', key })}
+                onEditCarryover={(key, item2) => setModal({ type: 'editCarryover', key, item: item2 })}
+                onDeleteCarryover={(key, itemId) => openConfirm(
+                  '이월 업무 삭제',
+                  '이 이월 업무를 삭제하시겠습니까?',
+                  () => wow.deleteTask(key, itemId)
+                )}
+              />
+            )
+          )
         )}
       </div>
 
@@ -265,6 +293,7 @@ function Board() {
           }}
           onChangeRole={(member, role) => wow.updateMember(member.id, { ...member, role })}
           onClose={() => setModal(null)}
+          onReorder={wow.reorderMember}
         />
       )}
 
@@ -274,6 +303,17 @@ function Board() {
           message={confirm.message}
           onConfirm={() => { confirm.onConfirm(); setConfirm(null) }}
           onCancel={() => setConfirm(null)}
+        />
+      )}
+
+      {modal?.type === 'copyTask' && (
+        <CopyTaskModal
+          task={modal.task}
+          fromKey={modal.fromKey}
+          members={wow.state.members.filter(m => m.role !== 'external')}
+          wk={wk}
+          onCopy={(toKey) => { wow.copyTask(modal.fromKey, toKey, modal.task.id); setModal(null) }}
+          onClose={() => setModal(null)}
         />
       )}
 

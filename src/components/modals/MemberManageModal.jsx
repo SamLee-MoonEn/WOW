@@ -8,7 +8,7 @@ const ROLES = [
 ]
 const ROLE_MAP = Object.fromEntries(ROLES.map(r => [r.value, r]))
 
-function MemberRow({ m, isAdmin, isLastAdmin, onEdit, onDelete, onChangeRole, onClose }) {
+function MemberRow({ m, isAdmin, isLastAdmin, onEdit, onDelete, onChangeRole, onClose, isExternal, isFirst, isLast, onMoveUp, onMoveDown }) {
   const role = m.role || 'member'
   const roleInfo = ROLE_MAP[role] || ROLE_MAP.member
   return (
@@ -24,6 +24,22 @@ function MemberRow({ m, isAdmin, isLastAdmin, onEdit, onDelete, onChangeRole, on
         </div>
       </div>
       <div className="flex gap-1.5 items-center">
+        {!isExternal && (
+          <div className="flex gap-0.5">
+            <button
+              onClick={onMoveUp}
+              disabled={isFirst}
+              className="text-[11px] px-1.5 py-0.5 border rounded text-jira-muted hover:bg-jira-bg disabled:opacity-30 disabled:cursor-not-allowed"
+              title="위로"
+            >↑</button>
+            <button
+              onClick={onMoveDown}
+              disabled={isLast}
+              className="text-[11px] px-1.5 py-0.5 border rounded text-jira-muted hover:bg-jira-bg disabled:opacity-30 disabled:cursor-not-allowed"
+              title="아래로"
+            >↓</button>
+          </div>
+        )}
         {isAdmin && (
           <select
             value={role}
@@ -48,7 +64,7 @@ function MemberRow({ m, isAdmin, isLastAdmin, onEdit, onDelete, onChangeRole, on
   )
 }
 
-export default function MemberManageModal({ members, myMemberId, onEdit, onDelete, onChangeRole, onClose }) {
+export default function MemberManageModal({ members, myMemberId, onEdit, onDelete, onChangeRole, onClose, onReorder }) {
   const adminCount = members.filter(m => m.role === 'admin').length
   const isAdmin = members.find(m => m.id === myMemberId)?.role === 'admin'
 
@@ -72,11 +88,16 @@ export default function MemberManageModal({ members, myMemberId, onEdit, onDelet
         <div className="flex flex-col gap-4 max-h-[480px] overflow-y-auto scrollbar-thin">
           {internalMembers.length > 0 && (
             <div className="flex flex-col gap-2">
-              {internalMembers.map(m => (
+              {internalMembers.map((m, idx) => (
                 <MemberRow
                   key={m.id}
                   m={m}
                   isLastAdmin={m.role === 'admin' && adminCount === 1}
+                  isExternal={false}
+                  isFirst={idx === 0}
+                  isLast={idx === internalMembers.length - 1}
+                  onMoveUp={() => onReorder(m.id, 'up')}
+                  onMoveDown={() => onReorder(m.id, 'down')}
                   {...rowProps}
                 />
               ))}
@@ -90,11 +111,16 @@ export default function MemberManageModal({ members, myMemberId, onEdit, onDelet
                 <span className="text-[11px] text-jira-muted">{externalMembers.length}명</span>
                 <div className="flex-1 h-px bg-purple-100" />
               </div>
-              {externalMembers.map(m => (
+              {externalMembers.map((m, idx) => (
                 <MemberRow
                   key={m.id}
                   m={m}
                   isLastAdmin={false}
+                  isExternal={true}
+                  isFirst={idx === 0}
+                  isLast={idx === externalMembers.length - 1}
+                  onMoveUp={() => onReorder(m.id, 'up')}
+                  onMoveDown={() => onReorder(m.id, 'down')}
                   {...rowProps}
                 />
               ))}

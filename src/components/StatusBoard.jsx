@@ -18,6 +18,11 @@ function PresenceBadge({ presence }) {
 }
 
 export default function StatusBoard({ members, myMemberId, isAdmin, onUpdatePresence, onEndOfDay }) {
+  const now = new Date()
+  const isWeekday = now.getDay() >= 1 && now.getDay() <= 5
+  const isAfterWorkHour = now.getHours() >= 18
+  const showUnreported = isWeekday && isAfterWorkHour
+
   // 업무 중 먼저, 그 다음 이름순
   const sorted = [...members].sort((a, b) => {
     const pa = a.presence || 'working'
@@ -36,6 +41,12 @@ export default function StatusBoard({ members, myMemberId, isAdmin, onUpdatePres
         <span className="text-[12px] font-bold text-jira-dark">상황판</span>
         <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
         <span className="text-[11px] text-jira-muted">업무 중 {workingCount}명 / 전체 {members.length}명</span>
+        {showUnreported && (() => {
+          const unreportedCount = members.filter(m => (m.presence || 'working') === 'working').length
+          return unreportedCount > 0 ? (
+            <span className="text-[11px] text-amber-600 font-semibold ml-2">⚠ 미보고 {unreportedCount}명</span>
+          ) : null
+        })()}
       </div>
 
       {/* Table */}
@@ -72,6 +83,9 @@ export default function StatusBoard({ members, myMemberId, isAdmin, onUpdatePres
                     {member.role === 'admin' && (
                       <span className="ml-1 text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full">관리자</span>
                     )}
+                    {member.group && (
+                      <span className="ml-1 text-[10px] text-jira-muted bg-jira-bg border border-jira-border px-1.5 py-0.5 rounded-full">{member.group}</span>
+                    )}
                   </td>
 
                   {/* 직급 */}
@@ -82,6 +96,11 @@ export default function StatusBoard({ members, myMemberId, isAdmin, onUpdatePres
                   {/* 상태 배지 */}
                   <td className="px-2 py-2">
                     <PresenceBadge presence={p} />
+                    {showUnreported && (member.presence || 'working') === 'working' && (
+                      <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full ml-1.5 animate-pulse">
+                        미보고
+                      </span>
+                    )}
                   </td>
 
                   {/* 상태 변경 버튼 (본인만) */}

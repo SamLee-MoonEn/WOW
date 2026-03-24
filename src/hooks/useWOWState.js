@@ -156,6 +156,19 @@ export function useWOWState() {
     })
   }, [persistTasks])
 
+  const copyTask = useCallback((fromKey, toKey, taskId) => {
+    const toMemberId = memberIdFromKey(toKey)
+    setTasks((prev) => {
+      const task = (prev[fromKey] || []).find(t => t.id === taskId)
+      if (!task) return prev
+      const newTask = { ...task, id: uid() }
+      const toList = [...(prev[toKey] || []), newTask]
+      const next = { ...prev, [toKey]: toList }
+      persistTasks(toMemberId, next)
+      return next
+    })
+  }, [persistTasks])
+
   const moveTask = useCallback((fromKey, toKey, taskId, insertBeforeId = null) => {
     const fromMemberId = memberIdFromKey(fromKey)
     const toMemberId = memberIdFromKey(toKey)
@@ -204,6 +217,19 @@ export function useWOWState() {
     })
   }, [])
 
+  const reorderMember = useCallback((memberId, direction) => {
+    setMembers((prev) => {
+      const idx = prev.findIndex(m => m.id === memberId)
+      if (idx < 0) return prev
+      const swapIdx = direction === 'up' ? idx - 1 : idx + 1
+      if (swapIdx < 0 || swapIdx >= prev.length) return prev
+      const next = [...prev]
+      ;[next[idx], next[swapIdx]] = [next[swapIdx], next[idx]]
+      saveMembers(next)
+      return next
+    })
+  }, [])
+
   const deleteMember = useCallback((memberId) => {
     setMembers((prev) => {
       const next = prev.filter((m) => m.id !== memberId)
@@ -233,6 +259,8 @@ export function useWOWState() {
     updateMember,
     deleteMember,
     moveTask,
+    copyTask,
     updatePresence,
+    reorderMember,
   }
 }

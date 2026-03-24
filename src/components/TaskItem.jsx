@@ -9,7 +9,7 @@ const styleMap = {
   'bold red-text': 'font-semibold text-[#de350b]',
 }
 
-export default function TaskItem({ task, taskKey, canEdit, onEdit, onDelete, onCycleStatus, onDropBefore }) {
+export default function TaskItem({ task, taskKey, canEdit, onEdit, onDelete, onCycleStatus, onDropBefore, onCopy }) {
   const [isDragOver, setIsDragOver] = useState(false)
   const textClass = styleMap[task.style] || ''
 
@@ -56,6 +56,13 @@ export default function TaskItem({ task, taskKey, canEdit, onEdit, onDelete, onC
         <span className="hidden group-hover:flex items-center gap-0.5 absolute right-0.5 top-1">
           {task.memo && (
             <span className="text-[9px] px-1 py-0.5 bg-jira-bg border border-jira-border rounded text-jira-muted mr-0.5">메모</span>
+          )}
+          {onCopy && (
+            <button
+              onClick={onCopy}
+              className="text-[10px] p-0.5 rounded hover:bg-blue-100 text-jira-muted hover:text-jira-blue"
+              title="복사"
+            >📋</button>
           )}
           {canEdit && <>
             <button

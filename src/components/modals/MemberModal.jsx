@@ -7,10 +7,11 @@ export default function MemberModal({ isEdit, member, onSave, onClose }) {
   const [name, setName] = useState(member?.name || '')
   const [rank, setRank] = useState(member?.rank || '')
   const [emoji, setEmoji] = useState(member?.emoji || '🚹')
+  const [group, setGroup] = useState(member?.group || '')
 
   const handleSave = () => {
     if (!name.trim() || !rank.trim()) { alert('이름과 직급을 입력해주세요.'); return }
-    onSave({ name: name.trim(), rank: rank.trim(), emoji })
+    onSave({ name: name.trim(), rank: rank.trim(), emoji, group: group.trim() })
   }
 
   return (
@@ -41,6 +42,9 @@ export default function MemberModal({ isEdit, member, onSave, onClose }) {
           <option value="👤">👤 일반</option>
           <option value="⭐">⭐ 스타</option>
         </Select>
+      </FormField>
+      <FormField label="부서/그룹">
+        <Input value={group} onChange={e => setGroup(e.target.value)} placeholder="개발팀, 기획팀..." onKeyDown={e => { if (e.key === 'Enter') handleSave() }} />
       </FormField>
     </Modal>
   )
