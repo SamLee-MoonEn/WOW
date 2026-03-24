@@ -5,7 +5,6 @@ import { DAYS, formatDate, formatDateFull } from '../utils/weekUtils'
 export default function DayCol({ member, weekKey, dayIndex, date, tasks, onAddTask, onEditTask, onDeleteTask, onCycleStatus, onMoveTask }) {
   const [isDragOver, setIsDragOver] = useState(false)
   const key = `${member.id}_${weekKey}_${dayIndex}`
-  const carryoverKey = `${member.id}_${weekKey}_carryover`
   const items = tasks[key] || []
   const isFriday = dayIndex === 4
   const isToday = formatDateFull(date) === formatDateFull(new Date())
@@ -58,7 +57,6 @@ export default function DayCol({ member, weekKey, dayIndex, date, tasks, onAddTa
             onDelete={onDeleteTask}
             onCycleStatus={onCycleStatus}
             onDropBefore={(dragId, fromKey) => onMoveTask(fromKey, key, dragId, task.id)}
-            onMoveToCarryover={() => onMoveTask(key, carryoverKey, task.id, null)}
           />
         ))}
         <button

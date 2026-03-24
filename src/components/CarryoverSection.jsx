@@ -54,7 +54,8 @@ function CarryoverItem({ item, itemKey, onEdit, onDelete, onCycleStatus }) {
   )
 }
 
-export default function CarryoverSection({ member, weekKey, tasks, onAddCarryover, onEditCarryover, onDeleteCarryover, onCycleStatus }) {
+export default function CarryoverSection({ member, weekKey, tasks, onAddCarryover, onEditCarryover, onDeleteCarryover, onCycleStatus, onMoveTask }) {
+  const [isDragOver, setIsDragOver] = useState(false)
   const currentKey = `${member.id}_${weekKey}_carryover`
   const prefix = member.id + '_'
   const suffix = '_carryover'
@@ -69,10 +70,39 @@ export default function CarryoverSection({ member, weekKey, tasks, onAddCarryove
     .sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0) // 오래된 주차 먼저
     .flatMap(([key, items]) => items.map(item => ({ ...item, _key: key })))
 
+  const handleDragOver = (e) => {
+    e.preventDefault()
+    const fromKey = e.dataTransfer.types.includes('text/plain') ? null : undefined
+    // fromKey 체크는 drop 시에만 가능, 여기선 일단 허용 표시
+    setIsDragOver(true)
+  }
+
+  const handleDragLeave = (e) => {
+    if (!e.currentTarget.contains(e.relatedTarget)) setIsDragOver(false)
+  }
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    setIsDragOver(false)
+    const fromKey = e.dataTransfer.getData('fromKey')
+    const taskId = e.dataTransfer.getData('taskId')
+    // 같은 멤버의 일정(day) 항목만 수락 - carryover → carryover는 제외
+    if (!fromKey || !fromKey.startsWith(member.id + '_') || fromKey.endsWith('_carryover')) return
+    if (onMoveTask) onMoveTask(fromKey, currentKey, taskId, null)
+  }
+
   return (
-    <div className="px-3 py-2 bg-jira-orange-light border-t border-jira-border">
+    <div
+      className={`px-3 py-2 border-t border-jira-border transition-colors ${isDragOver ? 'bg-orange-100 ring-2 ring-inset ring-orange-300' : 'bg-jira-orange-light'}`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[11px] font-bold text-jira-orange">📌 이월 / 추가 업무</span>
+        <span className="text-[11px] font-bold text-jira-orange">
+          📌 이월 / 추가 업무
+          {isDragOver && <span className="ml-1.5 font-normal text-orange-500">여기에 놓으면 이월됩니다</span>}
+        </span>
         <button
           onClick={() => onAddCarryover(currentKey)}
           className="text-[11px] text-jira-muted hover:text-jira-blue px-1.5 py-0.5 rounded hover:bg-jira-blue-light transition-colors"

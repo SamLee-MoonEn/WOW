@@ -160,10 +160,13 @@ function Board() {
             if (modal.type === 'editTask') {
               wow.updateTask(modal.key, modal.task.id, data)
             } else if (data.selectedDays) {
-              // 여러 날 반복: 선택된 각 요일에 추가
-              const baseKey = modal.key.slice(0, modal.key.lastIndexOf('_'))
-              const { selectedDays, ...taskData } = data
-              selectedDays.forEach(d => wow.addTask(`${baseKey}_${d}`, taskData))
+              // 여러 날 + 매주 반복
+              const { selectedDays, repeatWeeks = 1, ...taskData } = data
+              const memberId = modal.key.split('_')[0]
+              for (let w = 0; w < repeatWeeks; w++) {
+                const weekInfo = getWeekKeys(wow.state.baseWeekOffset + w)
+                selectedDays.forEach(d => wow.addTask(`${memberId}_${weekInfo.current}_${d}`, taskData))
+              }
             } else {
               wow.addTask(modal.key, data)
             }

@@ -23,6 +23,7 @@ export default function TaskModal({ isEdit, task, onSave, onClose }) {
   const [textError, setTextError] = useState(false)
   const [multiDay, setMultiDay] = useState(false)
   const [selectedDays, setSelectedDays] = useState(new Set([0, 1, 2, 3, 4]))
+  const [repeatWeeks, setRepeatWeeks] = useState(1)
 
   const toggleDay = (d) => {
     setSelectedDays(prev => {
@@ -36,7 +37,7 @@ export default function TaskModal({ isEdit, task, onSave, onClose }) {
     if (!text.trim()) { setTextError(true); return }
     const data = { text: text.trim(), status, style, dividerBefore, memo }
     if (!isEdit && multiDay) {
-      onSave({ ...data, selectedDays: [...selectedDays].sort() })
+      onSave({ ...data, selectedDays: [...selectedDays].sort(), repeatWeeks })
     } else {
       onSave(data)
     }
@@ -99,21 +100,38 @@ export default function TaskModal({ isEdit, task, onSave, onClose }) {
             선택한 요일에 모두 추가
           </label>
           {multiDay && (
-            <div className="flex gap-1.5 mt-1">
-              {DAY_LABELS.map((label, d) => (
-                <button
-                  key={d}
-                  type="button"
-                  onClick={() => toggleDay(d)}
-                  className={`w-8 h-8 rounded-full text-[12px] font-semibold border transition-colors ${
-                    selectedDays.has(d)
-                      ? 'bg-jira-blue text-white border-jira-blue'
-                      : 'bg-white text-jira-muted border-jira-border hover:border-jira-blue'
-                  }`}
+            <div className="space-y-2 mt-1">
+              <div className="flex gap-1.5">
+                {DAY_LABELS.map((label, d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => toggleDay(d)}
+                    className={`w-8 h-8 rounded-full text-[12px] font-semibold border transition-colors ${
+                      selectedDays.has(d)
+                        ? 'bg-jira-blue text-white border-jira-blue'
+                        : 'bg-white text-jira-muted border-jira-border hover:border-jira-blue'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 text-[13px] text-jira-mid">
+                <span>매주 반복:</span>
+                <select
+                  value={repeatWeeks}
+                  onChange={e => setRepeatWeeks(Number(e.target.value))}
+                  className="border border-jira-border rounded px-2 py-0.5 text-[12px] bg-white"
                 >
-                  {label}
-                </button>
-              ))}
+                  <option value={1}>이번 주만</option>
+                  <option value={2}>2주</option>
+                  <option value={3}>3주</option>
+                  <option value={4}>4주</option>
+                  <option value={6}>6주</option>
+                  <option value={8}>8주</option>
+                </select>
+              </div>
             </div>
           )}
         </FormField>

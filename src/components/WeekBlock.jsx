@@ -40,6 +40,7 @@ export default function WeekBlock({ member, weekKey, weekNum, monday, isCurrent,
         onEditCarryover={onEditCarryover}
         onDeleteCarryover={onDeleteCarryover}
         onCycleStatus={onCycleCarryoverStatus}
+        onMoveTask={onMoveTask}
       />
     </div>
   )
