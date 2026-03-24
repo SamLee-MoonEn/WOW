@@ -1,15 +1,16 @@
 import DayCol from './DayCol'
 import CarryoverSection from './CarryoverSection'
-import { getWeekDates, formatDate } from '../utils/weekUtils'
+import { getWeekDates, formatDate, getWeekKeys } from '../utils/weekUtils'
 
 export default function WeekBlock({ member, weekKey, weekNum, monday, isCurrent, tasks, onAddTask, onEditTask, onDeleteTask, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onCycleCarryoverStatus, onMoveTask }) {
   const dates = getWeekDates(monday)
+  const isActualCurrentWeek = weekKey === getWeekKeys(0).current
 
   return (
     <div className="border border-jira-border rounded-lg overflow-hidden">
       <div className="flex items-center justify-between px-3 py-2 bg-jira-bg border-b border-jira-border">
         <span className="text-sm font-bold text-jira-dark">
-          WK{weekNum} {isCurrent && <span className="text-red-500">🔴</span>}
+          WK{weekNum} {isActualCurrentWeek && <span className="text-red-500">🔴</span>}
         </span>
         <span className="text-[11px] text-jira-muted">
           {formatDate(dates[0])} ~ {formatDate(dates[4])}

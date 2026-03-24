@@ -24,6 +24,9 @@ export default function TaskModal({ isEdit, task, onSave, onClose }) {
   const [multiDay, setMultiDay] = useState(false)
   const [selectedDays, setSelectedDays] = useState(new Set([0, 1, 2, 3, 4]))
   const [repeatWeeks, setRepeatWeeks] = useState(1)
+  const [customWeeks, setCustomWeeks] = useState('')
+  const isCustom = repeatWeeks === 'custom'
+  const effectiveRepeatWeeks = isCustom ? (parseInt(customWeeks) || 1) : repeatWeeks
 
   const toggleDay = (d) => {
     setSelectedDays(prev => {
@@ -37,7 +40,7 @@ export default function TaskModal({ isEdit, task, onSave, onClose }) {
     if (!text.trim()) { setTextError(true); return }
     const data = { text: text.trim(), status, style, dividerBefore, memo }
     if (!isEdit && multiDay) {
-      onSave({ ...data, selectedDays: [...selectedDays].sort(), repeatWeeks })
+      onSave({ ...data, selectedDays: [...selectedDays].sort(), repeatWeeks: effectiveRepeatWeeks })
     } else {
       onSave(data)
     }
@@ -117,11 +120,11 @@ export default function TaskModal({ isEdit, task, onSave, onClose }) {
                   </button>
                 ))}
               </div>
-              <div className="flex items-center gap-2 text-[13px] text-jira-mid">
+              <div className="flex items-center gap-2 text-[13px] text-jira-mid flex-wrap">
                 <span>매주 반복:</span>
                 <select
                   value={repeatWeeks}
-                  onChange={e => setRepeatWeeks(Number(e.target.value))}
+                  onChange={e => setRepeatWeeks(e.target.value === 'custom' ? 'custom' : Number(e.target.value))}
                   className="border border-jira-border rounded px-2 py-0.5 text-[12px] bg-white"
                 >
                   <option value={1}>이번 주만</option>
@@ -130,7 +133,22 @@ export default function TaskModal({ isEdit, task, onSave, onClose }) {
                   <option value={4}>4주</option>
                   <option value={6}>6주</option>
                   <option value={8}>8주</option>
+                  <option value="custom">직접 입력</option>
                 </select>
+                {isCustom && (
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min={1}
+                      max={52}
+                      value={customWeeks}
+                      onChange={e => setCustomWeeks(e.target.value)}
+                      placeholder="주 수"
+                      className="w-16 border border-jira-border rounded px-2 py-0.5 text-[12px]"
+                    />
+                    <span className="text-[12px]">주</span>
+                  </div>
+                )}
               </div>
             </div>
           )}
