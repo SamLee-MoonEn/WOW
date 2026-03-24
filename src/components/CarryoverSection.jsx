@@ -56,7 +56,7 @@ function CarryoverItem({ item, itemKey, canEdit, onEdit, onDelete, onCycleStatus
   )
 }
 
-export default function CarryoverSection({ member, weekKey, tasks, onAddCarryover, onEditCarryover, onDeleteCarryover, onCycleStatus, onMoveTask, canEdit }) {
+export default function CarryoverSection({ member, weekKey, tasks, onAddCarryover, onEditCarryover, onDeleteCarryover, onCycleStatus, onMoveTask, canEdit, isAdmin }) {
   const [isDragOver, setIsDragOver] = useState(false)
   const currentKey = `${member.id}_${weekKey}_carryover`
   const prefix = member.id + '_'
@@ -88,8 +88,9 @@ export default function CarryoverSection({ member, weekKey, tasks, onAddCarryove
     setIsDragOver(false)
     const fromKey = e.dataTransfer.getData('fromKey')
     const taskId = e.dataTransfer.getData('taskId')
-    // 같은 멤버의 일정(day) 항목만 수락 - carryover → carryover는 제외
-    if (!fromKey || !fromKey.startsWith(member.id + '_') || fromKey.endsWith('_carryover')) return
+    // carryover → carryover 이동 제외, 관리자가 아닌 경우 다른 멤버 드롭 거부
+    if (!fromKey || fromKey.endsWith('_carryover')) return
+    if (!isAdmin && !fromKey.startsWith(member.id + '_')) return
     if (onMoveTask) onMoveTask(fromKey, currentKey, taskId, null)
   }
 

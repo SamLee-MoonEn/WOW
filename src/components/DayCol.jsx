@@ -2,7 +2,7 @@ import { useState } from 'react'
 import TaskItem from './TaskItem'
 import { DAYS, formatDate, formatDateFull } from '../utils/weekUtils'
 
-export default function DayCol({ member, weekKey, dayIndex, date, canEdit, tasks, onAddTask, onEditTask, onDeleteTask, onCycleStatus, onMoveTask }) {
+export default function DayCol({ member, weekKey, dayIndex, date, canEdit, isAdmin, tasks, onAddTask, onEditTask, onDeleteTask, onCycleStatus, onMoveTask }) {
   const [isDragOver, setIsDragOver] = useState(false)
   const key = `${member.id}_${weekKey}_${dayIndex}`
   const items = tasks[key] || []
@@ -23,8 +23,9 @@ export default function DayCol({ member, weekKey, dayIndex, date, canEdit, tasks
     setIsDragOver(false)
     const fromKey = e.dataTransfer.getData('fromKey')
     const taskId = e.dataTransfer.getData('taskId')
-    // 다른 멤버의 카드는 드롭 거부
-    if (!fromKey || !fromKey.startsWith(member.id + '_')) return
+    if (!fromKey) return
+    // 관리자가 아닌 경우 다른 멤버 카드 드롭 거부
+    if (!isAdmin && !fromKey.startsWith(member.id + '_')) return
     onMoveTask(fromKey, key, taskId, null)
   }
 
