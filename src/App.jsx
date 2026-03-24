@@ -95,7 +95,6 @@ function Board() {
     <div className="min-h-screen bg-jira-bg">
       <Header
         onManageMembers={isAdmin ? () => setModal({ type: 'memberManage' }) : undefined}
-        onAddMember={isAdmin ? () => setModal({ type: 'addMember' }) : undefined}
         displayName={displayName}
         onLogout={logout}
       />
@@ -198,16 +197,11 @@ function Board() {
         />
       )}
 
-      {(modal?.type === 'addMember' || modal?.type === 'editMember') && (
+      {modal?.type === 'editMember' && (
         <MemberModal
-          isEdit={modal.type === 'editMember'}
+          isEdit
           member={modal.member}
-          onSave={(data) => {
-            modal.type === 'editMember'
-              ? wow.updateMember(modal.member.id, data)
-              : wow.addMember(data)
-            setModal(null)
-          }}
+          onSave={(data) => { wow.updateMember(modal.member.id, data); setModal(null) }}
           onClose={() => setModal(null)}
         />
       )}
