@@ -26,6 +26,10 @@ function Board() {
 
   const wk = getWeekKeys(wow.state.baseWeekOffset)
 
+  // myMemberId를 early return 및 useEffect 의존성 배열보다 앞에 선언 (TDZ 방지)
+  const myMember = wow.state.members.find(m => m.email === email || m.name === displayName)
+  const myMemberId = myMember?.id
+
   // 평일 아침 자동 근무중 복귀: 전날(평일) 퇴근 처리된 경우 오늘(평일)이면 자동 복귀
   useEffect(() => {
     if (wow.loading || !myMemberId) return
@@ -118,8 +122,6 @@ function Board() {
 
   const openConfirm = (title, message, onConfirm) => setConfirm({ title, message, onConfirm })
 
-  const myMember = wow.state.members.find(m => m.email === email || m.name === displayName)
-  const myMemberId = myMember?.id
   const isAdmin = myMember?.role === 'admin'
   const isExternal = myMember?.role === 'external'
 
