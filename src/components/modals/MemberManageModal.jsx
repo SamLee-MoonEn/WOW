@@ -29,33 +29,38 @@ function MemberRow({ m, isAdmin, isLastAdmin, onEdit, onDelete, onChangeRole, on
             <button
               onClick={onMoveUp}
               disabled={isFirst}
-              className="text-[11px] px-1.5 py-0.5 border rounded text-jira-muted hover:bg-jira-bg disabled:opacity-30 disabled:cursor-not-allowed"
-              title="위로"
-            >↑</button>
+              className="text-[11px] px-2 py-0.5 border rounded text-jira-muted hover:bg-jira-bg disabled:opacity-25 disabled:cursor-not-allowed"
+              title="순서 위로"
+            >↑ 위</button>
             <button
               onClick={onMoveDown}
               disabled={isLast}
-              className="text-[11px] px-1.5 py-0.5 border rounded text-jira-muted hover:bg-jira-bg disabled:opacity-30 disabled:cursor-not-allowed"
-              title="아래로"
-            >↓</button>
+              className="text-[11px] px-2 py-0.5 border rounded text-jira-muted hover:bg-jira-bg disabled:opacity-25 disabled:cursor-not-allowed"
+              title="순서 아래로"
+            >↓ 아래</button>
           </div>
         )}
         {isAdmin && (
-          <select
-            value={role}
-            disabled={isLastAdmin}
-            title={isLastAdmin ? '마지막 관리자는 변경할 수 없습니다' : undefined}
-            onChange={e => onChangeRole(m, e.target.value)}
-            className={`text-[11px] px-2 py-0.5 rounded border transition-colors ${
-              isLastAdmin
-                ? 'border-jira-border text-gray-300 cursor-not-allowed bg-white'
-                : 'border-jira-border text-jira-dark bg-white hover:border-jira-blue cursor-pointer'
-            }`}
-          >
-            {ROLES.map(r => (
-              <option key={r.value} value={r.value}>{r.label}</option>
-            ))}
-          </select>
+          <div className="flex flex-col items-end gap-0.5">
+            <select
+              value={role}
+              disabled={isLastAdmin}
+              title={isLastAdmin ? '마지막 관리자는 변경할 수 없습니다' : undefined}
+              onChange={e => onChangeRole(m, e.target.value)}
+              className={`text-[11px] px-2 py-0.5 rounded border transition-colors ${
+                isLastAdmin
+                  ? 'border-jira-border text-gray-300 cursor-not-allowed bg-white'
+                  : 'border-jira-border text-jira-dark bg-white hover:border-jira-blue cursor-pointer'
+              }`}
+            >
+              {ROLES.map(r => (
+                <option key={r.value} value={r.value}>{r.label}</option>
+              ))}
+            </select>
+            {isLastAdmin && (
+              <span className="text-[10px] text-amber-500">관리자 최소 1명 필요</span>
+            )}
+          </div>
         )}
         <Button variant="outline" size="sm" onClick={() => { onClose(); onEdit(m) }}>✏️</Button>
         <Button variant="danger" size="sm" onClick={() => onDelete(m)}>🗑</Button>

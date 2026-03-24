@@ -1,26 +1,26 @@
 import { useState } from 'react'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
-import { DAYS, getWeekKeys } from '../../utils/weekUtils'
+import { DAYS } from '../../utils/weekUtils'
 
 export default function CopyTaskModal({ task, fromKey, members, wk, onCopy, onClose }) {
   const fromParts = fromKey.split('_')
-  // key format: {memberId}_{YYYY}_{WNN}_{dayIndex}
-  // memberId is the first segment, dayIndex is the last
+  const sourceMemberId = fromParts[0]
   const sourceDayIndex = parseInt(fromParts[fromParts.length - 1])
   const defaultDay = isNaN(sourceDayIndex) ? 0 : sourceDayIndex
 
+  const sourceMember = members.find(m => m.id === sourceMemberId)
+  const sourceDay = !isNaN(sourceDayIndex) ? DAYS[sourceDayIndex] : null
+
   const [targetMemberId, setTargetMemberId] = useState(members[0]?.id || '')
-  const [weekOffset, setWeekOffset] = useState(0) // 0=current, -1=prev
+  const [weekOffset, setWeekOffset] = useState(0)
   const [dayIndex, setDayIndex] = useState(defaultDay)
 
   const weekKey = weekOffset === 0 ? wk.current : wk.prev
-  const weekLabel = weekOffset === 0 ? `WK${wk.currentWk} (이번 주)` : `WK${wk.prevWk} (지난 주)`
 
   const handleCopy = () => {
     if (!targetMemberId) return
-    const toKey = `${targetMemberId}_${weekKey}_${dayIndex}`
-    onCopy(toKey)
+    onCopy(`${targetMemberId}_${weekKey}_${dayIndex}`)
   }
 
   return (
@@ -34,14 +34,23 @@ export default function CopyTaskModal({ task, fromKey, members, wk, onCopy, onCl
         </>
       }
     >
-      <div className="mb-3 px-3 py-2 bg-jira-bg rounded border border-jira-border text-[12px] text-jira-dark">
-        <span className="text-jira-muted mr-1">복사할 업무:</span>
-        {task.text}
+      {/* 원본 업무 정보 */}
+      <div className="mb-4 px-3 py-2.5 bg-jira-bg rounded-lg border border-jira-border">
+        <div className="text-[11px] text-jira-muted mb-1 font-medium">복사할 업무</div>
+        <div className="text-[13px] text-jira-dark font-medium">{task.text}</div>
+        {(sourceMember || sourceDay) && (
+          <div className="text-[11px] text-jira-muted mt-1.5 flex items-center gap-1.5">
+            {sourceMember && <span>{sourceMember.emoji} {sourceMember.name}</span>}
+            {sourceMember && sourceDay && <span className="text-gray-300">·</span>}
+            {sourceDay && <span>WK{wk.currentWk} {sourceDay}요일</span>}
+          </div>
+        )}
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-4">
+        {/* 담당자 */}
         <div>
-          <label className="block text-[12px] font-semibold text-jira-dark mb-1">담당자</label>
+          <label className="block text-[12px] font-semibold text-jira-dark mb-1.5">담당자</label>
           <select
             value={targetMemberId}
             onChange={e => setTargetMemberId(e.target.value)}
@@ -53,33 +62,39 @@ export default function CopyTaskModal({ task, fromKey, members, wk, onCopy, onCl
           </select>
         </div>
 
+        {/* 주차 */}
         <div>
-          <label className="block text-[12px] font-semibold text-jira-dark mb-1">주차</label>
+          <label className="block text-[12px] font-semibold text-jira-dark mb-1.5">주차</label>
           <div className="flex gap-2">
-            {[0, -1].map(offset => (
+            {[
+              { offset: 0,  label: `WK${wk.currentWk}`, sub: '이번 주' },
+              { offset: -1, label: `WK${wk.prevWk}`,    sub: '지난 주' },
+            ].map(({ offset, label, sub }) => (
               <button
                 key={offset}
                 onClick={() => setWeekOffset(offset)}
-                className={`text-[12px] px-3 py-1 rounded border transition-colors ${
+                className={`flex-1 py-2 rounded-lg border text-center transition-colors ${
                   weekOffset === offset
                     ? 'bg-jira-blue text-white border-jira-blue'
                     : 'border-jira-border text-jira-muted hover:border-jira-blue hover:text-jira-blue'
                 }`}
               >
-                {offset === 0 ? `WK${wk.currentWk} 이번 주` : `WK${wk.prevWk} 지난 주`}
+                <div className="text-[13px] font-semibold">{label}</div>
+                <div className="text-[10px] opacity-70">{sub}</div>
               </button>
             ))}
           </div>
         </div>
 
+        {/* 요일 */}
         <div>
-          <label className="block text-[12px] font-semibold text-jira-dark mb-1">요일</label>
-          <div className="flex gap-1.5">
+          <label className="block text-[12px] font-semibold text-jira-dark mb-1.5">요일</label>
+          <div className="grid grid-cols-5 gap-1.5">
             {DAYS.map((d, i) => (
               <button
                 key={i}
                 onClick={() => setDayIndex(i)}
-                className={`text-[12px] w-10 py-1 rounded border transition-colors ${
+                className={`py-2 rounded-lg border text-[13px] font-medium transition-colors ${
                   dayIndex === i
                     ? 'bg-jira-blue text-white border-jira-blue'
                     : 'border-jira-border text-jira-muted hover:border-jira-blue hover:text-jira-blue'

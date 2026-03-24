@@ -13,7 +13,7 @@ export default function MemberSection({ member, isMe, isAdmin, showDayGrid = tru
           {isMe && <span className="text-[11px] font-semibold text-jira-blue bg-white border border-blue-300 px-2 py-0.5 rounded-full">나</span>}
         </div>
         {isAdmin && (
-          <div className="flex gap-1.5 opacity-0 group-hover/header:opacity-100 transition-opacity">
+          <div className="flex gap-1.5 opacity-40 group-hover/header:opacity-100 transition-opacity">
             <Button variant="outline" size="sm" onClick={onEditMember}>✏️ 수정</Button>
             <Button variant="danger" size="sm" onClick={onDeleteMember}>🗑 삭제</Button>
           </div>

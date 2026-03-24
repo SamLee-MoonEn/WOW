@@ -53,7 +53,7 @@ export default function TaskItem({ task, taskKey, canEdit, onEdit, onDelete, onC
         <span className={`flex-1 text-[11.5px] leading-snug break-words ${textClass}`}>
           {task.text}
         </span>
-        <span className="hidden group-hover:flex items-center gap-0.5 absolute right-0.5 top-1">
+        <span className="flex items-center gap-0.5 absolute right-0.5 top-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
           {task.memo && (
             <span className="text-[9px] px-1 py-0.5 bg-jira-bg border border-jira-border rounded text-jira-muted mr-0.5">메모</span>
           )}

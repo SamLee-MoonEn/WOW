@@ -38,8 +38,10 @@ export default function WeekBlock({ member, weekKey, weekNum, monday, isCurrent,
           ))}
         </div>
       ) : (
-        <div className="px-3 py-2 bg-jira-bg/50 border-b border-jira-border text-[11px] text-jira-muted text-center">
-          일정 상세 열람 권한 없음
+        <div className="px-3 py-5 bg-jira-bg/50 border-b border-jira-border text-center">
+          <div className="text-base mb-1">🔒</div>
+          <div className="text-[11px] text-jira-muted font-medium">일정 열람 권한 없음</div>
+          <div className="text-[10px] text-gray-400 mt-0.5">관리자에게 권한을 요청하세요</div>
         </div>
       )}
       <CarryoverSection

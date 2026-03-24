@@ -106,7 +106,9 @@ export default function StatusBoard({ members, myMemberId, isAdmin, onUpdatePres
                   {/* 상태 변경 버튼 (본인만) */}
                   <td className="px-2 py-2">
                     {isMe && (
-                      <div className="flex gap-1">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] text-jira-muted">내 상태 변경</span>
+                        <div className="flex gap-1">
                         {Object.entries(PRESENCE).map(([key, cfg]) => (
                           <button
                             key={key}
@@ -128,6 +130,7 @@ export default function StatusBoard({ members, myMemberId, isAdmin, onUpdatePres
                             {key === 'off' && onEndOfDay ? `${cfg.label} 📤` : cfg.label}
                           </button>
                         ))}
+                        </div>
                       </div>
                     )}
                   </td>

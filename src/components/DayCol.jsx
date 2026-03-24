@@ -31,7 +31,7 @@ export default function DayCol({ member, weekKey, dayIndex, date, canEdit, isAdm
 
   return (
     <div
-      className={`border-r border-jira-border last:border-r-0 min-h-[160px] flex flex-col transition-colors ${isDragOver ? 'bg-jira-blue-light' : ''}`}
+      className={`border-r border-jira-border last:border-r-0 min-h-[160px] flex flex-col transition-colors ${isDragOver ? 'bg-jira-blue-light ring-2 ring-inset ring-jira-blue' : ''}`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}

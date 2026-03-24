@@ -26,7 +26,7 @@ function CarryoverItem({ item, itemKey, canEdit, onEdit, onDelete, onCycleStatus
         onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragOver(true) }}
         onDragLeave={() => setIsDragOver(false)}
         onDragEnd={() => setIsDragOver(false)}
-        className="group flex items-start gap-1.5 py-1 px-0.5 rounded hover:bg-yellow-100 relative cursor-grab active:cursor-grabbing active:opacity-50"
+        className="group flex items-start gap-1.5 py-1 px-0.5 rounded hover:bg-orange-50 relative cursor-grab active:cursor-grabbing active:opacity-50"
       >
         {item.date && (
           <span className="text-[10px] text-jira-muted whitespace-nowrap pt-px font-semibold">
@@ -38,7 +38,7 @@ function CarryoverItem({ item, itemKey, canEdit, onEdit, onDelete, onCycleStatus
           {item.text}
         </span>
         {canEdit && (
-          <span className="hidden group-hover:flex items-center gap-0.5 absolute right-0.5 top-1">
+          <span className="flex items-center gap-0.5 absolute right-0.5 top-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
             <button
               onClick={() => onEdit(item)}
               className="text-[10px] p-0.5 rounded hover:bg-gray-200 text-jira-muted hover:text-jira-dark"
