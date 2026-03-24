@@ -34,8 +34,8 @@ function Board() {
     )
     const hasAdmin = wow.state.members.some(m => m.role === 'admin')
     if (!exists) {
-      // 첫 멤버이거나 아직 관리자가 없으면 admin으로 등록
-      const role = (wow.state.members.length === 0 || !hasAdmin) ? 'admin' : 'member'
+      // 첫 멤버이거나 아직 관리자가 없으면 admin, 그 외 신규 로그인은 external로 등록
+      const role = (wow.state.members.length === 0 || !hasAdmin) ? 'admin' : 'external'
       wow.addMember({ name: displayName, rank: '팀원', emoji: '👤', email, role })
     } else {
       const updates = {}
