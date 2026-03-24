@@ -170,6 +170,7 @@ function Board() {
           myMemberId={isExternal ? null : myMemberId}
           isAdmin={isAdmin}
           onUpdatePresence={wow.updatePresence}
+          onUpdateWorkDesc={wow.updateWorkDesc}
           onEndOfDay={myMemberId && !isExternal ? () => setModal({ type: 'teamsReport' }) : undefined}
         />
 
@@ -293,7 +294,7 @@ function Board() {
           }}
           onChangeRole={(member, role) => wow.updateMember(member.id, { ...member, role })}
           onClose={() => setModal(null)}
-          onReorder={wow.reorderMember}
+          onReorderAll={wow.reorderMembers}
         />
       )}
 

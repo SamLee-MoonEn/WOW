@@ -217,14 +217,13 @@ export function useWOWState() {
     })
   }, [])
 
-  const reorderMember = useCallback((memberId, direction) => {
+  const reorderMembers = useCallback((orderedIds) => {
     setMembers((prev) => {
-      const idx = prev.findIndex(m => m.id === memberId)
-      if (idx < 0) return prev
-      const swapIdx = direction === 'up' ? idx - 1 : idx + 1
-      if (swapIdx < 0 || swapIdx >= prev.length) return prev
-      const next = [...prev]
-      ;[next[idx], next[swapIdx]] = [next[swapIdx], next[idx]]
+      const idMap = new Map(prev.map(m => [m.id, m]))
+      const inOrder = orderedIds.map(id => idMap.get(id)).filter(Boolean)
+      const inOrderSet = new Set(orderedIds)
+      const rest = prev.filter(m => !inOrderSet.has(m.id))
+      const next = [...inOrder, ...rest]
       saveMembers(next)
       return next
     })
@@ -245,6 +244,14 @@ export function useWOWState() {
     })
   }, [])
 
+  const updateWorkDesc = useCallback((memberId, desc) => {
+    setMembers((prev) => {
+      const next = prev.map((m) => (m.id === memberId ? { ...m, workDesc: desc } : m))
+      saveMembers(next)
+      return next
+    })
+  }, [])
+
   return {
     state,
     loading,
@@ -261,6 +268,7 @@ export function useWOWState() {
     moveTask,
     copyTask,
     updatePresence,
-    reorderMember,
+    reorderMembers,
+    updateWorkDesc,
   }
 }
