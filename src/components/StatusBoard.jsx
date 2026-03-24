@@ -17,7 +17,7 @@ function PresenceBadge({ presence }) {
   )
 }
 
-export default function StatusBoard({ members, myMemberId, onUpdatePresence, onEndOfDay }) {
+export default function StatusBoard({ members, myMemberId, isAdmin, onUpdatePresence, onEndOfDay }) {
   // 업무 중 먼저, 그 다음 이름순
   const sorted = [...members].sort((a, b) => {
     const pa = a.presence || 'working'
@@ -68,6 +68,9 @@ export default function StatusBoard({ members, myMemberId, onUpdatePresence, onE
                     <span className="text-[13px] font-semibold text-jira-dark">{member.name}</span>
                     {isMe && (
                       <span className="ml-1.5 text-[10px] font-semibold text-jira-blue bg-white border border-blue-200 px-1.5 py-0.5 rounded-full">나</span>
+                    )}
+                    {member.role === 'admin' && (
+                      <span className="ml-1 text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full">관리자</span>
                     )}
                   </td>
 

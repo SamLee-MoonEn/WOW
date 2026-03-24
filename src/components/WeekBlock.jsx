@@ -2,7 +2,7 @@ import DayCol from './DayCol'
 import CarryoverSection from './CarryoverSection'
 import { getWeekDates, formatDate, getWeekKeys } from '../utils/weekUtils'
 
-export default function WeekBlock({ member, weekKey, weekNum, monday, isCurrent, tasks, onAddTask, onEditTask, onDeleteTask, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onCycleCarryoverStatus, onMoveTask }) {
+export default function WeekBlock({ member, weekKey, weekNum, monday, isCurrent, canEdit, tasks, onAddTask, onEditTask, onDeleteTask, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onCycleCarryoverStatus, onMoveTask }) {
   const dates = getWeekDates(monday)
   const isActualCurrentWeek = weekKey === getWeekKeys(0).current
 
@@ -24,6 +24,7 @@ export default function WeekBlock({ member, weekKey, weekNum, monday, isCurrent,
             weekKey={weekKey}
             dayIndex={i}
             date={date}
+            canEdit={canEdit}
             tasks={tasks}
             onAddTask={onAddTask}
             onEditTask={onEditTask}
@@ -42,6 +43,7 @@ export default function WeekBlock({ member, weekKey, weekNum, monday, isCurrent,
         onDeleteCarryover={onDeleteCarryover}
         onCycleStatus={onCycleCarryoverStatus}
         onMoveTask={onMoveTask}
+        canEdit={canEdit}
       />
     </div>
   )

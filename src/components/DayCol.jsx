@@ -2,7 +2,7 @@ import { useState } from 'react'
 import TaskItem from './TaskItem'
 import { DAYS, formatDate, formatDateFull } from '../utils/weekUtils'
 
-export default function DayCol({ member, weekKey, dayIndex, date, tasks, onAddTask, onEditTask, onDeleteTask, onCycleStatus, onMoveTask }) {
+export default function DayCol({ member, weekKey, dayIndex, date, canEdit, tasks, onAddTask, onEditTask, onDeleteTask, onCycleStatus, onMoveTask }) {
   const [isDragOver, setIsDragOver] = useState(false)
   const key = `${member.id}_${weekKey}_${dayIndex}`
   const items = tasks[key] || []
@@ -53,18 +53,21 @@ export default function DayCol({ member, weekKey, dayIndex, date, tasks, onAddTa
             key={task.id}
             task={task}
             taskKey={key}
+            canEdit={canEdit}
             onEdit={(t) => onEditTask(key, t)}
             onDelete={onDeleteTask}
             onCycleStatus={onCycleStatus}
             onDropBefore={(dragId, fromKey) => onMoveTask(fromKey, key, dragId, task.id)}
           />
         ))}
-        <button
-          onClick={() => onAddTask(key)}
-          className="mt-auto flex items-center gap-1 text-jira-muted text-[11px] px-1 py-1 rounded border border-dashed border-transparent hover:text-jira-blue hover:border-jira-blue hover:bg-jira-blue-light w-full text-left transition-all"
-        >
-          + 업무 추가
-        </button>
+        {canEdit && (
+          <button
+            onClick={() => onAddTask(key)}
+            className="mt-auto flex items-center gap-1 text-jira-muted text-[11px] px-1 py-1 rounded border border-dashed border-transparent hover:text-jira-blue hover:border-jira-blue hover:bg-jira-blue-light w-full text-left transition-all"
+          >
+            + 업무 추가
+          </button>
+        )}
       </div>
     </div>
   )

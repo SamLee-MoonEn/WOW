@@ -9,7 +9,7 @@ const styleMap = {
   'bold red-text': 'font-semibold text-[#de350b]',
 }
 
-export default function TaskItem({ task, taskKey, onEdit, onDelete, onCycleStatus, onDropBefore }) {
+export default function TaskItem({ task, taskKey, canEdit, onEdit, onDelete, onCycleStatus, onDropBefore }) {
   const [isDragOver, setIsDragOver] = useState(false)
   const textClass = styleMap[task.style] || ''
 
@@ -57,16 +57,18 @@ export default function TaskItem({ task, taskKey, onEdit, onDelete, onCycleStatu
           {task.memo && (
             <span className="text-[9px] px-1 py-0.5 bg-jira-bg border border-jira-border rounded text-jira-muted mr-0.5">메모</span>
           )}
-          <button
-            onClick={() => onEdit(task)}
-            className="text-[10px] p-0.5 rounded hover:bg-gray-200 text-jira-muted hover:text-jira-dark"
-            title="수정"
-          >✏️</button>
-          <button
-            onClick={() => onDelete(taskKey, task.id)}
-            className="text-[10px] p-0.5 rounded hover:bg-red-100 text-jira-muted hover:text-red-600"
-            title="삭제"
-          >🗑</button>
+          {canEdit && <>
+            <button
+              onClick={() => onEdit(task)}
+              className="text-[10px] p-0.5 rounded hover:bg-gray-200 text-jira-muted hover:text-jira-dark"
+              title="수정"
+            >✏️</button>
+            <button
+              onClick={() => onDelete(taskKey, task.id)}
+              className="text-[10px] p-0.5 rounded hover:bg-red-100 text-jira-muted hover:text-red-600"
+              title="삭제"
+            >🗑</button>
+          </>}
         </span>
       </div>
     </>

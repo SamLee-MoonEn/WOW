@@ -7,7 +7,7 @@ const styleMap = {
   'bold blue-text': 'font-semibold text-jira-blue',
 }
 
-function CarryoverItem({ item, itemKey, onEdit, onDelete, onCycleStatus }) {
+function CarryoverItem({ item, itemKey, canEdit, onEdit, onDelete, onCycleStatus }) {
   const [isDragOver, setIsDragOver] = useState(false)
   const textClass = styleMap[item.style] || ''
 
@@ -37,24 +37,26 @@ function CarryoverItem({ item, itemKey, onEdit, onDelete, onCycleStatus }) {
         <span className={`flex-1 text-[11.5px] leading-snug break-words ${textClass}`}>
           {item.text}
         </span>
-        <span className="hidden group-hover:flex items-center gap-0.5 absolute right-0.5 top-1">
-          <button
-            onClick={() => onEdit(item)}
-            className="text-[10px] p-0.5 rounded hover:bg-gray-200 text-jira-muted hover:text-jira-dark"
-            title="수정"
-          >✏️</button>
-          <button
-            onClick={() => onDelete(itemKey, item.id)}
-            className="text-[10px] p-0.5 rounded hover:bg-red-100 text-jira-muted hover:text-red-600"
-            title="삭제"
-          >🗑</button>
-        </span>
+        {canEdit && (
+          <span className="hidden group-hover:flex items-center gap-0.5 absolute right-0.5 top-1">
+            <button
+              onClick={() => onEdit(item)}
+              className="text-[10px] p-0.5 rounded hover:bg-gray-200 text-jira-muted hover:text-jira-dark"
+              title="수정"
+            >✏️</button>
+            <button
+              onClick={() => onDelete(itemKey, item.id)}
+              className="text-[10px] p-0.5 rounded hover:bg-red-100 text-jira-muted hover:text-red-600"
+              title="삭제"
+            >🗑</button>
+          </span>
+        )}
       </div>
     </>
   )
 }
 
-export default function CarryoverSection({ member, weekKey, tasks, onAddCarryover, onEditCarryover, onDeleteCarryover, onCycleStatus, onMoveTask }) {
+export default function CarryoverSection({ member, weekKey, tasks, onAddCarryover, onEditCarryover, onDeleteCarryover, onCycleStatus, onMoveTask, canEdit }) {
   const [isDragOver, setIsDragOver] = useState(false)
   const currentKey = `${member.id}_${weekKey}_carryover`
   const prefix = member.id + '_'
@@ -103,12 +105,14 @@ export default function CarryoverSection({ member, weekKey, tasks, onAddCarryove
           📌 이월 / 추가 업무
           {isDragOver && <span className="ml-1.5 font-normal text-orange-500">여기에 놓으면 이월됩니다</span>}
         </span>
-        <button
-          onClick={() => onAddCarryover(currentKey)}
-          className="text-[11px] text-jira-muted hover:text-jira-blue px-1.5 py-0.5 rounded hover:bg-jira-blue-light transition-colors"
-        >
-          + 추가
-        </button>
+        {canEdit && (
+          <button
+            onClick={() => onAddCarryover(currentKey)}
+            className="text-[11px] text-jira-muted hover:text-jira-blue px-1.5 py-0.5 rounded hover:bg-jira-blue-light transition-colors"
+          >
+            + 추가
+          </button>
+        )}
       </div>
       <div>
         {aggregatedItems.length === 0 ? (
@@ -119,6 +123,7 @@ export default function CarryoverSection({ member, weekKey, tasks, onAddCarryove
               key={item.id}
               item={item}
               itemKey={item._key}
+              canEdit={canEdit}
               onEdit={(i) => onEditCarryover(item._key, i)}
               onDelete={onDeleteCarryover}
               onCycleStatus={onCycleStatus}

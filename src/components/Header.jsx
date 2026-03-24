@@ -8,8 +8,8 @@ export default function Header({ onManageMembers, onAddMember, displayName, onLo
         <div className="text-[11px] opacity-80 mt-0.5">담당자별 업무 진행 항목 / 현황 관리 · 격주 단위</div>
       </div>
       <div className="flex gap-2 items-center">
-        <Button variant="secondary" size="sm" onClick={onManageMembers}>👤 담당자 관리</Button>
-        <Button variant="secondary" size="sm" onClick={onAddMember}>➕ 담당자 추가</Button>
+        {onManageMembers && <Button variant="secondary" size="sm" onClick={onManageMembers}>👤 담당자 관리</Button>}
+        {onAddMember && <Button variant="secondary" size="sm" onClick={onAddMember}>➕ 담당자 추가</Button>}
         <Button variant="primary" size="sm" onClick={() => window.print()}>🖨 인쇄</Button>
 
         {displayName && (

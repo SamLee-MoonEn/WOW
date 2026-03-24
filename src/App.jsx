@@ -32,10 +32,17 @@ function Board() {
     const exists = wow.state.members.find(
       m => m.email === email || m.name === displayName
     )
+    const hasAdmin = wow.state.members.some(m => m.role === 'admin')
     if (!exists) {
-      wow.addMember({ name: displayName, rank: '팀원', emoji: '👤', email })
-    } else if (exists.email !== email) {
-      wow.updateMember(exists.id, { ...exists, email })
+      // 첫 멤버이거나 아직 관리자가 없으면 admin으로 등록
+      const role = (wow.state.members.length === 0 || !hasAdmin) ? 'admin' : 'member'
+      wow.addMember({ name: displayName, rank: '팀원', emoji: '👤', email, role })
+    } else {
+      const updates = {}
+      if (exists.email !== email) updates.email = email
+      // 마이그레이션: admin이 아무도 없으면 이 유저에게 부여
+      if (!hasAdmin) updates.role = 'admin'
+      if (Object.keys(updates).length > 0) wow.updateMember(exists.id, { ...exists, ...updates })
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [displayName, email, wow.loading])
@@ -72,10 +79,9 @@ function Board() {
 
   const openConfirm = (title, message, onConfirm) => setConfirm({ title, message, onConfirm })
 
-  // 현재 로그인한 유저의 멤버 ID
-  const myMemberId = wow.state.members.find(
-    m => m.email === email || m.name === displayName
-  )?.id
+  const myMember = wow.state.members.find(m => m.email === email || m.name === displayName)
+  const myMemberId = myMember?.id
+  const isAdmin = myMember?.role === 'admin'
 
   // 내 섹션이 맨 위로 오도록 정렬
   const sortedMembers = myMemberId
@@ -88,8 +94,8 @@ function Board() {
   return (
     <div className="min-h-screen bg-jira-bg">
       <Header
-        onManageMembers={() => setModal({ type: 'memberManage' })}
-        onAddMember={() => setModal({ type: 'addMember' })}
+        onManageMembers={isAdmin ? () => setModal({ type: 'memberManage' }) : undefined}
+        onAddMember={isAdmin ? () => setModal({ type: 'addMember' }) : undefined}
         displayName={displayName}
         onLogout={logout}
       />
@@ -100,6 +106,7 @@ function Board() {
         <StatusBoard
           members={wow.state.members}
           myMemberId={myMemberId}
+          isAdmin={isAdmin}
           onUpdatePresence={wow.updatePresence}
           onEndOfDay={myMemberId ? () => setModal({ type: 'teamsReport' }) : undefined}
         />
@@ -123,6 +130,7 @@ function Board() {
               key={member.id}
               member={member}
               isMe={member.id === myMemberId}
+              isAdmin={isAdmin}
               wk={wk}
               tasks={wow.state.tasks}
               onMoveTask={wow.moveTask}
@@ -207,6 +215,7 @@ function Board() {
       {modal?.type === 'memberManage' && (
         <MemberManageModal
           members={wow.state.members}
+          myMemberId={myMemberId}
           onEdit={(member) => setModal({ type: 'editMember', member })}
           onDelete={(member) => {
             setModal(null)
@@ -216,6 +225,7 @@ function Board() {
               () => wow.deleteMember(member.id)
             )
           }}
+          onChangeRole={(member, role) => wow.updateMember(member.id, { ...member, role })}
           onClose={() => setModal(null)}
         />
       )}
