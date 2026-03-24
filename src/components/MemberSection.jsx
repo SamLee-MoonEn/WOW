@@ -1,8 +1,8 @@
 import WeekBlock from './WeekBlock'
 import Button from './ui/Button'
 
-export default function MemberSection({ member, isMe, isAdmin, wk, tasks, onEditMember, onDeleteMember, onAddTask, onEditTask, onDeleteTask, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onMoveTask }) {
-  const canEdit = isMe || isAdmin
+export default function MemberSection({ member, isMe, isAdmin, showDayGrid = true, wk, tasks, onEditMember, onDeleteMember, onAddTask, onEditTask, onDeleteTask, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onMoveTask }) {
+  const canEdit = (isMe || isAdmin) && showDayGrid
 
   return (
     <div className={`bg-white rounded-xl mb-6 overflow-hidden ${isMe ? 'shadow-md ring-2 ring-jira-blue ring-offset-1' : 'shadow-sm'}`}>
@@ -28,6 +28,7 @@ export default function MemberSection({ member, isMe, isAdmin, wk, tasks, onEdit
             monday={wk.currentMonday}
             isCurrent={true}
             canEdit={canEdit}
+            showDayGrid={showDayGrid}
             tasks={tasks}
             onAddTask={onAddTask}
             onEditTask={onEditTask}
@@ -46,6 +47,7 @@ export default function MemberSection({ member, isMe, isAdmin, wk, tasks, onEdit
             monday={wk.prevMonday}
             isCurrent={false}
             canEdit={canEdit}
+            showDayGrid={showDayGrid}
             tasks={tasks}
             onAddTask={onAddTask}
             onEditTask={onEditTask}

@@ -82,14 +82,16 @@ function Board() {
   const myMember = wow.state.members.find(m => m.email === email || m.name === displayName)
   const myMemberId = myMember?.id
   const isAdmin = myMember?.role === 'admin'
+  const isExternal = myMember?.role === 'external'
 
-  // 내 섹션이 맨 위로 오도록 정렬
-  const sortedMembers = myMemberId
+  // 외부인은 섹션 미표시, 내 섹션이 맨 위로 오도록 정렬
+  const visibleMembers = wow.state.members.filter(m => m.role !== 'external')
+  const sortedMembers = myMemberId && !isExternal
     ? [
-        ...wow.state.members.filter(m => m.id === myMemberId),
-        ...wow.state.members.filter(m => m.id !== myMemberId),
+        ...visibleMembers.filter(m => m.id === myMemberId),
+        ...visibleMembers.filter(m => m.id !== myMemberId),
       ]
-    : wow.state.members
+    : visibleMembers
 
   return (
     <div className="min-h-screen bg-jira-bg">
@@ -103,11 +105,11 @@ function Board() {
         <InfoBanner />
 
         <StatusBoard
-          members={wow.state.members}
-          myMemberId={myMemberId}
+          members={wow.state.members.filter(m => m.role !== 'external')}
+          myMemberId={isExternal ? null : myMemberId}
           isAdmin={isAdmin}
           onUpdatePresence={wow.updatePresence}
-          onEndOfDay={myMemberId ? () => setModal({ type: 'teamsReport' }) : undefined}
+          onEndOfDay={myMemberId && !isExternal ? () => setModal({ type: 'teamsReport' }) : undefined}
         />
 
         <WeekNav
@@ -130,6 +132,7 @@ function Board() {
               member={member}
               isMe={member.id === myMemberId}
               isAdmin={isAdmin}
+              showDayGrid={!isExternal}
               wk={wk}
               tasks={wow.state.tasks}
               onMoveTask={wow.moveTask}
