@@ -12,6 +12,8 @@ const styleMap = {
   'bold red-text': 'font-semibold text-[#de350b]',
 }
 
+const DAY_LABELS = ['월', '화', '수', '목', '금']
+
 export default function TaskModal({ isEdit, task, onSave, onClose }) {
   const [text, setText] = useState(task?.text || '')
   const [status, setStatus] = useState(task?.status || 'none')
@@ -19,10 +21,25 @@ export default function TaskModal({ isEdit, task, onSave, onClose }) {
   const [dividerBefore, setDividerBefore] = useState(task?.dividerBefore || false)
   const [memo, setMemo] = useState(task?.memo || '')
   const [textError, setTextError] = useState(false)
+  const [multiDay, setMultiDay] = useState(false)
+  const [selectedDays, setSelectedDays] = useState(new Set([0, 1, 2, 3, 4]))
+
+  const toggleDay = (d) => {
+    setSelectedDays(prev => {
+      const next = new Set(prev)
+      next.has(d) ? next.delete(d) : next.add(d)
+      return next
+    })
+  }
 
   const handleSave = () => {
     if (!text.trim()) { setTextError(true); return }
-    onSave({ text: text.trim(), status, style, dividerBefore, memo })
+    const data = { text: text.trim(), status, style, dividerBefore, memo }
+    if (!isEdit && multiDay) {
+      onSave({ ...data, selectedDays: [...selectedDays].sort() })
+    } else {
+      onSave(data)
+    }
   }
 
   return (
@@ -69,6 +86,38 @@ export default function TaskModal({ isEdit, task, onSave, onClose }) {
           </Select>
         </FormField>
       </div>
+
+      {!isEdit && (
+        <FormField label="여러 날 반복">
+          <label className="flex items-center gap-2 text-[13px] cursor-pointer mb-2">
+            <input
+              type="checkbox"
+              checked={multiDay}
+              onChange={e => setMultiDay(e.target.checked)}
+              className="w-4 h-4 rounded accent-jira-blue"
+            />
+            선택한 요일에 모두 추가
+          </label>
+          {multiDay && (
+            <div className="flex gap-1.5 mt-1">
+              {DAY_LABELS.map((label, d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => toggleDay(d)}
+                  className={`w-8 h-8 rounded-full text-[12px] font-semibold border transition-colors ${
+                    selectedDays.has(d)
+                      ? 'bg-jira-blue text-white border-jira-blue'
+                      : 'bg-white text-jira-muted border-jira-border hover:border-jira-blue'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+        </FormField>
+      )}
 
       <FormField label="섹션 구분선">
         <label className="flex items-center gap-2 text-[13px] cursor-pointer">

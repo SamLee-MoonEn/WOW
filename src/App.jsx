@@ -157,9 +157,16 @@ function Board() {
           isEdit={modal.type === 'editTask'}
           task={modal.task}
           onSave={(data) => {
-            modal.type === 'editTask'
-              ? wow.updateTask(modal.key, modal.task.id, data)
-              : wow.addTask(modal.key, data)
+            if (modal.type === 'editTask') {
+              wow.updateTask(modal.key, modal.task.id, data)
+            } else if (data.selectedDays) {
+              // 여러 날 반복: 선택된 각 요일에 추가
+              const baseKey = modal.key.slice(0, modal.key.lastIndexOf('_'))
+              const { selectedDays, ...taskData } = data
+              selectedDays.forEach(d => wow.addTask(`${baseKey}_${d}`, taskData))
+            } else {
+              wow.addTask(modal.key, data)
+            }
             setModal(null)
           }}
           onClose={() => setModal(null)}
