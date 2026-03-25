@@ -291,6 +291,7 @@ function Board() {
         <MemberModal
           isEdit
           member={modal.member}
+          existingTags={[...new Set(wow.state.members.flatMap(m => m.tags || []))]}
           onSave={(data) => { wow.updateMember(modal.member.id, data); setModal(null) }}
           onClose={() => setModal(null)}
         />

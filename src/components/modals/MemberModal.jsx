@@ -3,23 +3,29 @@ import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import { FormField, Input, Select } from '../ui/FormField'
 
-export default function MemberModal({ isEdit, member, onSave, onClose }) {
+export default function MemberModal({ isEdit, member, existingTags = [], onSave, onClose }) {
   const [name, setName] = useState(member?.name || '')
   const [rank, setRank] = useState(member?.rank || '')
   const [emoji, setEmoji] = useState(member?.emoji || '🚹')
   const [group, setGroup] = useState(member?.group || '')
   const [tags, setTags] = useState(member?.tags || [])
   const [tagInput, setTagInput] = useState('')
+  const [showSuggestions, setShowSuggestions] = useState(false)
+
+  const suggestions = tagInput.trim()
+    ? existingTags.filter(t => t.toLowerCase().includes(tagInput.toLowerCase()) && !tags.includes(t))
+    : []
 
   const handleSave = () => {
     if (!name.trim() || !rank.trim()) { alert('이름과 직급을 입력해주세요.'); return }
     onSave({ name: name.trim(), rank: rank.trim(), emoji, group: group.trim(), tags })
   }
 
-  const addTag = () => {
-    const t = tagInput.trim()
+  const addTag = (value) => {
+    const t = (value ?? tagInput).trim()
     if (t && !tags.includes(t)) setTags(prev => [...prev, t])
     setTagInput('')
+    setShowSuggestions(false)
   }
 
   const removeTag = (t) => setTags(prev => prev.filter(x => x !== t))
@@ -57,14 +63,34 @@ export default function MemberModal({ isEdit, member, onSave, onClose }) {
         <Input value={group} onChange={e => setGroup(e.target.value)} placeholder="개발팀, 기획팀..." onKeyDown={e => { if (e.key === 'Enter') handleSave() }} />
       </FormField>
       <FormField label="태그">
-        <div className="flex gap-1.5">
-          <Input
-            value={tagInput}
-            onChange={e => setTagInput(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
-            placeholder="태그 입력 후 Enter"
-          />
-          <Button variant="outline" size="sm" onClick={addTag}>추가</Button>
+        <div className="relative flex gap-1.5">
+          <div className="relative flex-1">
+            <Input
+              value={tagInput}
+              onChange={e => { setTagInput(e.target.value); setShowSuggestions(true) }}
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') { e.preventDefault(); addTag() }
+                if (e.key === 'Escape') setShowSuggestions(false)
+              }}
+              placeholder="태그 입력 후 Enter"
+            />
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="absolute z-10 top-full left-0 right-0 mt-0.5 bg-white border border-jira-border rounded-lg shadow-md overflow-hidden">
+                {suggestions.map(t => (
+                  <button
+                    key={t}
+                    onMouseDown={() => addTag(t)}
+                    className="w-full text-left text-[12px] px-3 py-1.5 hover:bg-jira-bg text-jira-dark transition-colors"
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <Button variant="outline" size="sm" onClick={() => addTag()}>추가</Button>
         </div>
         {tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-2">
