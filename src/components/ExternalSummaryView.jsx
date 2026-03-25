@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 const PRESENCE = {
   working:  { label: '업무 중', dot: 'bg-green-500', badge: 'bg-green-50 border-green-200 text-green-700', pulse: true },
   off:      { label: '종료',    dot: 'bg-gray-400',  badge: 'bg-gray-50 border-gray-200 text-gray-400',   pulse: false },
@@ -10,6 +12,14 @@ function MemberCard({ member }) {
   const p = member.presence || 'working'
   const cfg = PRESENCE[p] || PRESENCE.working
   const isOff = p === 'off'
+  const [message, setMessage] = useState('')
+  const canContact = member.email && !isOff
+
+  const handleSend = () => {
+    if (!message.trim()) return
+    const url = `msteams://teams.microsoft.com/l/chat/0/0?users=${encodeURIComponent(member.email)}&message=${encodeURIComponent(message.trim())}`
+    window.location.href = url
+  }
 
   return (
     <div className={`bg-white rounded-xl p-4 shadow-sm border transition-colors ${isOff ? 'border-jira-border opacity-60' : 'border-jira-border hover:border-jira-blue hover:shadow-md'}`}>
@@ -49,17 +59,26 @@ function MemberCard({ member }) {
         )}
       </div>
 
-      {/* Teams 연락 버튼 */}
-      {member.email && !isOff && (
-        <a
-          href={`https://teams.microsoft.com/l/chat/0/0?users=${encodeURIComponent(member.email)}`}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-3 flex items-center justify-center gap-1.5 w-full text-[11px] font-semibold text-jira-blue border border-blue-200 bg-blue-50 hover:bg-jira-blue hover:text-white rounded-lg py-1.5 transition-colors"
-        >
-          <span>💬</span>
-          <span>Teams로 연락</span>
-        </a>
+      {/* Teams 메시지 입력 */}
+      {canContact && (
+        <div className="mt-3 flex gap-1.5">
+          <input
+            type="text"
+            value={message}
+            onChange={e => setMessage(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleSend()}
+            placeholder="메시지 입력 후 전송..."
+            maxLength={200}
+            className="flex-1 text-[11px] px-2.5 py-1.5 border border-jira-border rounded-lg focus:outline-none focus:border-jira-blue bg-jira-bg placeholder-gray-300"
+          />
+          <button
+            onClick={handleSend}
+            disabled={!message.trim()}
+            className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg border transition-colors bg-jira-blue text-white border-jira-blue hover:bg-blue-700 disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0"
+          >
+            💬
+          </button>
+        </div>
       )}
     </div>
   )
