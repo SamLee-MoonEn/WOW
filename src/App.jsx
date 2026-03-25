@@ -33,20 +33,36 @@ function Board() {
   const myMember = wow.state.members.find(m => m.email === email || m.name === displayName)
   const myMemberId = myMember?.id
 
-  // 평일 아침 자동 근무중 복귀: 전날(평일) 퇴근 처리된 경우 오늘(평일)이면 자동 복귀
+  // 자동 복귀 체크 공통 함수
+  const checkAutoReturn = (me) => {
+    if (!me) return
+    const today = new Date()
+    const isWeekday = today.getDay() >= 1 && today.getDay() <= 5
+
+    // 퇴근 → 다음 평일 아침 자동 복귀
+    if (me.presence === 'off' && me.offAt) {
+      const offDate = new Date(me.offAt)
+      if (offDate.toDateString() !== today.toDateString() && isWeekday) {
+        wow.updatePresence(me.id, 'working')
+        return
+      }
+    }
+
+    // 휴가 → 종료일 지나면 자동 복귀
+    if (me.presence === 'vacation' && me.vacationEnd) {
+      const endDate = new Date(me.vacationEnd)
+      endDate.setHours(23, 59, 59, 999)
+      if (today > endDate) {
+        wow.updatePresence(me.id, 'working')
+      }
+    }
+  }
+
+  // 평일 아침 자동 근무중 복귀
   useEffect(() => {
     if (wow.loading || !myMemberId) return
     const me = wow.state.members.find(m => m.id === myMemberId)
-    if (!me || me.presence !== 'off' || !me.offAt) return
-
-    const offDate = new Date(me.offAt)
-    const today = new Date()
-    const isNewDay = offDate.toDateString() !== today.toDateString()
-    const isWeekday = today.getDay() >= 1 && today.getDay() <= 5
-
-    if (isNewDay && isWeekday) {
-      wow.updatePresence(myMemberId, 'working')
-    }
+    checkAutoReturn(me)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myMemberId, wow.loading])
 
@@ -56,16 +72,7 @@ function Board() {
       if (document.visibilityState !== 'visible') return
       if (wow.loading || !myMemberId) return
       const me = wow.state.members.find(m => m.id === myMemberId)
-      if (!me || me.presence !== 'off' || !me.offAt) return
-
-      const offDate = new Date(me.offAt)
-      const today = new Date()
-      const isNewDay = offDate.toDateString() !== today.toDateString()
-      const isWeekday = today.getDay() >= 1 && today.getDay() <= 5
-
-      if (isNewDay && isWeekday) {
-        wow.updatePresence(myMemberId, 'working')
-      }
+      checkAutoReturn(me)
     }
     document.addEventListener('visibilitychange', handleVisibility)
     return () => document.removeEventListener('visibilitychange', handleVisibility)

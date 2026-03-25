@@ -208,10 +208,11 @@ export function useWOWState() {
     })
   }, [])
 
-  const updatePresence = useCallback((memberId, presence) => {
+  const updatePresence = useCallback((memberId, presence, extra = {}) => {
     setMembers((prev) => {
-      const extra = presence === 'off' ? { offAt: Date.now() } : { offAt: null }
-      const next = prev.map((m) => (m.id === memberId ? { ...m, presence, ...extra } : m))
+      const base = presence === 'off' ? { offAt: Date.now() } : { offAt: null }
+      if (presence !== 'vacation') base.vacationEnd = null
+      const next = prev.map((m) => (m.id === memberId ? { ...m, presence, ...base, ...extra } : m))
       saveMembers(next)
       return next
     })
