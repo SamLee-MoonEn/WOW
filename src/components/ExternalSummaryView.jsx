@@ -48,6 +48,19 @@ function MemberCard({ member }) {
           <p className="text-[12px] text-gray-300 italic">업무 설명 없음</p>
         )}
       </div>
+
+      {/* Teams 연락 버튼 */}
+      {member.email && !isOff && (
+        <a
+          href={`https://teams.microsoft.com/l/chat/0/0?users=${encodeURIComponent(member.email)}`}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-3 flex items-center justify-center gap-1.5 w-full text-[11px] font-semibold text-jira-blue border border-blue-200 bg-blue-50 hover:bg-jira-blue hover:text-white rounded-lg py-1.5 transition-colors"
+        >
+          <span>💬</span>
+          <span>Teams로 연락</span>
+        </a>
+      )}
     </div>
   )
 }
