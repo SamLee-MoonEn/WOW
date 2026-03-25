@@ -11,6 +11,7 @@ export default function MemberModal({ isEdit, member, existingTags = [], onSave,
   const [tags, setTags] = useState(member?.tags || [])
   const [tagInput, setTagInput] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [activeIndex, setActiveIndex] = useState(-1)
 
   const suggestions = tagInput.trim()
     ? existingTags.filter(t => t.toLowerCase().includes(tagInput.toLowerCase()) && !tags.includes(t))
@@ -26,6 +27,7 @@ export default function MemberModal({ isEdit, member, existingTags = [], onSave,
     if (t && !tags.includes(t)) setTags(prev => [...prev, t])
     setTagInput('')
     setShowSuggestions(false)
+    setActiveIndex(-1)
   }
 
   const removeTag = (t) => setTags(prev => prev.filter(x => x !== t))
@@ -67,22 +69,36 @@ export default function MemberModal({ isEdit, member, existingTags = [], onSave,
           <div className="relative flex-1">
             <Input
               value={tagInput}
-              onChange={e => { setTagInput(e.target.value); setShowSuggestions(true) }}
+              onChange={e => { setTagInput(e.target.value); setShowSuggestions(true); setActiveIndex(-1) }}
               onFocus={() => setShowSuggestions(true)}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+              onBlur={() => setTimeout(() => { setShowSuggestions(false); setActiveIndex(-1) }, 150)}
               onKeyDown={e => {
-                if (e.key === 'Enter') { e.preventDefault(); addTag() }
-                if (e.key === 'Escape') setShowSuggestions(false)
+                if (e.key === 'ArrowDown') {
+                  e.preventDefault()
+                  setActiveIndex(i => Math.min(i + 1, suggestions.length - 1))
+                } else if (e.key === 'ArrowUp') {
+                  e.preventDefault()
+                  setActiveIndex(i => Math.max(i - 1, -1))
+                } else if (e.key === 'Enter') {
+                  e.preventDefault()
+                  activeIndex >= 0 ? addTag(suggestions[activeIndex]) : addTag()
+                } else if (e.key === 'Escape') {
+                  setShowSuggestions(false)
+                  setActiveIndex(-1)
+                }
               }}
               placeholder="태그 입력 후 Enter"
             />
             {showSuggestions && suggestions.length > 0 && (
               <div className="absolute z-10 top-full left-0 right-0 mt-0.5 bg-white border border-jira-border rounded-lg shadow-md overflow-hidden">
-                {suggestions.map(t => (
+                {suggestions.map((t, i) => (
                   <button
                     key={t}
                     onMouseDown={() => addTag(t)}
-                    className="w-full text-left text-[12px] px-3 py-1.5 hover:bg-jira-bg text-jira-dark transition-colors"
+                    onMouseEnter={() => setActiveIndex(i)}
+                    className={`w-full text-left text-[12px] px-3 py-1.5 text-jira-dark transition-colors ${
+                      i === activeIndex ? 'bg-jira-blue text-white' : 'hover:bg-jira-bg'
+                    }`}
                   >
                     {t}
                   </button>
