@@ -8,11 +8,21 @@ export default function MemberModal({ isEdit, member, onSave, onClose }) {
   const [rank, setRank] = useState(member?.rank || '')
   const [emoji, setEmoji] = useState(member?.emoji || '🚹')
   const [group, setGroup] = useState(member?.group || '')
+  const [tags, setTags] = useState(member?.tags || [])
+  const [tagInput, setTagInput] = useState('')
 
   const handleSave = () => {
     if (!name.trim() || !rank.trim()) { alert('이름과 직급을 입력해주세요.'); return }
-    onSave({ name: name.trim(), rank: rank.trim(), emoji, group: group.trim() })
+    onSave({ name: name.trim(), rank: rank.trim(), emoji, group: group.trim(), tags })
   }
+
+  const addTag = () => {
+    const t = tagInput.trim()
+    if (t && !tags.includes(t)) setTags(prev => [...prev, t])
+    setTagInput('')
+  }
+
+  const removeTag = (t) => setTags(prev => prev.filter(x => x !== t))
 
   return (
     <Modal
@@ -45,6 +55,27 @@ export default function MemberModal({ isEdit, member, onSave, onClose }) {
       </FormField>
       <FormField label="부서/그룹">
         <Input value={group} onChange={e => setGroup(e.target.value)} placeholder="개발팀, 기획팀..." onKeyDown={e => { if (e.key === 'Enter') handleSave() }} />
+      </FormField>
+      <FormField label="태그">
+        <div className="flex gap-1.5">
+          <Input
+            value={tagInput}
+            onChange={e => setTagInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
+            placeholder="태그 입력 후 Enter"
+          />
+          <Button variant="outline" size="sm" onClick={addTag}>추가</Button>
+        </div>
+        {tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {tags.map(t => (
+              <span key={t} className="flex items-center gap-1 text-[11px] bg-jira-bg border border-jira-border px-2 py-0.5 rounded-full">
+                {t}
+                <button onClick={() => removeTag(t)} className="text-gray-400 hover:text-red-400 leading-none">✕</button>
+              </span>
+            ))}
+          </div>
+        )}
       </FormField>
     </Modal>
   )

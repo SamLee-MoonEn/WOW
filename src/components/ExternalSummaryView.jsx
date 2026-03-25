@@ -50,6 +50,15 @@ function MemberCard({ member }) {
         </div>
       </div>
 
+      {/* 태그 */}
+      {member.tags?.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-1.5">
+          {member.tags.map(t => (
+            <span key={t} className="text-[10px] text-jira-blue bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded-full">{t}</span>
+          ))}
+        </div>
+      )}
+
       {/* 업무 설명 */}
       <div className="mt-2.5 pt-2.5 border-t border-jira-border min-h-[36px]">
         {member.workDesc ? (
@@ -101,6 +110,8 @@ function GroupSection({ label, members }) {
 }
 
 export default function ExternalSummaryView({ members }) {
+  const [selectedTags, setSelectedTags] = useState([])
+
   const sorted = [...members].sort((a, b) => {
     const pa = PRESENCE_ORDER[a.presence || 'working'] ?? 0
     const pb = PRESENCE_ORDER[b.presence || 'working'] ?? 0
@@ -108,11 +119,23 @@ export default function ExternalSummaryView({ members }) {
     return a.name.localeCompare(b.name, 'ko')
   })
 
-  const workingCount = members.filter(m => (m.presence || 'working') === 'working').length
+  // 전체 태그 목록
+  const allTags = [...new Set(sorted.flatMap(m => m.tags || []))]
+
+  // 태그 필터 적용
+  const filtered = selectedTags.length === 0
+    ? sorted
+    : sorted.filter(m => selectedTags.every(t => (m.tags || []).includes(t)))
+
+  const workingCount = filtered.filter(m => (m.presence || 'working') === 'working').length
+
+  const toggleTag = (t) => setSelectedTags(prev =>
+    prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]
+  )
 
   // 그룹별 분류
   const groupMap = {}
-  for (const m of sorted) {
+  for (const m of filtered) {
     const g = m.group || ''
     if (!groupMap[g]) groupMap[g] = []
     groupMap[g].push(m)
@@ -142,11 +165,39 @@ export default function ExternalSummaryView({ members }) {
         </div>
       </div>
 
+      {/* 태그 필터 */}
+      {allTags.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <span className="text-[11px] text-jira-muted font-semibold">태그 필터</span>
+          {allTags.map(t => (
+            <button
+              key={t}
+              onClick={() => toggleTag(t)}
+              className={`text-[11px] px-2.5 py-0.5 rounded-full border transition-colors ${
+                selectedTags.includes(t)
+                  ? 'bg-jira-blue text-white border-jira-blue font-semibold'
+                  : 'bg-white text-jira-muted border-jira-border hover:border-jira-blue hover:text-jira-blue'
+              }`}
+            >
+              {t}
+            </button>
+          ))}
+          {selectedTags.length > 0 && (
+            <button
+              onClick={() => setSelectedTags([])}
+              className="text-[11px] text-gray-400 hover:text-red-400 transition-colors"
+            >
+              ✕ 초기화
+            </button>
+          )}
+        </div>
+      )}
+
       {/* 멤버 카드 목록 */}
-      {members.length === 0 ? (
+      {filtered.length === 0 ? (
         <div className="text-center py-16 text-jira-muted">
-          <div className="text-5xl mb-3">👤</div>
-          <div className="text-sm">등록된 팀원이 없습니다</div>
+          <div className="text-5xl mb-3">🔍</div>
+          <div className="text-sm">해당 태그의 담당자가 없습니다</div>
         </div>
       ) : hasGroups ? (
         <div className="flex flex-col gap-6">
@@ -155,7 +206,7 @@ export default function ExternalSummaryView({ members }) {
           ))}
         </div>
       ) : (
-        <GroupSection label={null} members={sorted} />
+        <GroupSection label={null} members={filtered} />
       )}
     </div>
   )
