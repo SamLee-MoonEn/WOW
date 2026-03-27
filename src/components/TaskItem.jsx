@@ -91,7 +91,7 @@ export default function TaskItem({ task, taskKey, canEdit, onEdit, onDelete, onC
                     </button>
                     <button
                       onClick={() => onDelete(taskKey, task.id)}
-                      className="text-[13px] px-1.5 py-0.5 rounded border border-transparent hover:bg-red-50 hover:border-red-200 hover:text-red-600 text-jira-muted transition-colors ml-auto"
+                      className="text-[13px] px-1.5 py-0.5 rounded border border-jira-border bg-white hover:bg-red-50 hover:border-red-200 hover:text-red-600 text-jira-muted transition-colors ml-auto"
                       title="삭제"
                     >
                       🗑
