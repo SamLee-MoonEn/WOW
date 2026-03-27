@@ -11,6 +11,7 @@ import MemberModal from './components/modals/MemberModal'
 import MemberManageModal from './components/modals/MemberManageModal'
 import ConfirmDialog from './components/modals/ConfirmDialog'
 import TeamsReportModal from './components/modals/TeamsReportModal'
+import AppSettingsModal from './components/modals/AppSettingsModal'
 import CopyTaskModal from './components/modals/CopyTaskModal'
 import { getTodayTasks } from './utils/teamsUtils'
 import { fetchProfilePhoto } from './utils/graphUtils'
@@ -27,6 +28,7 @@ function Board() {
   const [modal, setModal] = useState(null)
   const [confirm, setConfirm] = useState(null)
   const [showSummaryView, setShowSummaryView] = useState(false)
+  const [myTasksOnly, setMyTasksOnly] = useState(false)
 
   const wk = getWeekKeys(wow.state.baseWeekOffset)
 
@@ -185,6 +187,7 @@ function Board() {
         onLogout={logout}
         onToggleSummary={isAdmin ? () => setShowSummaryView(v => !v) : undefined}
         showSummaryView={showSummaryView}
+        onOpenSettings={isAdmin ? () => setModal({ type: 'appSettings' }) : undefined}
       />
 
       <div className="max-w-[1600px] mx-auto px-4 py-5">
@@ -203,21 +206,40 @@ function Board() {
               onEndOfDay={myMemberId ? () => setModal({ type: 'teamsReport' }) : undefined}
             />
 
-            <WeekNav
-              wk={wk}
-              onPrev={() => wow.shiftWeeks(-1)}
-              onNext={() => wow.shiftWeeks(1)}
-              onToday={wow.goToCurrentWeek}
-              isCurrentWeek={wow.state.baseWeekOffset === 0}
-            />
+            <div className="flex items-center justify-between mb-1">
+              <WeekNav
+                wk={wk}
+                onPrev={() => wow.shiftWeeks(-1)}
+                onNext={() => wow.shiftWeeks(1)}
+                onToday={wow.goToCurrentWeek}
+                isCurrentWeek={wow.state.baseWeekOffset === 0}
+              />
+              {myMemberId && (
+                <button
+                  onClick={() => setMyTasksOnly(v => !v)}
+                  className={`flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-lg border transition-colors flex-shrink-0 ${
+                    myTasksOnly
+                      ? 'bg-jira-blue text-white border-jira-blue font-semibold'
+                      : 'bg-white border-jira-border text-jira-muted hover:border-jira-blue hover:text-jira-blue'
+                  }`}
+                >
+                  <span>👤</span>
+                  <span>내 일감만 보기</span>
+                </button>
+              )}
+            </div>
 
-            {boardItems.length === 0 ? (
-              <div className="text-center py-16 text-jira-muted">
-                <div className="text-5xl mb-3">👤</div>
-                <div className="text-sm">담당자를 추가해주세요</div>
-              </div>
-            ) : (
-              boardItems.map((item, idx) =>
+            {(() => {
+              const displayItems = myTasksOnly
+                ? boardItems.filter(item => item.type === 'member' && item.member.id === myMemberId)
+                : boardItems
+              if (displayItems.length === 0) return (
+                <div className="text-center py-16 text-jira-muted">
+                  <div className="text-5xl mb-3">👤</div>
+                  <div className="text-sm">{myTasksOnly ? '표시할 내 일감이 없습니다' : '담당자를 추가해주세요'}</div>
+                </div>
+              )
+              return displayItems.map((item) =>
                 item.type === 'header' ? (
                   <div key={`grp-${item.label}`} className="flex items-center gap-3 mb-2 mt-4 first:mt-0">
                     <span className="text-[12px] font-bold text-jira-muted uppercase tracking-wide">{item.label}</span>
@@ -258,7 +280,7 @@ function Board() {
                   />
                 )
               )
-            )}
+            })()}
           </>
         )}
       </div>
@@ -356,6 +378,15 @@ function Board() {
           todayTasks={getTodayTasks(myMemberId, wow.state.tasks)}
           onClose={() => setModal(null)}
           onConfirmEnd={() => { wow.updatePresence(myMemberId, 'off'); setModal(null) }}
+          settings={wow.state.settings}
+        />
+      )}
+
+      {modal?.type === 'appSettings' && (
+        <AppSettingsModal
+          settings={wow.state.settings ?? {}}
+          onSave={(s) => wow.updateSettings(s)}
+          onClose={() => setModal(null)}
         />
       )}
     </div>

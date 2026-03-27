@@ -4,6 +4,8 @@ import {
   subscribeMemberTasks,
   saveMembers,
   saveMemberTasks,
+  subscribeSettings,
+  saveSettings,
 } from '../utils/storage'
 import { uid } from '../utils/weekUtils'
 import { nextStatus } from '../utils/statusUtils'
@@ -27,6 +29,7 @@ export function useWOWState() {
   const [baseWeekOffset, setBaseWeekOffset] = useState(0)
   const [members, setMembers] = useState([])
   const [tasks, setTasks] = useState({})
+  const [settings, setSettings] = useState({})
   const [loading, setLoading] = useState(true)
   const [fsError, setFsError] = useState(null)
 
@@ -99,8 +102,13 @@ export function useWOWState() {
     return () => Object.values(taskUnsubsRef.current).forEach((u) => u())
   }, [])
 
+  // ── 설정 구독 ──────────────────────────────────────────────────────
+  useEffect(() => {
+    return subscribeSettings((data) => setSettings(data))
+  }, [])
+
   // ── 외부에 노출하는 state ──────────────────────────────────────────
-  const state = { baseWeekOffset, members, tasks }
+  const state = { baseWeekOffset, members, tasks, settings }
 
   // 특정 멤버의 tasks를 Firestore에 저장
   const persistTasks = useCallback((memberId, newAllTasks) => {
@@ -253,10 +261,16 @@ export function useWOWState() {
     })
   }, [])
 
+  const updateSettings = useCallback((data) => {
+    setSettings(data)
+    saveSettings(data)
+  }, [])
+
   return {
     state,
     loading,
     fsError,
+    updateSettings,
     shiftWeeks,
     goToCurrentWeek,
     addTask,

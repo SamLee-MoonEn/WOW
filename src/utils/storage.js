@@ -1,7 +1,8 @@
 import { doc, onSnapshot, setDoc } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 
-const membersRef = doc(db, 'wow', 'members')
+const membersRef  = doc(db, 'wow', 'members')
+const settingsRef = doc(db, 'wow', 'settings')
 const taskRef = (memberId) => doc(db, 'wow', `tasks_${memberId}`)
 
 export function subscribeMembers(callback, onError) {
@@ -25,6 +26,18 @@ export function subscribeMemberTasks(memberId, callback) {
 
 export function saveMembers(members) {
   setDoc(membersRef, { members })
+}
+
+export function subscribeSettings(callback) {
+  return onSnapshot(
+    settingsRef,
+    (snap) => callback(snap.exists() ? snap.data() : {}),
+    (err) => console.error('[Firestore] settings 구독 실패:', err.code)
+  )
+}
+
+export function saveSettings(settings) {
+  return setDoc(settingsRef, settings)
 }
 
 // shortKeyTasks: memberId prefix 없는 키 맵

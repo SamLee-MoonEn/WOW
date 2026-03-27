@@ -3,12 +3,12 @@ import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import { formatTeamsText, getTodayLabel, sendToTeamsWebhook } from '../../utils/teamsUtils'
 
-export default function TeamsReportModal({ memberName, todayTasks, onClose, onConfirmEnd }) {
+export default function TeamsReportModal({ memberName, todayTasks, onClose, onConfirmEnd, settings = {} }) {
   const [sendStatus, setSendStatus] = useState('idle') // idle | sending | success | error
   const [copied, setCopied] = useState(false)
 
   const dateLabel = getTodayLabel()
-  const defaultText = formatTeamsText(memberName, todayTasks, dateLabel)
+  const defaultText = formatTeamsText(memberName, todayTasks, dateLabel, settings.reportHeader, settings.reportFooter)
   const [text, setText] = useState(defaultText)
 
   const isEdited = text !== defaultText
@@ -21,7 +21,8 @@ export default function TeamsReportModal({ memberName, todayTasks, onClose, onCo
   const handleSend = async () => {
     setSendStatus('sending')
     try {
-      await sendToTeamsWebhook(import.meta.env.VITE_TEAMS_WEBHOOK_URL, memberName, todayTasks, dateLabel, text)
+      const webhookUrl = settings.webhookUrl || import.meta.env.VITE_TEAMS_WEBHOOK_URL
+      await sendToTeamsWebhook(webhookUrl, memberName, todayTasks, dateLabel, text)
       setSendStatus('success')
       onConfirmEnd?.()
     } catch {
@@ -39,7 +40,7 @@ export default function TeamsReportModal({ memberName, todayTasks, onClose, onCo
     onConfirmEnd?.()
   }
 
-  const webhookUrl = import.meta.env.VITE_TEAMS_WEBHOOK_URL
+  const webhookUrl = settings.webhookUrl || import.meta.env.VITE_TEAMS_WEBHOOK_URL
 
   const footer = (
     <>

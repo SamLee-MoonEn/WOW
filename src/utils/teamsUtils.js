@@ -15,7 +15,7 @@ export function getTodayLabel() {
   return `${formatDateFull(today)} (${dayNames[today.getDay()]})`
 }
 
-export function formatTeamsText(memberName, todayTasks, dateLabel) {
+export function formatTeamsText(memberName, todayTasks, dateLabel, header = '', footer = '') {
   const groups = {
     done:     todayTasks.filter(t => t.status === 'done'),
     progress: todayTasks.filter(t => t.status === 'progress'),
@@ -46,7 +46,10 @@ export function formatTeamsText(memberName, todayTasks, dateLabel) {
 
   if (!hasAny) lines.push('등록된 업무가 없습니다.')
 
-  return lines.join('\n').trimEnd()
+  let result = lines.join('\n').trimEnd()
+  if (header?.trim()) result = header.trim() + '\n\n' + result
+  if (footer?.trim()) result = result + '\n\n' + footer.trim()
+  return result
 }
 
 export async function sendToTeamsWebhook(webhookUrl, memberName, todayTasks, dateLabel, customText) {

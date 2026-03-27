@@ -1,10 +1,11 @@
-export function FormField({ label, required, children }) {
+export function FormField({ label, required, hint, children }) {
   return (
     <div className="mb-4">
       <label className="block text-[11px] font-semibold text-jira-mid uppercase tracking-wide mb-1.5">
         {label}{required && <span className="text-[#de350b] ml-0.5">*</span>}
       </label>
       {children}
+      {hint && <p className="text-[11px] text-jira-muted mt-1">{hint}</p>}
     </div>
   )
 }

@@ -1,6 +1,6 @@
 import Button from './ui/Button'
 
-export default function Header({ onManageMembers, displayName, onLogout, onToggleSummary, showSummaryView }) {
+export default function Header({ onManageMembers, displayName, onLogout, onToggleSummary, showSummaryView, onOpenSettings }) {
   return (
     <header className="bg-jira-blue text-white px-6 py-3.5 flex items-center justify-between shadow-md sticky top-0 z-40">
       <div>
@@ -9,6 +9,7 @@ export default function Header({ onManageMembers, displayName, onLogout, onToggl
       </div>
       <div className="flex gap-2 items-center">
         {onManageMembers && <Button variant="secondary" size="sm" onClick={onManageMembers}>👤 담당자 관리</Button>}
+        {onOpenSettings && <Button variant="secondary" size="sm" onClick={onOpenSettings}>⚙️ 설정</Button>}
         {onToggleSummary && (
           <Button variant={showSummaryView ? 'primary' : 'secondary'} size="sm" onClick={onToggleSummary}>
             {showSummaryView ? '📋 일반 보기' : '👁 외부인 뷰'}
