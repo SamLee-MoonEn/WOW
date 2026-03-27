@@ -56,17 +56,18 @@ export function formatTeamsText(memberName, todayTasks, dateLabel, header = '', 
 
 export async function sendToTeamsWebhook(webhookUrl, memberName, todayTasks, dateLabel, customText) {
   const text = customText ?? formatTeamsText(memberName, todayTasks, dateLabel)
+  const htmlText = text.replace(/\n/g, '<br>')
 
   // Power Automate의 For_each가 attachments 배열을 순회하는 구조에 맞춤
   const payload = {
     title: `${memberName} 업무 종료 보고`,
     date: dateLabel,
     memberName,
-    message: text,
+    message: htmlText,
     attachments: [
       {
-        contentType: 'text/plain',
-        content: text,
+        contentType: 'text/html',
+        content: htmlText,
       },
     ],
   }
