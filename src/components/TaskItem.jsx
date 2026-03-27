@@ -70,7 +70,7 @@ export default function TaskItem({ task, taskKey, canEdit, onEdit, onDelete, onC
         {hasActions && (
           <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-[grid-template-rows] duration-150">
             <div className="overflow-hidden">
-              <div className="flex items-center gap-1.5 pt-1.5 pb-0.5 pl-5">
+              <div className="flex items-center justify-end gap-1.5 pt-1.5 pb-0.5">
                 {onCopy && (
                   <button
                     onClick={onCopy}
