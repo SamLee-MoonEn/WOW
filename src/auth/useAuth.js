@@ -11,14 +11,18 @@ export function useAuth() {
   const logout = () =>
     instance.logoutPopup({ postLogoutRedirectUri: window.location.origin })
 
+  const acquireToken = async () => {
+    const res = await instance.acquireTokenSilent({ scopes: ['User.Read'], account })
+    return res.accessToken
+  }
+
   return {
     isAuthenticated,
     account,
-    // 표시 이름: "홍길동"
     displayName: account?.name ?? '',
-    // 이메일: "hong@company.com"
     email: account?.username ?? '',
     login,
     logout,
+    acquireToken,
   }
 }

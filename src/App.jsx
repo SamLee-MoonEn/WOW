@@ -13,6 +13,7 @@ import ConfirmDialog from './components/modals/ConfirmDialog'
 import TeamsReportModal from './components/modals/TeamsReportModal'
 import CopyTaskModal from './components/modals/CopyTaskModal'
 import { getTodayTasks } from './utils/teamsUtils'
+import { fetchProfilePhoto } from './utils/graphUtils'
 import { useWOWState } from './hooks/useWOWState'
 import { useAuth } from './auth/useAuth'
 import { getWeekKeys } from './utils/weekUtils'
@@ -22,7 +23,7 @@ import ExternalSummaryView from './components/ExternalSummaryView'
 
 function Board() {
   const wow = useWOWState()
-  const { displayName, email, logout } = useAuth()
+  const { displayName, email, logout, acquireToken } = useAuth()
   const [modal, setModal] = useState(null)
   const [confirm, setConfirm] = useState(null)
   const [showSummaryView, setShowSummaryView] = useState(false)
@@ -99,6 +100,19 @@ function Board() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [displayName, email, wow.loading])
+
+  // 로그인 시 Microsoft 프로필 사진 자동 저장
+  useEffect(() => {
+    if (!myMemberId || wow.loading) return
+    const me = wow.state.members.find(m => m.id === myMemberId)
+    if (!me) return
+    fetchProfilePhoto(acquireToken).then(photoUrl => {
+      if (photoUrl && photoUrl !== me.photoUrl) {
+        wow.updateMember(myMemberId, { ...me, photoUrl })
+      }
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myMemberId, wow.loading])
 
   if (wow.loading) {
     return (

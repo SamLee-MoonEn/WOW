@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
+import MemberAvatar from '../ui/MemberAvatar'
 
 const ROLES = [
   { value: 'admin',    label: '관리자', badge: 'text-amber-700 bg-amber-50 border-amber-200' },
@@ -66,7 +67,7 @@ function DraggableList({ list, adminCount, isAdmin, onReorder, onEdit, onDelete,
 
             {/* 멤버 정보 */}
             <div className="flex items-center gap-2 flex-1 min-w-0">
-              <span className="text-xl flex-shrink-0">{m.emoji}</span>
+              <MemberAvatar member={m} size="sm" />
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="font-semibold text-sm">{m.name}</span>
                 <span className="text-xs text-jira-muted">{m.rank}</span>

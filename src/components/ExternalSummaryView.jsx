@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import MemberAvatar from './ui/MemberAvatar'
 
 const PRESENCE = {
   working:  { label: '업무 중', dot: 'bg-green-500', badge: 'bg-green-50 border-green-200 text-green-700', pulse: true },
@@ -23,9 +24,9 @@ function MemberCard({ member }) {
 
   return (
     <div className={`bg-white rounded-xl p-4 shadow-sm border transition-colors ${isOff ? 'border-jira-border opacity-60' : 'border-jira-border hover:border-jira-blue hover:shadow-md'}`}>
-      {/* 상단: 이모지 + 상태 */}
+      {/* 상단: 아바타 + 상태 */}
       <div className="flex items-start justify-between mb-3">
-        <span className="text-4xl">{member.emoji}</span>
+        <MemberAvatar member={member} size="xl" />
         <div className="flex items-center gap-1.5">
           <span className={`w-2 h-2 rounded-full flex-shrink-0 ${cfg.dot} ${cfg.pulse ? 'animate-pulse' : ''}`} />
           <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${cfg.badge}`}>

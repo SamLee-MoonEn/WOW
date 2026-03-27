@@ -1,5 +1,6 @@
 import WeekBlock from './WeekBlock'
 import Button from './ui/Button'
+import MemberAvatar from './ui/MemberAvatar'
 
 export default function MemberSection({ member, isMe, isAdmin, showDayGrid = true, wk, tasks, onEditMember, onDeleteMember, onAddTask, onEditTask, onDeleteTask, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onMoveTask, onCopyTask }) {
   const canEdit = (isMe || isAdmin) && showDayGrid
@@ -8,7 +9,7 @@ export default function MemberSection({ member, isMe, isAdmin, showDayGrid = tru
     <div className={`bg-white rounded-xl mb-6 overflow-hidden ${isMe ? 'shadow-md ring-2 ring-jira-blue ring-offset-1' : 'shadow-sm'}`}>
       <div className={`group/header flex items-center justify-between px-5 py-3.5 border-b-2 ${isMe ? 'bg-jira-blue-light border-blue-200' : 'bg-jira-bg-alt border-jira-bg'}`}>
         <div className="text-lg font-bold flex items-center gap-2">
-          {member.emoji} {member.name}
+          <MemberAvatar member={member} size="md" /> {member.name}
           <span className="text-jira-muted text-sm font-normal">{member.rank}</span>
           {isMe && <span className="text-[11px] font-semibold text-jira-blue bg-white border border-blue-300 px-2 py-0.5 rounded-full">나</span>}
         </div>

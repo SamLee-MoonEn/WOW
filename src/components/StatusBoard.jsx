@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import MemberAvatar from './ui/MemberAvatar'
 
 const PRESENCE = {
   working:  { label: '업무 중', dot: 'bg-green-500',  badge: 'bg-green-50 border-green-200 text-green-700',  pulse: true  },
@@ -110,8 +111,10 @@ export default function StatusBoard({ members, myMemberId, isAdmin, onUpdatePres
                     key={member.id}
                     className={`transition-colors ${isMe ? 'bg-jira-blue-light/40' : 'hover:bg-jira-bg'}`}
                   >
-                    {/* 이모지 */}
-                    <td className="px-4 py-2 text-base text-center align-top pt-3">{member.emoji}</td>
+                    {/* 아바타 */}
+                    <td className="px-4 py-2 text-center align-top pt-2.5">
+                      <MemberAvatar member={member} size="md" />
+                    </td>
 
                     {/* 이름 + 업무 설명 */}
                     <td className="px-2 py-2">
