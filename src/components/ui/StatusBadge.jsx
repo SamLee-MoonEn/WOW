@@ -10,9 +10,9 @@ export default function StatusBadge({ status, onClick }) {
     <span
       onClick={onClick}
       title={onClick ? '클릭하여 상태 변경' : undefined}
-      className={`inline-flex items-center justify-center min-w-[24px] px-1.5 py-px rounded text-[10px] font-bold tracking-wide uppercase whitespace-nowrap shrink-0 ${cfg.cls} ${onClick ? `${cfg.hoverCls} cursor-pointer` : ''}`}
+      className={`inline-flex items-center justify-center w-[56px] px-1 py-px rounded text-[10px] font-bold tracking-wide uppercase shrink-0 overflow-hidden ${cfg.cls} ${onClick ? `${cfg.hoverCls} cursor-pointer` : ''}`}
     >
-      {cfg.label || '○'}
+      <span className="truncate">{cfg.label || '○'}</span>
     </span>
   )
 }
