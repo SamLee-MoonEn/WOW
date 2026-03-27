@@ -70,11 +70,11 @@ export default function TaskItem({ task, taskKey, canEdit, onEdit, onDelete, onC
         {hasActions && (
           <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-[grid-template-rows] duration-150">
             <div className="overflow-hidden">
-              <div className="flex items-center gap-1 pt-1.5 pb-0.5 pl-5">
+              <div className="flex items-center gap-1.5 pt-1.5 pb-0.5 pl-5">
                 {onCopy && (
                   <button
                     onClick={onCopy}
-                    className="text-[13px] px-1.5 py-0.5 rounded border border-jira-border bg-white hover:bg-blue-50 hover:border-jira-blue text-jira-muted transition-colors"
+                    className="w-6 h-6 flex items-center justify-center text-[13px] rounded border border-jira-border bg-white hover:bg-gray-100 hover:border-gray-300 text-jira-muted transition-colors"
                     title="다른 날로 복사"
                   >
                     📋
@@ -84,14 +84,14 @@ export default function TaskItem({ task, taskKey, canEdit, onEdit, onDelete, onC
                   <>
                     <button
                       onClick={() => onEdit(task)}
-                      className="text-[13px] px-1.5 py-0.5 rounded border border-jira-border bg-white hover:bg-gray-100 text-jira-muted transition-colors"
+                      className="w-6 h-6 flex items-center justify-center text-[13px] rounded border border-jira-border bg-white hover:bg-gray-100 hover:border-gray-300 text-jira-muted transition-colors"
                       title="수정"
                     >
                       ✏️
                     </button>
                     <button
                       onClick={() => onDelete(taskKey, task.id)}
-                      className="text-[13px] px-1.5 py-0.5 rounded border border-jira-border bg-white hover:bg-red-50 hover:border-red-200 hover:text-red-600 text-jira-muted transition-colors ml-auto"
+                      className="w-6 h-6 flex items-center justify-center text-[13px] rounded border border-jira-border bg-white hover:bg-red-50 hover:border-red-200 hover:text-red-600 text-jira-muted transition-colors ml-auto"
                       title="삭제"
                     >
                       🗑
