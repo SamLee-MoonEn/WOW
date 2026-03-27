@@ -1,7 +1,7 @@
 import Button from './ui/Button'
 import { getWeekDates, formatDate } from '../utils/weekUtils'
 
-export default function WeekNav({ wk, onPrev, onNext, onToday, isCurrentWeek }) {
+export default function WeekNav({ wk, onPrev, onNext, onToday, isCurrentWeek, rightSlot }) {
   const prevDates = getWeekDates(wk.prevMonday)
   const curDates = getWeekDates(wk.currentMonday)
   const label =
@@ -22,6 +22,7 @@ export default function WeekNav({ wk, onPrev, onNext, onToday, isCurrentWeek }) 
       >
         오늘로
       </Button>
+      {rightSlot && <div className="ml-auto">{rightSlot}</div>}
     </div>
   )
 }

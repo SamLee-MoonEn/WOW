@@ -206,18 +206,16 @@ function Board() {
               onEndOfDay={myMemberId ? () => setModal({ type: 'teamsReport' }) : undefined}
             />
 
-            <div className="flex items-center justify-between mb-1">
-              <WeekNav
-                wk={wk}
-                onPrev={() => wow.shiftWeeks(-1)}
-                onNext={() => wow.shiftWeeks(1)}
-                onToday={wow.goToCurrentWeek}
-                isCurrentWeek={wow.state.baseWeekOffset === 0}
-              />
-              {myMemberId && (
+            <WeekNav
+              wk={wk}
+              onPrev={() => wow.shiftWeeks(-1)}
+              onNext={() => wow.shiftWeeks(1)}
+              onToday={wow.goToCurrentWeek}
+              isCurrentWeek={wow.state.baseWeekOffset === 0}
+              rightSlot={myMemberId ? (
                 <button
                   onClick={() => setMyTasksOnly(v => !v)}
-                  className={`flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-lg border transition-colors flex-shrink-0 ${
+                  className={`flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-lg border transition-colors ${
                     myTasksOnly
                       ? 'bg-jira-blue text-white border-jira-blue font-semibold'
                       : 'bg-white border-jira-border text-jira-muted hover:border-jira-blue hover:text-jira-blue'
@@ -226,8 +224,8 @@ function Board() {
                   <span>👤</span>
                   <span>내 일감만 보기</span>
                 </button>
-              )}
-            </div>
+              ) : null}
+            />
 
             {(() => {
               const displayItems = myTasksOnly
