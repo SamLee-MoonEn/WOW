@@ -74,27 +74,27 @@ export default function TaskItem({ task, taskKey, canEdit, onEdit, onDelete, onC
                 {onCopy && (
                   <button
                     onClick={onCopy}
-                    className="flex items-center gap-0.5 text-[11px] px-2 py-0.5 rounded border border-jira-border bg-white hover:bg-blue-50 hover:border-jira-blue hover:text-jira-blue text-jira-muted transition-colors"
+                    className="text-[13px] px-1.5 py-0.5 rounded border border-jira-border bg-white hover:bg-blue-50 hover:border-jira-blue text-jira-muted transition-colors"
                     title="다른 날로 복사"
                   >
-                    <span>📋</span><span>복사</span>
+                    📋
                   </button>
                 )}
                 {canEdit && (
                   <>
                     <button
                       onClick={() => onEdit(task)}
-                      className="flex items-center gap-0.5 text-[11px] px-2 py-0.5 rounded border border-jira-border bg-white hover:bg-gray-100 hover:text-jira-dark text-jira-muted transition-colors"
+                      className="text-[13px] px-1.5 py-0.5 rounded border border-jira-border bg-white hover:bg-gray-100 text-jira-muted transition-colors"
                       title="수정"
                     >
-                      <span>✏️</span><span>수정</span>
+                      ✏️
                     </button>
                     <button
                       onClick={() => onDelete(taskKey, task.id)}
-                      className="flex items-center gap-0.5 text-[11px] px-2 py-0.5 rounded border border-transparent hover:bg-red-50 hover:border-red-200 hover:text-red-600 text-jira-muted transition-colors ml-auto"
+                      className="text-[13px] px-1.5 py-0.5 rounded border border-transparent hover:bg-red-50 hover:border-red-200 hover:text-red-600 text-jira-muted transition-colors ml-auto"
                       title="삭제"
                     >
-                      <span>🗑</span><span>삭제</span>
+                      🗑
                     </button>
                   </>
                 )}
