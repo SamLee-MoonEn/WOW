@@ -91,10 +91,16 @@ export default function TaskItem({ task, taskKey, canEdit, onEdit, onDelete, onC
                     </button>
                     <button
                       onClick={() => onDelete(taskKey, task.id)}
-                      className="w-6 h-6 flex items-center justify-center text-[13px] rounded border border-jira-border bg-white hover:bg-red-50 hover:border-red-200 hover:text-red-600 text-jira-muted transition-colors ml-auto"
+                      className="w-6 h-6 flex items-center justify-center rounded border border-jira-border bg-white hover:bg-red-50 hover:border-red-200 hover:text-red-600 text-jira-muted transition-colors"
                       title="삭제"
                     >
-                      🗑
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                        <path d="M10 11v6" />
+                        <path d="M14 11v6" />
+                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                      </svg>
                     </button>
                   </>
                 )}
