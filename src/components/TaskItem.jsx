@@ -50,12 +50,22 @@ export default function TaskItem({ task, taskKey, canEdit, onEdit, onDelete, onC
         className="group flex items-start gap-1.5 px-0.5 py-1 rounded hover:bg-jira-bg relative cursor-grab active:cursor-grabbing active:opacity-50"
       >
         <StatusBadge status={task.status} onClick={() => onCycleStatus(taskKey, task.id)} />
-        <span className={`flex-1 text-[11.5px] leading-snug break-words ${textClass}`}>
-          {task.text}
+        <span className="flex-1 min-w-0">
+          <span className={`text-[11.5px] leading-snug break-words ${textClass}`}>
+            {task.text}
+          </span>
+          {task.memo && (
+            <span className="block text-[10.5px] text-jira-muted italic leading-snug mt-0.5 truncate">
+              {task.memo}
+            </span>
+          )}
         </span>
         <span className="flex items-center gap-0.5 absolute right-0.5 top-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
           {task.memo && (
-            <span className="text-[9px] px-1 py-0.5 bg-jira-bg border border-jira-border rounded text-jira-muted mr-0.5">메모</span>
+            <span
+              className="text-[10px] px-1 py-0.5 bg-amber-50 border border-amber-300 rounded text-amber-600 mr-0.5 cursor-default"
+              title={task.memo}
+            >📝</span>
           )}
           {onCopy && (
             <button
