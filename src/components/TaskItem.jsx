@@ -36,6 +36,8 @@ export default function TaskItem({ task, taskKey, canEdit, onEdit, onDelete, onC
     if (dragId && dragId !== task.id) onDropBefore(dragId, fromKey)
   }
 
+  const hasActions = onCopy || canEdit
+
   return (
     <>
       {task.dividerBefore && <hr className="border-t border-jira-border my-1.5" />}
@@ -47,46 +49,59 @@ export default function TaskItem({ task, taskKey, canEdit, onEdit, onDelete, onC
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onDragEnd={() => setIsDragOver(false)}
-        className="group flex items-start gap-1.5 px-0.5 py-1 rounded hover:bg-jira-bg relative cursor-grab active:cursor-grabbing active:opacity-50"
+        className="group px-0.5 pt-1 pb-0.5 rounded hover:bg-jira-bg cursor-grab active:cursor-grabbing active:opacity-50"
       >
-        <StatusBadge status={task.status} onClick={() => onCycleStatus(taskKey, task.id)} />
-        <span className="flex-1 min-w-0">
-          <span className={`text-[11.5px] leading-snug break-words ${textClass}`}>
-            {task.text}
-          </span>
-          {task.memo && (
-            <span className="block text-[10.5px] text-jira-muted italic leading-snug mt-0.5 truncate">
-              {task.memo}
+        {/* 일감 본문 행 */}
+        <div className="flex items-start gap-1.5">
+          <StatusBadge status={task.status} onClick={() => onCycleStatus(taskKey, task.id)} />
+          <span className="flex-1 min-w-0">
+            <span className={`text-[11.5px] leading-snug break-words ${textClass}`}>
+              {task.text}
             </span>
-          )}
-        </span>
-        <span className="flex items-center gap-0.5 absolute right-0.5 top-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-          {task.memo && (
-            <span
-              className="text-[10px] px-1 py-0.5 bg-amber-50 border border-amber-300 rounded text-amber-600 mr-0.5 cursor-default"
-              title={task.memo}
-            >📝</span>
-          )}
-          {onCopy && (
-            <button
-              onClick={onCopy}
-              className="text-[10px] p-0.5 rounded hover:bg-blue-100 text-jira-muted hover:text-jira-blue"
-              title="복사"
-            >📋</button>
-          )}
-          {canEdit && <>
-            <button
-              onClick={() => onEdit(task)}
-              className="text-[10px] p-0.5 rounded hover:bg-gray-200 text-jira-muted hover:text-jira-dark"
-              title="수정"
-            >✏️</button>
-            <button
-              onClick={() => onDelete(taskKey, task.id)}
-              className="text-[10px] p-0.5 rounded hover:bg-red-100 text-jira-muted hover:text-red-600"
-              title="삭제"
-            >🗑</button>
-          </>}
-        </span>
+            {task.memo && (
+              <span className="block text-[10.5px] text-jira-muted italic leading-snug mt-0.5 truncate">
+                {task.memo}
+              </span>
+            )}
+          </span>
+        </div>
+
+        {/* 액션바 — hover 시 아래로 슬라이드 */}
+        {hasActions && (
+          <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-[grid-template-rows] duration-150">
+            <div className="overflow-hidden">
+              <div className="flex items-center gap-1 pt-1.5 pb-0.5 pl-5">
+                {onCopy && (
+                  <button
+                    onClick={onCopy}
+                    className="flex items-center gap-0.5 text-[11px] px-2 py-0.5 rounded border border-jira-border bg-white hover:bg-blue-50 hover:border-jira-blue hover:text-jira-blue text-jira-muted transition-colors"
+                    title="다른 날로 복사"
+                  >
+                    <span>📋</span><span>복사</span>
+                  </button>
+                )}
+                {canEdit && (
+                  <>
+                    <button
+                      onClick={() => onEdit(task)}
+                      className="flex items-center gap-0.5 text-[11px] px-2 py-0.5 rounded border border-jira-border bg-white hover:bg-gray-100 hover:text-jira-dark text-jira-muted transition-colors"
+                      title="수정"
+                    >
+                      <span>✏️</span><span>수정</span>
+                    </button>
+                    <button
+                      onClick={() => onDelete(taskKey, task.id)}
+                      className="flex items-center gap-0.5 text-[11px] px-2 py-0.5 rounded border border-transparent hover:bg-red-50 hover:border-red-200 hover:text-red-600 text-jira-muted transition-colors ml-auto"
+                      title="삭제"
+                    >
+                      <span>🗑</span><span>삭제</span>
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   )
