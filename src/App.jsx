@@ -190,7 +190,7 @@ function Board() {
         onOpenSettings={isAdmin ? () => setModal({ type: 'appSettings' }) : undefined}
       />
 
-      <div className="max-w-[1600px] mx-auto px-4 py-5">
+      <div className="px-6 py-5">
         <InfoBanner />
 
 {isExternal || showSummaryView ? (
