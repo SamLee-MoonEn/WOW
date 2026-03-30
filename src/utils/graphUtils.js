@@ -4,7 +4,9 @@ const KEEP_DAYS = 28
 
 export async function uploadWeeklyReport(blob, filename, acquireToken) {
   const token = await acquireToken(['Files.ReadWrite'])
-  const res = await fetch(
+
+  // 1. 파일 업로드
+  const uploadRes = await fetch(
     `${GRAPH}/me/drive/root:/${REPORT_FOLDER}/${filename}:/content`,
     {
       method: 'PUT',
@@ -12,9 +14,34 @@ export async function uploadWeeklyReport(blob, filename, acquireToken) {
       body: blob,
     }
   )
-  if (!res.ok) throw new Error(`OneDrive 업로드 실패 (${res.status})`)
-  const item = await res.json()
-  // 임시 다운로드 URL (Teams 전송용)
+  if (!uploadRes.ok) throw new Error(`OneDrive 업로드 실패 (${uploadRes.status})`)
+  const item = await uploadRes.json()
+
+  // 2. 조직 내 영구 공유 링크 생성
+  try {
+    const linkRes = await fetch(`${GRAPH}/me/drive/items/${item.id}/createLink`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'view', scope: 'organization' }),
+    })
+    if (linkRes.ok) {
+      const linkData = await linkRes.json()
+      // sharingUrl → 직접 콘텐츠 URL 변환
+      const encodedUrl = `u!${btoa(linkData.link.webUrl).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')}`
+      const contentRes = await fetch(
+        `${GRAPH}/shares/${encodedUrl}/driveItem?$select=@microsoft.graph.downloadUrl`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      if (contentRes.ok) {
+        const contentData = await contentRes.json()
+        if (contentData['@microsoft.graph.downloadUrl']) {
+          return contentData['@microsoft.graph.downloadUrl']
+        }
+      }
+      return linkData.link.webUrl
+    }
+  } catch { /* 공유 링크 생성 실패 시 임시 URL fallback */ }
+
   return item['@microsoft.graph.downloadUrl'] ?? item.webUrl
 }
 
