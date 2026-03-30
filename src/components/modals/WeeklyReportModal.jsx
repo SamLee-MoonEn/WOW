@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import html2canvas from 'html2canvas'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
-import { sendImageToTeamsChat } from '../../utils/graphUtils'
+import { uploadWeeklyReport } from '../../utils/graphUtils'
 
 export default function WeeklyReportModal({ targetEl, weekLabel, memberName, acquireToken, settings = {}, onClose }) {
   const [status, setStatus] = useState('capturing') // capturing | preview | sending | success | error
@@ -33,11 +33,22 @@ export default function WeeklyReportModal({ targetEl, weekLabel, memberName, acq
   const handleSend = async () => {
     setStatus('sending')
     try {
-      const chatId = settings.teamsChatId
-      if (!chatId) throw new Error('설정에서 Teams 그룹 채팅 ID를 입력해주세요.')
+      const webhookUrl = settings.webhookUrl || import.meta.env.VITE_TEAMS_WEBHOOK_URL
+      if (!webhookUrl) throw new Error('설정에서 Webhook URL을 입력해주세요.')
 
-      const title = `${memberName} 주간 업무 계획 · ${weekLabel}`
-      await sendImageToTeamsChat(blobRef.current, title, acquireToken, chatId)
+      const filename = `${weekLabel.replace(/[^a-zA-Z0-9가-힣_-]/g, '-')}-${memberName}.png`
+      const imageUrl = await uploadWeeklyReport(blobRef.current, filename, acquireToken)
+
+      const res = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: `${memberName} 주간 업무 계획 · ${weekLabel}`,
+          memberName,
+          imageUrl,
+        }),
+      })
+      if (!res.ok) throw new Error(`전송 실패 (HTTP ${res.status})`)
       setStatus('success')
     } catch (e) {
       setErrorMsg(e.message)
@@ -73,7 +84,7 @@ export default function WeeklyReportModal({ targetEl, weekLabel, memberName, acq
       {status === 'sending' && (
         <div className="flex flex-col items-center justify-center py-12 gap-3 text-jira-muted">
           <div className="text-3xl animate-pulse">📤</div>
-          <div className="text-sm">Teams 그룹 채팅으로 전송 중...</div>
+          <div className="text-sm">OneDrive 업로드 후 Teams로 전송 중...</div>
         </div>
       )}
       {(status === 'preview' || status === 'success') && previewUrl && (

@@ -1,5 +1,20 @@
 const GRAPH = 'https://graph.microsoft.com/v1.0'
 
+export async function uploadWeeklyReport(blob, filename, acquireToken) {
+  const token = await acquireToken(['Files.ReadWrite'])
+  const res = await fetch(
+    `${GRAPH}/me/drive/root:/WOW-Reports/${filename}:/content`,
+    {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'image/png' },
+      body: blob,
+    }
+  )
+  if (!res.ok) throw new Error(`OneDrive 업로드 실패 (${res.status})`)
+  const item = await res.json()
+  return item['@microsoft.graph.downloadUrl'] ?? item.webUrl
+}
+
 export async function sendImageToTeamsChat(blob, title, acquireToken, chatId) {
   const token = await acquireToken(['Chat.ReadWrite'])
 
