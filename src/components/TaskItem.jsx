@@ -11,14 +11,22 @@ const styleMap = {
 
 const URL_RE = /(https?:\/\/[^\s<]+)/g
 
-function Linkify({ text }) {
-  const parts = text.split(URL_RE)
-  return parts.map((part, i) =>
-    URL_RE.test(part) ? (
-      <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-jira-blue underline hover:text-blue-700 not-italic" onClick={e => e.stopPropagation()}>{part}</a>
-    ) : (
-      <span key={i}>{part}</span>
-    )
+function MemoWithLinks({ text }) {
+  const hasUrl = URL_RE.test(text)
+  URL_RE.lastIndex = 0
+  const urls = hasUrl ? text.match(URL_RE) : []
+  // 텍스트 부분만 (URL 제거) 잘라서 표시
+  const plainText = text.replace(URL_RE, '').trim()
+
+  return (
+    <span className="flex items-center gap-1">
+      {plainText && <span className="truncate">{plainText}</span>}
+      {urls.map((url, i) => (
+        <a key={i} href={url} target="_blank" rel="noopener noreferrer" title={url} onClick={e => e.stopPropagation()} className="inline-flex items-center text-jira-blue hover:text-blue-700 not-italic flex-shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        </a>
+      ))}
+    </span>
   )
 }
 
@@ -71,8 +79,8 @@ export default function TaskItem({ task, taskKey, canEdit, onEdit, onDelete, onC
               {task.text}
             </span>
             {task.memo && (
-              <span className="block text-[10.5px] text-jira-muted italic leading-snug mt-0.5 break-words">
-                <Linkify text={task.memo} />
+              <span className="block text-[10.5px] text-jira-muted italic leading-snug mt-0.5 truncate">
+                <MemoWithLinks text={task.memo} />
               </span>
             )}
           </span>
