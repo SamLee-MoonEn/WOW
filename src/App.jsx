@@ -257,13 +257,14 @@ function Board() {
                     onMoveTask={wow.moveTask}
                     onCopyTask={(fromKey, task) => setModal({ type: 'copyTask', fromKey, task })}
                     onWeeklyReport={async (el, member) => {
+                      let blob = null
+                      let captureError = null
                       try {
-                        const blob = await captureElement(el)
-                        setModal({ type: 'weeklyReport', blob, member })
+                        blob = await captureElement(el)
                       } catch (e) {
-                        const cancelled = e?.name === 'NotAllowedError'
-                        if (!cancelled) setModal({ type: 'weeklyReport', blob: null, member, captureError: e?.message })
+                        captureError = e?.message || '화면 캡처 중 오류가 발생했습니다.'
                       }
+                      setModal({ type: 'weeklyReport', blob, member, captureError })
                     }}
                     onEditMember={() => setModal({ type: 'editMember', member: item.member })}
                     onDeleteMember={() => openConfirm(
