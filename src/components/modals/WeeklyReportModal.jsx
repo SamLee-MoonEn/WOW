@@ -3,11 +3,11 @@ import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import { uploadWeeklyReport } from '../../utils/graphUtils'
 
-export default function WeeklyReportModal({ initialBlob, weekLabel, memberName, acquireToken, settings = {}, onClose }) {
+export default function WeeklyReportModal({ initialBlob, captureError, weekLabel, memberName, acquireToken, settings = {}, onClose }) {
   const blobRef = useRef(initialBlob)
   const [previewUrl] = useState(initialBlob ? URL.createObjectURL(initialBlob) : null)
   const [status, setStatus] = useState(initialBlob ? 'preview' : 'error')
-  const [errorMsg, setErrorMsg] = useState(initialBlob ? '' : '캡처된 이미지가 없습니다.')
+  const [errorMsg, setErrorMsg] = useState(captureError ?? (initialBlob ? '' : '캡처된 이미지가 없습니다.'))
 
   const handleSend = async () => {
     setStatus('sending')

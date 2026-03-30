@@ -1,8 +1,14 @@
 export async function captureElement(element) {
-  const stream = await navigator.mediaDevices.getDisplayMedia({
-    video: { displaySurface: 'browser' },
-    preferCurrentTab: true,
-  })
+  let stream
+  try {
+    stream = await navigator.mediaDevices.getDisplayMedia({
+      video: { displaySurface: 'browser' },
+      preferCurrentTab: true,
+    })
+  } catch {
+    // preferCurrentTab 미지원 시 기본 옵션으로 재시도
+    stream = await navigator.mediaDevices.getDisplayMedia({ video: true })
+  }
 
   try {
     const video = document.createElement('video')

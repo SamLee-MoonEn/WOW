@@ -260,7 +260,10 @@ function Board() {
                       try {
                         const blob = await captureElement(el)
                         setModal({ type: 'weeklyReport', blob, member })
-                      } catch { /* 사용자가 취소한 경우 무시 */ }
+                      } catch (e) {
+                        const cancelled = e?.name === 'NotAllowedError'
+                        if (!cancelled) setModal({ type: 'weeklyReport', blob: null, member, captureError: e?.message })
+                      }
                     }}
                     onEditMember={() => setModal({ type: 'editMember', member: item.member })}
                     onDeleteMember={() => openConfirm(
@@ -399,6 +402,7 @@ function Board() {
       {modal?.type === 'weeklyReport' && (
         <WeeklyReportModal
           initialBlob={modal.blob}
+          captureError={modal.captureError}
           weekLabel={`WK${wk.currentWk}`}
           memberName={modal.member?.name ?? displayName}
           acquireToken={acquireToken}
