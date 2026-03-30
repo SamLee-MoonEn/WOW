@@ -52,7 +52,7 @@ export default function TaskItem({ task, taskKey, canEdit, onEdit, onDelete, onC
         className="group px-0.5 pt-1 pb-0.5 rounded hover:bg-jira-bg cursor-grab active:cursor-grabbing active:opacity-50"
       >
         {/* 일감 본문 행 */}
-        <div className="flex items-start gap-1.5">
+        <div data-task-row className="flex items-start gap-1.5">
           <StatusBadge status={task.status} onClick={() => onCycleStatus(taskKey, task.id)} />
           <span className="flex-1 min-w-0">
             <span className={`text-[11.5px] leading-snug break-words ${textClass}`}>

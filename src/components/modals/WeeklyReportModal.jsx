@@ -23,11 +23,15 @@ export default function WeeklyReportModal({ targetEl, weekLabel, memberName, acq
       logging: false,
       onclone: (doc) => {
         doc.querySelectorAll('[data-status-badge]').forEach(el => {
-          el.style.lineHeight = '1'
+          el.style.display = 'inline-block'
+          el.style.height = '16px'
+          el.style.lineHeight = '16px'
           el.style.paddingTop = '0'
           el.style.paddingBottom = '0'
-          el.style.display = 'inline-block'
           el.style.verticalAlign = 'middle'
+        })
+        doc.querySelectorAll('[data-task-row]').forEach(el => {
+          el.style.alignItems = 'center'
         })
       },
     })
