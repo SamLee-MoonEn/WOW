@@ -30,6 +30,7 @@ function Board() {
   const [confirm, setConfirm] = useState(null)
   const [showSummaryView, setShowSummaryView] = useState(false)
   const [myTasksOnly, setMyTasksOnly] = useState(false)
+  const [groupFilter, setGroupFilter] = useState('')
 
   const wk = getWeekKeys(wow.state.baseWeekOffset)
 
@@ -175,6 +176,14 @@ function Board() {
     return a.localeCompare(b, 'ko')
   })
 
+  // 부서 목록
+  const allGroups = [...new Set(visibleMembers.map(m => m.group || ''))].sort((a, b) => {
+    if (!a && b) return 1
+    if (a && !b) return -1
+    return a.localeCompare(b, 'ko')
+  })
+  const hasGroups = allGroups.some(g => g !== '')
+
   for (const g of groupKeys) {
     if (g) boardItems.push({ type: 'header', label: g })
     for (const m of groupMap[g]) boardItems.push({ type: 'member', member: m })
@@ -213,25 +222,49 @@ function Board() {
               onNext={() => wow.shiftWeeks(1)}
               onToday={wow.goToCurrentWeek}
               isCurrentWeek={wow.state.baseWeekOffset === 0}
-              rightSlot={myMemberId ? (
-                <button
-                  onClick={() => setMyTasksOnly(v => !v)}
-                  className={`flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-lg border transition-colors ${
-                    myTasksOnly
-                      ? 'bg-jira-blue text-white border-jira-blue font-semibold'
-                      : 'bg-white border-jira-border text-jira-muted hover:border-jira-blue hover:text-jira-blue'
-                  }`}
-                >
-                  <span>👤</span>
-                  <span>내 일감만 보기</span>
-                </button>
-              ) : null}
+              rightSlot={
+                <div className="flex items-center gap-2">
+                  {hasGroups && (
+                    <select
+                      value={groupFilter}
+                      onChange={e => setGroupFilter(e.target.value)}
+                      className="text-[12px] border border-jira-border rounded-lg px-2.5 py-1.5 bg-white text-jira-mid"
+                    >
+                      <option value="">전체 부서</option>
+                      {allGroups.filter(g => g).map(g => (
+                        <option key={g} value={g}>{g}</option>
+                      ))}
+                    </select>
+                  )}
+                  {myMemberId && (
+                    <button
+                      onClick={() => setMyTasksOnly(v => !v)}
+                      className={`flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-lg border transition-colors ${
+                        myTasksOnly
+                          ? 'bg-jira-blue text-white border-jira-blue font-semibold'
+                          : 'bg-white border-jira-border text-jira-muted hover:border-jira-blue hover:text-jira-blue'
+                      }`}
+                    >
+                      <span>👤</span>
+                      <span>내 일감만 보기</span>
+                    </button>
+                  )}
+                </div>
+              }
             />
 
             {(() => {
-              const displayItems = myTasksOnly
-                ? boardItems.filter(item => item.type === 'member' && item.member.id === myMemberId)
-                : boardItems
+              let displayItems = boardItems
+              if (myTasksOnly) {
+                displayItems = displayItems.filter(item => item.type === 'member' && item.member.id === myMemberId)
+              }
+              if (groupFilter) {
+                displayItems = displayItems.filter(item => {
+                  if (item.type === 'header') return item.label === groupFilter
+                  if (item.type === 'member') return (item.member.group || '') === groupFilter || item.member.id === myMemberId
+                  return true
+                })
+              }
               if (displayItems.length === 0) return (
                 <div className="text-center py-16 text-jira-muted">
                   <div className="text-5xl mb-3">👤</div>
