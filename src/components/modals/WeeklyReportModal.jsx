@@ -5,19 +5,19 @@ import Button from '../ui/Button'
 import { uploadWeeklyReport, cleanupOldReports } from '../../utils/graphUtils'
 import { sendToTeamsWebhook } from '../../utils/teamsUtils'
 
-export default function WeeklyReportModal({ boardRef, weekLabel, memberName, acquireToken, settings = {}, onClose }) {
+export default function WeeklyReportModal({ targetEl, weekLabel, memberName, acquireToken, settings = {}, onClose }) {
   const [status, setStatus] = useState('capturing') // capturing | preview | sending | success | error
   const [errorMsg, setErrorMsg] = useState('')
   const [previewUrl, setPreviewUrl] = useState(null)
   const blobRef = useRef(null)
 
   useEffect(() => {
-    if (!boardRef?.current) {
+    if (!targetEl) {
       setStatus('error')
       setErrorMsg('캡쳐할 영역을 찾을 수 없습니다.')
       return
     }
-    html2canvas(boardRef.current, { scale: 2, useCORS: true, backgroundColor: '#f4f5f7' })
+    html2canvas(targetEl, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
       .then(canvas => {
         canvas.toBlob(blob => {
           blobRef.current = blob
@@ -29,7 +29,7 @@ export default function WeeklyReportModal({ boardRef, weekLabel, memberName, acq
         setStatus('error')
         setErrorMsg('화면 캡쳐에 실패했습니다.')
       })
-  }, [boardRef])
+  }, [targetEl])
 
   const handleSend = async () => {
     setStatus('sending')
