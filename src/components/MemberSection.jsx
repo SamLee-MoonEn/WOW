@@ -3,7 +3,7 @@ import WeekBlock from './WeekBlock'
 import Button from './ui/Button'
 import MemberAvatar from './ui/MemberAvatar'
 
-export default function MemberSection({ member, isMe, isAdmin, showDayGrid = true, wk, tasks, onEditMember, onDeleteMember, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onMoveTask, onCopyTask, onWeeklyReport }) {
+export default function MemberSection({ member, isMe, isAdmin, showDayGrid = true, wk, tasks, onEditMember, onDeleteMember, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onMoveTask, onCopyTask, onWeeklyReport, onEndOfDay }) {
   const canEdit = (isMe || isAdmin) && showDayGrid
   const currentWeekRef = useRef(null)
 
@@ -16,6 +16,9 @@ export default function MemberSection({ member, isMe, isAdmin, showDayGrid = tru
           {isMe && <span className="text-[11px] font-semibold text-jira-blue bg-white border border-blue-300 px-2 py-0.5 rounded-full">나</span>}
         </div>
         <div className="flex gap-1.5 opacity-40 group-hover/header:opacity-100 transition-opacity">
+          {isMe && onEndOfDay && (
+            <Button variant="outline" size="sm" onClick={onEndOfDay}>📤 업무 종료</Button>
+          )}
           {onWeeklyReport && (
             <Button variant="outline" size="sm" onClick={() => onWeeklyReport(currentWeekRef.current, member)}>📸 주간 계획 전송</Button>
           )}

@@ -256,6 +256,7 @@ function Board() {
                     onMoveTask={wow.moveTask}
                     onCopyTask={(fromKey, task) => setModal({ type: 'copyTask', fromKey, task })}
                     onWeeklyReport={(el, member) => setModal({ type: 'weeklyReport', el, member })}
+                    onEndOfDay={item.member.id === myMemberId ? () => setModal({ type: 'teamsReport' }) : undefined}
                     onEditMember={() => setModal({ type: 'editMember', member: item.member })}
                     onDeleteMember={() => openConfirm(
                       '담당자 삭제',

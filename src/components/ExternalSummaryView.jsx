@@ -35,6 +35,11 @@ function MemberCard({ member }) {
         </div>
       </div>
 
+      {/* 휴가 기간 */}
+      {p === 'vacation' && member.vacationEnd && (
+        <div className="text-[10px] text-sky-500 mt-1">~ {member.vacationEnd} 까지</div>
+      )}
+
       {/* 이름 + 직급 */}
       <div className="mb-1">
         <div className="flex items-center gap-1.5 flex-wrap">
