@@ -40,7 +40,6 @@ export default function TaskItem({ task, taskKey, canEdit, onEdit, onDelete, onC
 
   return (
     <>
-      {task.dividerBefore && <hr className="border-t border-jira-border my-1.5" />}
       {isDragOver && <div className="h-0.5 bg-jira-blue rounded mx-0.5" />}
       <div
         draggable

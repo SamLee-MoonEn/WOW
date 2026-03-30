@@ -262,13 +262,20 @@ function Board() {
                       `'${item.member.name}'님의 모든 업무 데이터가 삭제됩니다. 계속하시겠습니까?`,
                       () => wow.deleteMember(item.member.id)
                     )}
-                    onAddTask={(key) => setModal({ type: 'addTask', key })}
+                    onAddTask={(key, directData) => {
+                      if (directData) {
+                        wow.addTask(key, directData)
+                      } else {
+                        setModal({ type: 'addTask', key })
+                      }
+                    }}
                     onEditTask={(key, task) => setModal({ type: 'editTask', key, task })}
                     onDeleteTask={(key, taskId) => openConfirm(
                       '업무 삭제',
                       '이 업무를 삭제하시겠습니까?',
                       () => wow.deleteTask(key, taskId)
                     )}
+                    onDeleteDivider={(key, taskId) => wow.deleteTask(key, taskId)}
                     onCycleTaskStatus={wow.cycleStatus}
                     onAddCarryover={(key) => setModal({ type: 'addCarryover', key })}
                     onEditCarryover={(key, item2) => setModal({ type: 'editCarryover', key, item: item2 })}
@@ -369,11 +376,10 @@ function Board() {
           myMemberId={myMemberId}
           wk={wk}
           baseWeekOffset={wow.state.baseWeekOffset}
-          onCopy={({ targetMemberId: mid, selectedDays: days, repeatWeeks: rw, weekOffset: wo }) => {
+          onCopy={({ targetMemberId: mid, selectedDays: days, repeatWeeks: rw, startWeekOffset: swo }) => {
             for (let w = 0; w < rw; w++) {
-              const weekInfo = getWeekKeys(wow.state.baseWeekOffset + w)
-              const wKey = wo === 0 ? weekInfo.current : weekInfo.prev
-              days.forEach(d => wow.copyTask(modal.fromKey, `${mid}_${wKey}_${d}`, modal.task.id))
+              const weekInfo = getWeekKeys(wow.state.baseWeekOffset + swo + w)
+              days.forEach(d => wow.copyTask(modal.fromKey, `${mid}_${weekInfo.current}_${d}`, modal.task.id))
             }
             setModal(null)
           }}

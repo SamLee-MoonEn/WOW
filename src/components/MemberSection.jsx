@@ -3,7 +3,7 @@ import WeekBlock from './WeekBlock'
 import Button from './ui/Button'
 import MemberAvatar from './ui/MemberAvatar'
 
-export default function MemberSection({ member, isMe, isAdmin, showDayGrid = true, wk, tasks, onEditMember, onDeleteMember, onAddTask, onEditTask, onDeleteTask, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onMoveTask, onCopyTask, onWeeklyReport }) {
+export default function MemberSection({ member, isMe, isAdmin, showDayGrid = true, wk, tasks, onEditMember, onDeleteMember, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onMoveTask, onCopyTask, onWeeklyReport }) {
   const canEdit = (isMe || isAdmin) && showDayGrid
   const currentWeekRef = useRef(null)
 
@@ -43,6 +43,7 @@ export default function MemberSection({ member, isMe, isAdmin, showDayGrid = tru
             onAddTask={onAddTask}
             onEditTask={onEditTask}
             onDeleteTask={onDeleteTask}
+            onDeleteDivider={onDeleteDivider}
             onCycleTaskStatus={onCycleTaskStatus}
             onAddCarryover={onAddCarryover}
             onEditCarryover={onEditCarryover}
@@ -65,6 +66,7 @@ export default function MemberSection({ member, isMe, isAdmin, showDayGrid = tru
             onAddTask={onAddTask}
             onEditTask={onEditTask}
             onDeleteTask={onDeleteTask}
+            onDeleteDivider={onDeleteDivider}
             onCycleTaskStatus={onCycleTaskStatus}
             onAddCarryover={onAddCarryover}
             onEditCarryover={onEditCarryover}

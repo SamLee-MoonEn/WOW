@@ -2,7 +2,7 @@ import { useState } from 'react'
 import TaskItem from './TaskItem'
 import { DAYS, formatDate, formatDateFull } from '../utils/weekUtils'
 
-export default function DayCol({ member, weekKey, dayIndex, date, canEdit, isAdmin, tasks, onAddTask, onEditTask, onDeleteTask, onCycleStatus, onMoveTask, onCopyTask }) {
+export default function DayCol({ member, weekKey, dayIndex, date, canEdit, isAdmin, tasks, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleStatus, onMoveTask, onCopyTask }) {
   const [isDragOver, setIsDragOver] = useState(false)
   const key = `${member.id}_${weekKey}_${dayIndex}`
   const items = tasks[key] || []
@@ -50,25 +50,46 @@ export default function DayCol({ member, weekKey, dayIndex, date, canEdit, isAdm
       </div>
       <div className="p-1.5 flex-1 flex flex-col">
         {items.map(task => (
-          <TaskItem
-            key={task.id}
-            task={task}
-            taskKey={key}
-            canEdit={canEdit}
-            onEdit={(t) => onEditTask(key, t)}
-            onDelete={onDeleteTask}
-            onCycleStatus={onCycleStatus}
-            onDropBefore={(dragId, fromKey) => onMoveTask(fromKey, key, dragId, task.id)}
-            onCopy={isAdmin ? () => onCopyTask(key, task) : undefined}
-          />
+          task.type === 'divider' ? (
+            <div key={task.id} className="group/div flex items-center gap-1 my-1">
+              <hr className="flex-1 border-t border-jira-border" />
+              {canEdit && (
+                <button
+                  onClick={() => onDeleteDivider(key, task.id)}
+                  className="opacity-0 group-hover/div:opacity-100 text-[10px] text-jira-muted hover:text-red-500 transition-opacity"
+                  title="구분선 삭제"
+                >✕</button>
+              )}
+            </div>
+          ) : (
+            <TaskItem
+              key={task.id}
+              task={task}
+              taskKey={key}
+              canEdit={canEdit}
+              onEdit={(t) => onEditTask(key, t)}
+              onDelete={onDeleteTask}
+              onCycleStatus={onCycleStatus}
+              onDropBefore={(dragId, fromKey) => onMoveTask(fromKey, key, dragId, task.id)}
+              onCopy={isAdmin ? () => onCopyTask(key, task) : undefined}
+            />
+          )
         ))}
         {canEdit && (
-          <button
-            onClick={() => onAddTask(key)}
-            className="mt-auto flex items-center gap-1 text-jira-muted text-[11px] px-1 py-1 rounded border border-dashed border-transparent hover:text-jira-blue hover:border-jira-blue hover:bg-jira-blue-light w-full text-left transition-all"
-          >
-            + 업무 추가
-          </button>
+          <div className="mt-auto flex flex-col gap-0.5">
+            <button
+              onClick={() => onAddTask(key)}
+              className="flex items-center gap-1 text-jira-muted text-[11px] px-1 py-1 rounded border border-dashed border-transparent hover:text-jira-blue hover:border-jira-blue hover:bg-jira-blue-light w-full text-left transition-all"
+            >
+              + 업무 추가
+            </button>
+            <button
+              onClick={() => onAddTask(key, { type: 'divider' })}
+              className="flex items-center gap-1 text-jira-muted text-[11px] px-1 py-0.5 rounded border border-dashed border-transparent hover:text-gray-500 hover:border-gray-300 w-full text-left transition-all"
+            >
+              ― 구분선
+            </button>
+          </div>
         )}
       </div>
     </div>

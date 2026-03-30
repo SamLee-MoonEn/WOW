@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
-import { DAYS } from '../../utils/weekUtils'
+import { DAYS, getWeekKeys } from '../../utils/weekUtils'
 
 const DAY_LABELS = ['월', '화', '수', '목', '금']
 
@@ -14,14 +14,20 @@ export default function CopyTaskModal({ task, fromKey, members, myMemberId, wk, 
   const sourceMember = members.find(m => m.id === sourceMemberId)
   const sourceDay = !isNaN(sourceDayIndex) ? DAYS[sourceDayIndex] : null
 
+  // 주차 옵션: 지난 주 ~ 8주 후
+  const weekOptions = []
+  for (let i = -1; i <= 8; i++) {
+    const info = getWeekKeys(baseWeekOffset + i)
+    const label = i === -1 ? '지난 주' : i === 0 ? '이번 주' : i === 1 ? '다음 주' : `${i}주 후`
+    weekOptions.push({ offset: i, wkNum: info.currentWk, label, weekKey: info.current })
+  }
+
   const [targetMemberId, setTargetMemberId] = useState(myMemberId || members[0]?.id || '')
-  const [weekOffset, setWeekOffset] = useState(0)
+  const [startWeekIdx, setStartWeekIdx] = useState(1) // weekOptions index (default: 이번 주)
   const [dayIndex, setDayIndex] = useState(defaultDay)
   const [multiDay, setMultiDay] = useState(false)
   const [selectedDays, setSelectedDays] = useState(new Set([defaultDay]))
   const [repeatWeeks, setRepeatWeeks] = useState(1)
-
-  const weekKey = weekOffset === 0 ? wk.current : wk.prev
 
   const toggleDay = (d) => {
     setSelectedDays(prev => {
@@ -33,15 +39,18 @@ export default function CopyTaskModal({ task, fromKey, members, myMemberId, wk, 
 
   const handleCopy = () => {
     if (!targetMemberId) return
-    if (multiDay) {
-      onCopy({ targetMemberId, selectedDays: [...selectedDays].sort(), repeatWeeks, weekOffset })
-    } else {
-      onCopy({ targetMemberId, selectedDays: [dayIndex], repeatWeeks: 1, weekOffset })
-    }
+    const startOffset = weekOptions[startWeekIdx].offset
+    const days = multiDay ? [...selectedDays].sort() : [dayIndex]
+    const weeks = multiDay ? repeatWeeks : 1
+    onCopy({ targetMemberId, selectedDays: days, repeatWeeks: weeks, startWeekOffset: startOffset })
   }
 
   const dayCount = multiDay ? selectedDays.size : 1
   const totalCopies = dayCount * (multiDay ? repeatWeeks : 1)
+
+  // 반복 시 마지막 주차 표시
+  const endWeekIdx = startWeekIdx + (multiDay ? repeatWeeks : 1) - 1
+  const endWeekInfo = endWeekIdx < weekOptions.length ? weekOptions[endWeekIdx] : null
 
   return (
     <Modal
@@ -87,25 +96,39 @@ export default function CopyTaskModal({ task, fromKey, members, myMemberId, wk, 
         {/* 주차 */}
         <div>
           <label className="block text-[12px] font-semibold text-jira-dark mb-1.5">주차</label>
-          <div className="flex gap-2">
-            {[
-              { offset: 0,  label: `WK${wk.currentWk}`, sub: '이번 주' },
-              { offset: -1, label: `WK${wk.prevWk}`,    sub: '지난 주' },
-            ].map(({ offset, label, sub }) => (
+          <div className="flex gap-1.5 flex-wrap">
+            {weekOptions.slice(0, 5).map((opt, idx) => (
               <button
-                key={offset}
-                onClick={() => setWeekOffset(offset)}
-                className={`flex-1 py-2 rounded-lg border text-center transition-colors ${
-                  weekOffset === offset
+                key={opt.offset}
+                onClick={() => setStartWeekIdx(idx)}
+                className={`flex-1 min-w-0 py-2 rounded-lg border text-center transition-colors ${
+                  startWeekIdx === idx
                     ? 'bg-jira-blue text-white border-jira-blue'
                     : 'border-jira-border text-jira-muted hover:border-jira-blue hover:text-jira-blue'
                 }`}
               >
-                <div className="text-[13px] font-semibold">{label}</div>
-                <div className="text-[10px] opacity-70">{sub}</div>
+                <div className="text-[12px] font-semibold">WK{opt.wkNum}</div>
+                <div className="text-[10px] opacity-70">{opt.label}</div>
               </button>
             ))}
           </div>
+          {/* 더 먼 주차: 드롭다운 */}
+          {startWeekIdx >= 5 && (
+            <div className="mt-1.5 text-[12px] text-jira-blue font-medium">
+              WK{weekOptions[startWeekIdx].wkNum} ({weekOptions[startWeekIdx].label}) 선택됨
+            </div>
+          )}
+          <select
+            value={startWeekIdx}
+            onChange={e => setStartWeekIdx(Number(e.target.value))}
+            className="mt-1.5 w-full text-[12px] border border-jira-border rounded px-2 py-1 bg-white text-jira-mid"
+          >
+            {weekOptions.map((opt, idx) => (
+              <option key={opt.offset} value={idx}>
+                WK{opt.wkNum} — {opt.label}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* 요일 — 단일 선택 */}
@@ -166,14 +189,18 @@ export default function CopyTaskModal({ task, fromKey, members, myMemberId, wk, 
                   onChange={e => setRepeatWeeks(Number(e.target.value))}
                   className="border border-jira-border rounded px-2 py-0.5 text-[12px] bg-white"
                 >
-                  <option value={1}>이번 주만</option>
-                  <option value={2}>2주</option>
-                  <option value={3}>3주</option>
-                  <option value={4}>4주</option>
-                  <option value={6}>6주</option>
-                  <option value={8}>8주</option>
+                  {[1, 2, 3, 4, 6, 8].filter(n => startWeekIdx + n - 1 < weekOptions.length).map(n => (
+                    <option key={n} value={n}>
+                      {n === 1 ? '선택한 주만' : `${n}주 연속`}
+                    </option>
+                  ))}
                 </select>
               </div>
+              {repeatWeeks > 1 && endWeekInfo && (
+                <div className="text-[11px] text-jira-muted">
+                  WK{weekOptions[startWeekIdx].wkNum} ~ WK{endWeekInfo.wkNum} ({repeatWeeks}주간)
+                </div>
+              )}
             </div>
           )}
         </div>

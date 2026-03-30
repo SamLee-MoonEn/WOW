@@ -18,7 +18,6 @@ export default function TaskModal({ isEdit, task, onSave, onClose }) {
   const [text, setText] = useState(task?.text || '')
   const [status, setStatus] = useState(task?.status || 'none')
   const [style, setStyle] = useState(task?.style || '')
-  const [dividerBefore, setDividerBefore] = useState(task?.dividerBefore || false)
   const [memo, setMemo] = useState(task?.memo || '')
   const [textError, setTextError] = useState(false)
   const [multiDay, setMultiDay] = useState(false)
@@ -38,7 +37,7 @@ export default function TaskModal({ isEdit, task, onSave, onClose }) {
 
   const handleSave = () => {
     if (!text.trim()) { setTextError(true); return }
-    const data = { text: text.trim(), status, style, dividerBefore, memo }
+    const data = { text: text.trim(), status, style, memo }
     if (!isEdit && multiDay) {
       onSave({ ...data, selectedDays: [...selectedDays].sort(), repeatWeeks: effectiveRepeatWeeks })
     } else {
@@ -155,18 +154,6 @@ export default function TaskModal({ isEdit, task, onSave, onClose }) {
         </FormField>
       )}
 
-      <FormField label="섹션 구분선">
-        <label className="flex items-center gap-2 text-[13px] cursor-pointer">
-          <input
-            type="checkbox"
-            checked={dividerBefore}
-            onChange={e => setDividerBefore(e.target.checked)}
-            className="w-4 h-4 rounded accent-jira-blue"
-          />
-          이 항목 위에 구분선 추가
-        </label>
-      </FormField>
-
       <FormField label="메모">
         <Textarea
           value={memo}
@@ -178,7 +165,6 @@ export default function TaskModal({ isEdit, task, onSave, onClose }) {
 
       <FormField label="미리보기">
         <div className="border border-jira-border rounded p-2.5 min-h-9 bg-jira-bg-alt">
-          {dividerBefore && <hr className="border-t border-jira-border mb-1" />}
           <div className="flex items-start gap-1.5">
             <StatusBadge status={status} />
             <span className={`text-[11.5px] leading-snug ${styleMap[style] || ''}`}>
