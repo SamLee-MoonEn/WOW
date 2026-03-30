@@ -23,12 +23,21 @@ export default function WeeklyReportModal({ targetEl, weekLabel, memberName, acq
       logging: false,
       onclone: (doc) => {
         doc.querySelectorAll('[data-status-badge]').forEach(el => {
-          el.style.display = 'inline-block'
-          el.style.height = '16px'
-          el.style.lineHeight = '16px'
-          el.style.paddingTop = '0'
-          el.style.paddingBottom = '0'
-          el.style.verticalAlign = 'middle'
+          // html2canvas는 inline-flex items-center를 렌더링 못함 → 완전 제거
+          el.style.cssText = `
+            display: inline-block;
+            text-align: center;
+            min-width: 24px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            white-space: nowrap;
+            line-height: normal;
+          `
+          // 기존 배경/텍스트/테두리 색상은 class에서 유지됨
         })
         doc.querySelectorAll('[data-task-row]').forEach(el => {
           el.style.alignItems = 'center'
