@@ -16,6 +16,7 @@ import CopyTaskModal from './components/modals/CopyTaskModal'
 import WeeklyReportModal from './components/modals/WeeklyReportModal'
 import { getTodayTasks } from './utils/teamsUtils'
 import { fetchProfilePhoto } from './utils/graphUtils'
+import { captureElement } from './utils/captureUtils'
 import { useWOWState } from './hooks/useWOWState'
 import { useAuth } from './auth/useAuth'
 import { getWeekKeys } from './utils/weekUtils'
@@ -255,7 +256,12 @@ function Board() {
                     tasks={wow.state.tasks}
                     onMoveTask={wow.moveTask}
                     onCopyTask={(fromKey, task) => setModal({ type: 'copyTask', fromKey, task })}
-                    onWeeklyReport={(el, member) => setModal({ type: 'weeklyReport', el, member })}
+                    onWeeklyReport={async (el, member) => {
+                      try {
+                        const blob = await captureElement(el)
+                        setModal({ type: 'weeklyReport', blob, member })
+                      } catch { /* 사용자가 취소한 경우 무시 */ }
+                    }}
                     onEditMember={() => setModal({ type: 'editMember', member: item.member })}
                     onDeleteMember={() => openConfirm(
                       '담당자 삭제',
@@ -392,7 +398,7 @@ function Board() {
 
       {modal?.type === 'weeklyReport' && (
         <WeeklyReportModal
-          targetEl={modal.el}
+          initialBlob={modal.blob}
           weekLabel={`WK${wk.currentWk}`}
           memberName={modal.member?.name ?? displayName}
           acquireToken={acquireToken}
