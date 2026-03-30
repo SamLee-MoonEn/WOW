@@ -366,6 +366,7 @@ function Board() {
           task={modal.task}
           fromKey={modal.fromKey}
           members={wow.state.members.filter(m => m.role !== 'external')}
+          myMemberId={myMemberId}
           wk={wk}
           onCopy={(toKey) => { wow.copyTask(modal.fromKey, toKey, modal.task.id); setModal(null) }}
           onClose={() => setModal(null)}

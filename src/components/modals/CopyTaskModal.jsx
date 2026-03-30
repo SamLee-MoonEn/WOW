@@ -3,7 +3,7 @@ import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import { DAYS } from '../../utils/weekUtils'
 
-export default function CopyTaskModal({ task, fromKey, members, wk, onCopy, onClose }) {
+export default function CopyTaskModal({ task, fromKey, members, myMemberId, wk, onCopy, onClose }) {
   const fromParts = fromKey.split('_')
   const sourceMemberId = fromParts[0]
   const sourceDayIndex = parseInt(fromParts[fromParts.length - 1])
@@ -12,7 +12,7 @@ export default function CopyTaskModal({ task, fromKey, members, wk, onCopy, onCl
   const sourceMember = members.find(m => m.id === sourceMemberId)
   const sourceDay = !isNaN(sourceDayIndex) ? DAYS[sourceDayIndex] : null
 
-  const [targetMemberId, setTargetMemberId] = useState(sourceMemberId || members[0]?.id || '')
+  const [targetMemberId, setTargetMemberId] = useState(myMemberId || members[0]?.id || '')
   const [weekOffset, setWeekOffset] = useState(0)
   const [dayIndex, setDayIndex] = useState(defaultDay)
 
