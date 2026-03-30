@@ -2,6 +2,43 @@ import { useState } from 'react'
 import TaskItem from './TaskItem'
 import { DAYS, formatDate, formatDateFull } from '../utils/weekUtils'
 
+function DividerItem({ task, taskKey, canEdit, onDelete, onDropBefore }) {
+  const [isDragOver, setIsDragOver] = useState(false)
+
+  return (
+    <>
+      {isDragOver && <div className="h-0.5 bg-jira-blue rounded mx-0.5" />}
+      <div
+        draggable
+        onDragStart={(e) => {
+          e.dataTransfer.effectAllowed = 'move'
+          e.dataTransfer.setData('taskId', task.id)
+          e.dataTransfer.setData('fromKey', taskKey)
+        }}
+        onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragOver(true) }}
+        onDragLeave={() => setIsDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault(); e.stopPropagation(); setIsDragOver(false)
+          const dragId = e.dataTransfer.getData('taskId')
+          const fromKey = e.dataTransfer.getData('fromKey')
+          if (dragId && dragId !== task.id) onDropBefore(dragId, fromKey)
+        }}
+        onDragEnd={() => setIsDragOver(false)}
+        className="group/div flex items-center gap-1 my-1 cursor-grab active:cursor-grabbing active:opacity-50"
+      >
+        <hr className="flex-1 border-t border-jira-border" />
+        {canEdit && (
+          <button
+            onClick={onDelete}
+            className="opacity-0 group-hover/div:opacity-100 text-[10px] text-jira-muted hover:text-red-500 transition-opacity"
+            title="구분선 삭제"
+          >✕</button>
+        )}
+      </div>
+    </>
+  )
+}
+
 export default function DayCol({ member, weekKey, dayIndex, date, canEdit, isAdmin, tasks, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleStatus, onMoveTask, onCopyTask }) {
   const [isDragOver, setIsDragOver] = useState(false)
   const key = `${member.id}_${weekKey}_${dayIndex}`
@@ -51,16 +88,14 @@ export default function DayCol({ member, weekKey, dayIndex, date, canEdit, isAdm
       <div className="p-1.5 flex-1 flex flex-col">
         {items.map(task => (
           task.type === 'divider' ? (
-            <div key={task.id} className="group/div flex items-center gap-1 my-1">
-              <hr className="flex-1 border-t border-jira-border" />
-              {canEdit && (
-                <button
-                  onClick={() => onDeleteDivider(key, task.id)}
-                  className="opacity-0 group-hover/div:opacity-100 text-[10px] text-jira-muted hover:text-red-500 transition-opacity"
-                  title="구분선 삭제"
-                >✕</button>
-              )}
-            </div>
+            <DividerItem
+              key={task.id}
+              task={task}
+              taskKey={key}
+              canEdit={canEdit}
+              onDelete={() => onDeleteDivider(key, task.id)}
+              onDropBefore={(dragId, fromKey) => onMoveTask(fromKey, key, dragId, task.id)}
+            />
           ) : (
             <TaskItem
               key={task.id}
