@@ -32,13 +32,11 @@ function MemberCard({ member }) {
           <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${cfg.badge}`}>
             {cfg.label}
           </span>
+          {p === 'vacation' && member.vacationEnd && (
+            <span className="text-[11px] font-medium text-sky-500">~ {member.vacationEnd}</span>
+          )}
         </div>
       </div>
-
-      {/* 휴가 기간 */}
-      {p === 'vacation' && member.vacationEnd && (
-        <div className="text-[10px] text-sky-500 mt-1">~ {member.vacationEnd} 까지</div>
-      )}
 
       {/* 이름 + 직급 */}
       <div className="mb-1">
