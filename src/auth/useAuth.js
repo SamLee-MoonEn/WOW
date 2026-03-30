@@ -1,4 +1,5 @@
 import { useMsal, useIsAuthenticated } from '@azure/msal-react'
+import { InteractionRequiredAuthError } from '@azure/msal-browser'
 import { loginRequest } from './msalConfig'
 
 export function useAuth() {
@@ -12,8 +13,17 @@ export function useAuth() {
     instance.logoutPopup({ postLogoutRedirectUri: window.location.origin })
 
   const acquireToken = async (scopes = ['User.Read']) => {
-    const res = await instance.acquireTokenSilent({ scopes, account })
-    return res.accessToken
+    try {
+      const res = await instance.acquireTokenSilent({ scopes, account })
+      return res.accessToken
+    } catch (e) {
+      if (e instanceof InteractionRequiredAuthError) {
+        // 동의가 필요한 경우 팝업으로 재시도
+        const res = await instance.acquireTokenPopup({ scopes, account })
+        return res.accessToken
+      }
+      throw e
+    }
   }
 
   return {
