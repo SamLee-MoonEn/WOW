@@ -26,19 +26,46 @@ export default function StatusBoard({ members, myMemberId, isAdmin, onUpdatePres
   const [descDraft, setDescDraft] = useState('')
   const [vacationPickerId, setVacationPickerId] = useState(null)
   const [vacationDate, setVacationDate] = useState('')
+  const [groupFilter, setGroupFilter] = useState('')
 
   const now = new Date()
   const isWeekday = now.getDay() >= 1 && now.getDay() <= 5
   const isAfterWorkHour = now.getHours() >= 18
   const showUnreported = isWeekday && isAfterWorkHour
 
-  const sorted = [...members].sort((a, b) => {
+  // 부서 목록
+  const allGroups = [...new Set(members.map(m => m.group || ''))].sort((a, b) => {
+    if (!a && b) return 1
+    if (a && !b) return -1
+    return a.localeCompare(b, 'ko')
+  })
+  const hasGroups = allGroups.some(g => g !== '')
+
+  // 필터 적용
+  const filtered = groupFilter
+    ? members.filter(m => (m.group || '') === groupFilter)
+    : members
+
+  // 부서별 그룹핑 + 부서 내 상태→이름순 정렬
+  const sortWithinGroup = (list) => [...list].sort((a, b) => {
     const pa = a.presence || 'working'
     const pb = b.presence || 'working'
     if (pa === 'working' && pb !== 'working') return -1
     if (pa !== 'working' && pb === 'working') return 1
-    return a.name.localeCompare(b.name)
+    return a.name.localeCompare(b.name, 'ko')
   })
+
+  const groupedRows = []
+  if (hasGroups && !groupFilter) {
+    for (const g of allGroups) {
+      const groupMembers = filtered.filter(m => (m.group || '') === g)
+      if (groupMembers.length === 0) continue
+      groupedRows.push({ type: 'header', label: g || '기타' })
+      sortWithinGroup(groupMembers).forEach(m => groupedRows.push({ type: 'member', member: m }))
+    }
+  } else {
+    sortWithinGroup(filtered).forEach(m => groupedRows.push({ type: 'member', member: m }))
+  }
 
   const workingCount  = members.filter(m => (m.presence || 'working') === 'working').length
   const vacationCount = members.filter(m => (m.presence || 'working') === 'vacation').length
@@ -83,7 +110,20 @@ export default function StatusBoard({ members, myMemberId, isAdmin, onUpdatePres
           )}
         </div>
 
-        <span className="text-[11px] text-jira-muted ml-auto">
+        {hasGroups && (
+          <select
+            value={groupFilter}
+            onChange={e => { e.stopPropagation(); setGroupFilter(e.target.value) }}
+            onClick={e => e.stopPropagation()}
+            className="text-[11px] border border-jira-border rounded px-2 py-0.5 bg-white text-jira-mid ml-auto mr-2"
+          >
+            <option value="">전체 부서</option>
+            {allGroups.filter(g => g).map(g => (
+              <option key={g} value={g}>{g}</option>
+            ))}
+          </select>
+        )}
+        <span className={`text-[11px] text-jira-muted ${hasGroups ? '' : 'ml-auto'}`}>
           {isExpanded ? '▲ 접기' : '▼ 펼치기'}
         </span>
       </div>
@@ -102,7 +142,17 @@ export default function StatusBoard({ members, myMemberId, isAdmin, onUpdatePres
               </tr>
             </thead>
             <tbody className="divide-y divide-jira-border">
-              {sorted.map(member => {
+              {groupedRows.map((row, rowIdx) => {
+                if (row.type === 'header') {
+                  return (
+                    <tr key={`grp-${row.label}`} className="bg-jira-bg">
+                      <td colSpan={5} className="px-4 py-1.5">
+                        <span className="text-[11px] font-bold text-jira-muted uppercase tracking-wide">{row.label}</span>
+                      </td>
+                    </tr>
+                  )
+                }
+                const member = row.member
                 const p = member.presence || 'working'
                 const isMe = member.id === myMemberId
 
