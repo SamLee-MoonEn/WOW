@@ -9,6 +9,19 @@ const styleMap = {
   'bold red-text': 'font-semibold text-[#de350b]',
 }
 
+const URL_RE = /(https?:\/\/[^\s<]+)/g
+
+function Linkify({ text }) {
+  const parts = text.split(URL_RE)
+  return parts.map((part, i) =>
+    URL_RE.test(part) ? (
+      <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-jira-blue underline hover:text-blue-700 not-italic" onClick={e => e.stopPropagation()}>{part}</a>
+    ) : (
+      <span key={i}>{part}</span>
+    )
+  )
+}
+
 export default function TaskItem({ task, taskKey, canEdit, onEdit, onDelete, onCycleStatus, onDropBefore, onCopy }) {
   const [isDragOver, setIsDragOver] = useState(false)
   const textClass = styleMap[task.style] || ''
@@ -58,8 +71,8 @@ export default function TaskItem({ task, taskKey, canEdit, onEdit, onDelete, onC
               {task.text}
             </span>
             {task.memo && (
-              <span className="block text-[10.5px] text-jira-muted italic leading-snug mt-0.5 truncate">
-                {task.memo}
+              <span className="block text-[10.5px] text-jira-muted italic leading-snug mt-0.5 break-words">
+                <Linkify text={task.memo} />
               </span>
             )}
           </span>
