@@ -16,7 +16,19 @@ export default function WeeklyReportModal({ targetEl, weekLabel, memberName, acq
       setErrorMsg('캡쳐할 영역을 찾을 수 없습니다.')
       return
     }
-    html2canvas(targetEl, { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false })
+    html2canvas(targetEl, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      onclone: (doc) => {
+        doc.querySelectorAll('[class*="font-bold"]').forEach(el => {
+          el.style.lineHeight = '1'
+          el.style.paddingTop = '0'
+          el.style.marginTop = '0'
+        })
+      },
+    })
       .then(canvas => {
         canvas.toBlob(blob => {
           blobRef.current = blob
