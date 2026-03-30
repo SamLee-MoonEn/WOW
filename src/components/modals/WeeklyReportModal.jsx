@@ -2,8 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import html2canvas from 'html2canvas'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
-import { uploadWeeklyReport, cleanupOldReports } from '../../utils/graphUtils'
-import { sendToTeamsWebhook } from '../../utils/teamsUtils'
+import { sendImageToTeamsChat } from '../../utils/graphUtils'
 
 export default function WeeklyReportModal({ targetEl, weekLabel, memberName, acquireToken, settings = {}, onClose }) {
   const [status, setStatus] = useState('capturing') // capturing | preview | sending | success | error
@@ -34,28 +33,11 @@ export default function WeeklyReportModal({ targetEl, weekLabel, memberName, acq
   const handleSend = async () => {
     setStatus('sending')
     try {
-      const weekKey = weekLabel.replace(/[^a-zA-Z0-9가-힣_-]/g, '-')
-      const filename = `${weekKey}-${memberName}.png`
-      const imageUrl = await uploadWeeklyReport(blobRef.current, filename, acquireToken)
+      const chatId = settings.teamsChatId
+      if (!chatId) throw new Error('설정에서 Teams 그룹 채팅 ID를 입력해주세요.')
 
-      const webhookUrl = settings.webhookUrl || import.meta.env.VITE_TEAMS_WEBHOOK_URL
-      if (!webhookUrl) throw new Error('Webhook URL이 설정되지 않았습니다.')
-
-      const payload = {
-        title: `${memberName} 주간 업무 계획 · ${weekLabel}`,
-        memberName,
-        message: `${memberName} 주간 업무 계획 · ${weekLabel}`,
-        imageUrl,
-        attachments: [{ contentType: 'text/html', content: `<img src="${imageUrl}" alt="주간 업무 계획" />` }],
-      }
-      const res = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-      if (!res.ok) throw new Error(`전송 실패 (HTTP ${res.status})`)
-
-      await cleanupOldReports(acquireToken)
+      const title = `${memberName} 주간 업무 계획 · ${weekLabel}`
+      await sendImageToTeamsChat(blobRef.current, title, acquireToken, chatId)
       setStatus('success')
     } catch (e) {
       setErrorMsg(e.message)
@@ -91,7 +73,7 @@ export default function WeeklyReportModal({ targetEl, weekLabel, memberName, acq
       {status === 'sending' && (
         <div className="flex flex-col items-center justify-center py-12 gap-3 text-jira-muted">
           <div className="text-3xl animate-pulse">📤</div>
-          <div className="text-sm">OneDrive 업로드 후 Teams로 전송 중...</div>
+          <div className="text-sm">Teams 그룹 채팅으로 전송 중...</div>
         </div>
       )}
       {(status === 'preview' || status === 'success') && previewUrl && (
