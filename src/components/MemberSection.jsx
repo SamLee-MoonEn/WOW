@@ -17,7 +17,7 @@ export default function MemberSection({ member, isMe, isAdmin, showDayGrid = tru
         </div>
         <div className="flex gap-1.5 opacity-40 group-hover/header:opacity-100 transition-opacity">
           {onWeeklyReport && (
-            <Button variant="outline" size="sm" onClick={() => onWeeklyReport(currentWeekRef.current, member)}>📸 전송</Button>
+            <Button variant="outline" size="sm" onClick={() => onWeeklyReport(currentWeekRef.current, member)}>📸 주간 계획 전송</Button>
           )}
           {isAdmin && (
             <>
