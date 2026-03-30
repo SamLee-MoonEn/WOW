@@ -393,7 +393,7 @@ function Board() {
       {modal?.type === 'weeklyReport' && (
         <WeeklyReportModal
           targetEl={modal.el}
-          weekLabel={`WK${wk.prevWk}~${wk.currentWk}`}
+          weekLabel={`WK${wk.currentWk}`}
           memberName={modal.member?.name ?? displayName}
           acquireToken={acquireToken}
           settings={wow.state.settings}
