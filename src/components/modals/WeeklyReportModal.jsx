@@ -1,13 +1,34 @@
-import { useState, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import html2canvas from 'html2canvas'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import { uploadWeeklyReport } from '../../utils/graphUtils'
 
-export default function WeeklyReportModal({ initialBlob, captureError, weekLabel, memberName, acquireToken, settings = {}, onClose }) {
-  const blobRef = useRef(initialBlob)
-  const [previewUrl] = useState(initialBlob ? URL.createObjectURL(initialBlob) : null)
-  const [status, setStatus] = useState(initialBlob ? 'preview' : 'error')
-  const [errorMsg, setErrorMsg] = useState(captureError ?? (initialBlob ? '' : '캡처된 이미지가 없습니다.'))
+export default function WeeklyReportModal({ targetEl, weekLabel, memberName, acquireToken, settings = {}, onClose }) {
+  const [status, setStatus] = useState('capturing')
+  const [errorMsg, setErrorMsg] = useState('')
+  const [previewUrl, setPreviewUrl] = useState(null)
+  const blobRef = useRef(null)
+
+  useEffect(() => {
+    if (!targetEl) {
+      setStatus('error')
+      setErrorMsg('캡쳐할 영역을 찾을 수 없습니다.')
+      return
+    }
+    html2canvas(targetEl, { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false })
+      .then(canvas => {
+        canvas.toBlob(blob => {
+          blobRef.current = blob
+          setPreviewUrl(URL.createObjectURL(blob))
+          setStatus('preview')
+        }, 'image/png')
+      })
+      .catch(() => {
+        setStatus('error')
+        setErrorMsg('화면 캡쳐에 실패했습니다.')
+      })
+  }, [targetEl])
 
   const handleSend = async () => {
     setStatus('sending')
@@ -54,6 +75,12 @@ export default function WeeklyReportModal({ initialBlob, captureError, weekLabel
 
   return (
     <Modal title="📸 주간 업무 계획 전송" onClose={onClose} footer={footer} size="lg">
+      {status === 'capturing' && (
+        <div className="flex flex-col items-center justify-center py-12 gap-3 text-jira-muted">
+          <div className="text-3xl animate-pulse">📸</div>
+          <div className="text-sm">화면을 캡쳐하는 중...</div>
+        </div>
+      )}
       {status === 'sending' && (
         <div className="flex flex-col items-center justify-center py-12 gap-3 text-jira-muted">
           <div className="text-3xl animate-pulse">📤</div>
@@ -63,11 +90,7 @@ export default function WeeklyReportModal({ initialBlob, captureError, weekLabel
       {(status === 'preview' || status === 'success') && previewUrl && (
         <div className="flex flex-col gap-2">
           <p className="text-xs text-jira-muted">아래 이미지가 Teams로 전송됩니다. ({weekLabel})</p>
-          <img
-            src={previewUrl}
-            alt="주간 업무 계획 미리보기"
-            className="w-full rounded border border-jira-border"
-          />
+          <img src={previewUrl} alt="주간 업무 계획 미리보기" className="w-full rounded border border-jira-border" />
         </div>
       )}
       {status === 'error' && (
