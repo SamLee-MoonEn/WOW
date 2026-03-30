@@ -60,7 +60,10 @@ export default function StatusBoard({ members, myMemberId, isAdmin, onUpdatePres
     for (const g of allGroups) {
       const groupMembers = filtered.filter(m => (m.group || '') === g)
       if (groupMembers.length === 0) continue
-      groupedRows.push({ type: 'header', label: g || '기타' })
+      const gWorking = groupMembers.filter(m => (m.presence || 'working') === 'working').length
+      const gVacation = groupMembers.filter(m => (m.presence || 'working') === 'vacation').length
+      const gOff = groupMembers.filter(m => (m.presence || 'working') === 'off').length
+      groupedRows.push({ type: 'header', label: g || '기타', stats: { working: gWorking, vacation: gVacation, off: gOff, total: groupMembers.length } })
       sortWithinGroup(groupMembers).forEach(m => groupedRows.push({ type: 'member', member: m }))
     }
   } else {
@@ -144,10 +147,19 @@ export default function StatusBoard({ members, myMemberId, isAdmin, onUpdatePres
             <tbody className="divide-y divide-jira-border">
               {groupedRows.map((row, rowIdx) => {
                 if (row.type === 'header') {
+                  const s = row.stats
                   return (
                     <tr key={`grp-${row.label}`} className="bg-jira-bg">
                       <td colSpan={5} className="px-4 py-1.5">
-                        <span className="text-[11px] font-bold text-jira-muted uppercase tracking-wide">{row.label}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-bold text-jira-muted uppercase tracking-wide">{row.label}</span>
+                          <span className="text-[10px] text-jira-muted">({s.total}명)</span>
+                          <div className="flex items-center gap-2 ml-auto">
+                            {s.working > 0 && <span className="text-[10px] text-green-600 font-semibold">업무 중 {s.working}</span>}
+                            {s.vacation > 0 && <span className="text-[10px] text-sky-600 font-semibold">휴가 {s.vacation}</span>}
+                            {s.off > 0 && <span className="text-[10px] text-jira-muted">종료 {s.off}</span>}
+                          </div>
+                        </div>
                       </td>
                     </tr>
                   )
