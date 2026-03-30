@@ -24,9 +24,12 @@ function DividerItem({ task, taskKey, canEdit, onDelete, onDropBefore }) {
           if (dragId && dragId !== task.id) onDropBefore(dragId, fromKey)
         }}
         onDragEnd={() => setIsDragOver(false)}
-        className="group/div flex items-center gap-1 my-1 cursor-grab active:cursor-grabbing active:opacity-50"
+        className="group/div flex items-center gap-1.5 my-1.5 py-1 px-1 rounded cursor-grab active:cursor-grabbing active:opacity-50 hover:bg-gray-100 transition-colors"
       >
-        <hr className="flex-1 border-t border-jira-border" />
+        <div className="flex-1 flex items-center gap-1">
+          <span className="opacity-0 group-hover/div:opacity-100 text-[10px] text-gray-400 transition-opacity select-none">⠿</span>
+          <hr className="flex-1 border-t-2 border-gray-300 group-hover/div:border-jira-blue transition-colors" />
+        </div>
         {canEdit && (
           <button
             onClick={onDelete}
