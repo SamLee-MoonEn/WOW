@@ -22,22 +22,54 @@ export default function WeeklyReportModal({ targetEl, weekLabel, memberName, acq
       backgroundColor: '#ffffff',
       logging: false,
       onclone: (doc) => {
+        // html2canvas는 inline-flex 텍스트 정렬을 렌더링 못함
+        // → 배지를 캔버스로 미리 그린 이미지로 교체
         doc.querySelectorAll('[data-status-badge]').forEach(el => {
-          // html2canvas는 inline-flex items-center를 렌더링 못함 → 완전 제거
-          el.style.cssText = `
-            display: inline-block;
-            text-align: center;
-            min-width: 24px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            white-space: nowrap;
-            line-height: normal;
-          `
-          // 기존 배경/텍스트/테두리 색상은 class에서 유지됨
+          const text = el.textContent.trim()
+          if (!text) return
+          try {
+            const cs = doc.defaultView?.getComputedStyle(el) ?? getComputedStyle(el)
+            const bgColor = cs.backgroundColor
+            const textColor = cs.color
+            const borderColor = cs.borderColor
+            const w = el.offsetWidth || 40
+            const h = el.offsetHeight || 16
+
+            const c = document.createElement('canvas')
+            c.width = w * 2
+            c.height = h * 2
+            const ctx = c.getContext('2d')
+            ctx.scale(2, 2)
+
+            // 배경
+            ctx.fillStyle = bgColor
+            ctx.beginPath()
+            ctx.roundRect(0, 0, w, h, 3)
+            ctx.fill()
+
+            // 테두리
+            ctx.strokeStyle = borderColor
+            ctx.lineWidth = 1
+            ctx.beginPath()
+            ctx.roundRect(0.5, 0.5, w - 1, h - 1, 3)
+            ctx.stroke()
+
+            // 텍스트 (정확히 중앙)
+            ctx.fillStyle = textColor
+            ctx.font = 'bold 10px system-ui, -apple-system, sans-serif'
+            ctx.textAlign = 'center'
+            ctx.textBaseline = 'middle'
+            ctx.fillText(text, w / 2, h / 2)
+
+            const img = doc.createElement('img')
+            img.src = c.toDataURL()
+            img.style.width = w + 'px'
+            img.style.height = h + 'px'
+            img.style.display = 'inline-block'
+            img.style.verticalAlign = 'middle'
+            img.style.flexShrink = '0'
+            el.replaceWith(img)
+          } catch { /* 실패 시 원본 유지 */ }
         })
         doc.querySelectorAll('[data-task-row]').forEach(el => {
           el.style.alignItems = 'center'
