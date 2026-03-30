@@ -22,10 +22,12 @@ export default function WeeklyReportModal({ targetEl, weekLabel, memberName, acq
       backgroundColor: '#ffffff',
       logging: false,
       onclone: (doc) => {
-        doc.querySelectorAll('[class*="font-bold"]').forEach(el => {
+        doc.querySelectorAll('[data-status-badge]').forEach(el => {
           el.style.lineHeight = '1'
           el.style.paddingTop = '0'
-          el.style.marginTop = '0'
+          el.style.paddingBottom = '0'
+          el.style.display = 'inline-block'
+          el.style.verticalAlign = 'middle'
         })
       },
     })
