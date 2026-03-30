@@ -368,7 +368,15 @@ function Board() {
           members={wow.state.members.filter(m => m.role !== 'external')}
           myMemberId={myMemberId}
           wk={wk}
-          onCopy={(toKey) => { wow.copyTask(modal.fromKey, toKey, modal.task.id); setModal(null) }}
+          baseWeekOffset={wow.state.baseWeekOffset}
+          onCopy={({ targetMemberId: mid, selectedDays: days, repeatWeeks: rw, weekOffset: wo }) => {
+            for (let w = 0; w < rw; w++) {
+              const weekInfo = getWeekKeys(wow.state.baseWeekOffset + w)
+              const wKey = wo === 0 ? weekInfo.current : weekInfo.prev
+              days.forEach(d => wow.copyTask(modal.fromKey, `${mid}_${wKey}_${d}`, modal.task.id))
+            }
+            setModal(null)
+          }}
           onClose={() => setModal(null)}
         />
       )}

@@ -3,7 +3,9 @@ import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import { DAYS } from '../../utils/weekUtils'
 
-export default function CopyTaskModal({ task, fromKey, members, myMemberId, wk, onCopy, onClose }) {
+const DAY_LABELS = ['월', '화', '수', '목', '금']
+
+export default function CopyTaskModal({ task, fromKey, members, myMemberId, wk, baseWeekOffset, onCopy, onClose }) {
   const fromParts = fromKey.split('_')
   const sourceMemberId = fromParts[0]
   const sourceDayIndex = parseInt(fromParts[fromParts.length - 1])
@@ -15,13 +17,31 @@ export default function CopyTaskModal({ task, fromKey, members, myMemberId, wk, 
   const [targetMemberId, setTargetMemberId] = useState(myMemberId || members[0]?.id || '')
   const [weekOffset, setWeekOffset] = useState(0)
   const [dayIndex, setDayIndex] = useState(defaultDay)
+  const [multiDay, setMultiDay] = useState(false)
+  const [selectedDays, setSelectedDays] = useState(new Set([defaultDay]))
+  const [repeatWeeks, setRepeatWeeks] = useState(1)
 
   const weekKey = weekOffset === 0 ? wk.current : wk.prev
 
+  const toggleDay = (d) => {
+    setSelectedDays(prev => {
+      const next = new Set(prev)
+      next.has(d) ? next.delete(d) : next.add(d)
+      return next
+    })
+  }
+
   const handleCopy = () => {
     if (!targetMemberId) return
-    onCopy(`${targetMemberId}_${weekKey}_${dayIndex}`)
+    if (multiDay) {
+      onCopy({ targetMemberId, selectedDays: [...selectedDays].sort(), repeatWeeks, weekOffset })
+    } else {
+      onCopy({ targetMemberId, selectedDays: [dayIndex], repeatWeeks: 1, weekOffset })
+    }
   }
+
+  const dayCount = multiDay ? selectedDays.size : 1
+  const totalCopies = dayCount * (multiDay ? repeatWeeks : 1)
 
   return (
     <Modal
@@ -30,7 +50,9 @@ export default function CopyTaskModal({ task, fromKey, members, myMemberId, wk, 
       footer={
         <>
           <Button variant="outline" onClick={onClose}>취소</Button>
-          <Button variant="primary" onClick={handleCopy}>복사</Button>
+          <Button variant="primary" onClick={handleCopy}>
+            {totalCopies > 1 ? `${totalCopies}건 복사` : '복사'}
+          </Button>
         </>
       }
     >
@@ -86,24 +108,74 @@ export default function CopyTaskModal({ task, fromKey, members, myMemberId, wk, 
           </div>
         </div>
 
-        {/* 요일 */}
-        <div>
-          <label className="block text-[12px] font-semibold text-jira-dark mb-1.5">요일</label>
-          <div className="grid grid-cols-5 gap-1.5">
-            {DAYS.map((d, i) => (
-              <button
-                key={i}
-                onClick={() => setDayIndex(i)}
-                className={`py-2 rounded-lg border text-[13px] font-medium transition-colors ${
-                  dayIndex === i
-                    ? 'bg-jira-blue text-white border-jira-blue'
-                    : 'border-jira-border text-jira-muted hover:border-jira-blue hover:text-jira-blue'
-                }`}
-              >
-                {d}
-              </button>
-            ))}
+        {/* 요일 — 단일 선택 */}
+        {!multiDay && (
+          <div>
+            <label className="block text-[12px] font-semibold text-jira-dark mb-1.5">요일</label>
+            <div className="grid grid-cols-5 gap-1.5">
+              {DAYS.map((d, i) => (
+                <button
+                  key={i}
+                  onClick={() => setDayIndex(i)}
+                  className={`py-2 rounded-lg border text-[13px] font-medium transition-colors ${
+                    dayIndex === i
+                      ? 'bg-jira-blue text-white border-jira-blue'
+                      : 'border-jira-border text-jira-muted hover:border-jira-blue hover:text-jira-blue'
+                  }`}
+                >
+                  {d}
+                </button>
+              ))}
+            </div>
           </div>
+        )}
+
+        {/* 반복 옵션 */}
+        <div>
+          <label className="flex items-center gap-2 text-[13px] cursor-pointer text-jira-dark">
+            <input
+              type="checkbox"
+              checked={multiDay}
+              onChange={e => setMultiDay(e.target.checked)}
+              className="w-4 h-4 rounded accent-jira-blue"
+            />
+            여러 요일에 반복 복사
+          </label>
+          {multiDay && (
+            <div className="space-y-2 mt-2 ml-6">
+              <div className="flex gap-1.5">
+                {DAY_LABELS.map((label, d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => toggleDay(d)}
+                    className={`w-8 h-8 rounded-full text-[12px] font-semibold border transition-colors ${
+                      selectedDays.has(d)
+                        ? 'bg-jira-blue text-white border-jira-blue'
+                        : 'bg-white text-jira-muted border-jira-border hover:border-jira-blue'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 text-[13px] text-jira-mid">
+                <span>매주 반복:</span>
+                <select
+                  value={repeatWeeks}
+                  onChange={e => setRepeatWeeks(Number(e.target.value))}
+                  className="border border-jira-border rounded px-2 py-0.5 text-[12px] bg-white"
+                >
+                  <option value={1}>이번 주만</option>
+                  <option value={2}>2주</option>
+                  <option value={3}>3주</option>
+                  <option value={4}>4주</option>
+                  <option value={6}>6주</option>
+                  <option value={8}>8주</option>
+                </select>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </Modal>
