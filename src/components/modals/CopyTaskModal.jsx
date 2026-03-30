@@ -12,7 +12,7 @@ export default function CopyTaskModal({ task, fromKey, members, wk, onCopy, onCl
   const sourceMember = members.find(m => m.id === sourceMemberId)
   const sourceDay = !isNaN(sourceDayIndex) ? DAYS[sourceDayIndex] : null
 
-  const [targetMemberId, setTargetMemberId] = useState(members[0]?.id || '')
+  const [targetMemberId, setTargetMemberId] = useState(sourceMemberId || members[0]?.id || '')
   const [weekOffset, setWeekOffset] = useState(0)
   const [dayIndex, setDayIndex] = useState(defaultDay)
 
