@@ -5,10 +5,10 @@ import MemberAvatar from './ui/MemberAvatar'
 
 export default function MemberSection({ member, isMe, isAdmin, showDayGrid = true, wk, tasks, onEditMember, onDeleteMember, onAddTask, onEditTask, onDeleteTask, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onMoveTask, onCopyTask, onWeeklyReport }) {
   const canEdit = (isMe || isAdmin) && showDayGrid
-  const sectionRef = useRef(null)
+  const currentWeekRef = useRef(null)
 
   return (
-    <div ref={sectionRef} className={`bg-white rounded-xl mb-6 overflow-hidden ${isMe ? 'shadow-md ring-2 ring-jira-blue ring-offset-1' : 'shadow-sm'}`}>
+    <div className={`bg-white rounded-xl mb-6 overflow-hidden ${isMe ? 'shadow-md ring-2 ring-jira-blue ring-offset-1' : 'shadow-sm'}`}>
       <div className={`group/header flex items-center justify-between px-5 py-3.5 border-b-2 ${isMe ? 'bg-jira-blue-light border-blue-200' : 'bg-jira-bg-alt border-jira-bg'}`}>
         <div className="text-lg font-bold flex items-center gap-2">
           <MemberAvatar member={member} size="md" /> {member.name}
@@ -17,7 +17,7 @@ export default function MemberSection({ member, isMe, isAdmin, showDayGrid = tru
         </div>
         <div className="flex gap-1.5 opacity-40 group-hover/header:opacity-100 transition-opacity">
           {onWeeklyReport && (
-            <Button variant="outline" size="sm" onClick={() => onWeeklyReport(sectionRef.current, member)}>📸 전송</Button>
+            <Button variant="outline" size="sm" onClick={() => onWeeklyReport(currentWeekRef.current, member)}>📸 전송</Button>
           )}
           {isAdmin && (
             <>
@@ -29,6 +29,7 @@ export default function MemberSection({ member, isMe, isAdmin, showDayGrid = tru
       </div>
       <div className="p-4">
         <div className="grid grid-cols-2 gap-4 max-[1024px]:grid-cols-1">
+          <div ref={currentWeekRef}>
           <WeekBlock
             member={member}
             weekKey={wk.current}
@@ -50,6 +51,7 @@ export default function MemberSection({ member, isMe, isAdmin, showDayGrid = tru
             onMoveTask={onMoveTask}
             onCopyTask={onCopyTask}
           />
+          </div>
           <WeekBlock
             member={member}
             weekKey={wk.prev}
