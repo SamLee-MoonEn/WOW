@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { AuthenticatedTemplate, UnauthenticatedTemplate } from '@azure/msal-react'
 import Header from './components/Header'
 import InfoBanner from './components/InfoBanner'
@@ -13,6 +13,7 @@ import ConfirmDialog from './components/modals/ConfirmDialog'
 import TeamsReportModal from './components/modals/TeamsReportModal'
 import AppSettingsModal from './components/modals/AppSettingsModal'
 import CopyTaskModal from './components/modals/CopyTaskModal'
+import WeeklyReportModal from './components/modals/WeeklyReportModal'
 import { getTodayTasks } from './utils/teamsUtils'
 import { fetchProfilePhoto } from './utils/graphUtils'
 import { useWOWState } from './hooks/useWOWState'
@@ -29,6 +30,7 @@ function Board() {
   const [confirm, setConfirm] = useState(null)
   const [showSummaryView, setShowSummaryView] = useState(false)
   const [myTasksOnly, setMyTasksOnly] = useState(false)
+  const boardRef = useRef(null)
 
   const wk = getWeekKeys(wow.state.baseWeekOffset)
 
@@ -212,21 +214,33 @@ function Board() {
               onNext={() => wow.shiftWeeks(1)}
               onToday={wow.goToCurrentWeek}
               isCurrentWeek={wow.state.baseWeekOffset === 0}
-              rightSlot={myMemberId ? (
-                <button
-                  onClick={() => setMyTasksOnly(v => !v)}
-                  className={`flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-lg border transition-colors ${
-                    myTasksOnly
-                      ? 'bg-jira-blue text-white border-jira-blue font-semibold'
-                      : 'bg-white border-jira-border text-jira-muted hover:border-jira-blue hover:text-jira-blue'
-                  }`}
-                >
-                  <span>👤</span>
-                  <span>내 일감만 보기</span>
-                </button>
-              ) : null}
+              rightSlot={
+                <div className="flex items-center gap-2">
+                  {myMemberId && (
+                    <button
+                      onClick={() => setMyTasksOnly(v => !v)}
+                      className={`flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-lg border transition-colors ${
+                        myTasksOnly
+                          ? 'bg-jira-blue text-white border-jira-blue font-semibold'
+                          : 'bg-white border-jira-border text-jira-muted hover:border-jira-blue hover:text-jira-blue'
+                      }`}
+                    >
+                      <span>👤</span>
+                      <span>내 일감만 보기</span>
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setModal({ type: 'weeklyReport' })}
+                    className="flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-lg border border-jira-border bg-white text-jira-muted hover:border-jira-blue hover:text-jira-blue transition-colors"
+                  >
+                    <span>📸</span>
+                    <span>주간 계획 전송</span>
+                  </button>
+                </div>
+              }
             />
 
+            <div ref={boardRef}>
             {(() => {
               const displayItems = myTasksOnly
                 ? boardItems.filter(item => item.type === 'member' && item.member.id === myMemberId)
@@ -279,6 +293,7 @@ function Board() {
                 )
               )
             })()}
+            </div>
           </>
         )}
       </div>
@@ -384,6 +399,17 @@ function Board() {
         <AppSettingsModal
           settings={wow.state.settings ?? {}}
           onSave={(s) => wow.updateSettings(s)}
+          onClose={() => setModal(null)}
+        />
+      )}
+
+      {modal?.type === 'weeklyReport' && (
+        <WeeklyReportModal
+          boardRef={boardRef}
+          weekLabel={`WK${wk.prevWk}~${wk.currentWk}`}
+          memberName={displayName}
+          acquireToken={acquireToken}
+          settings={wow.state.settings}
           onClose={() => setModal(null)}
         />
       )}

@@ -1,0 +1,117 @@
+import { useState, useEffect, useRef } from 'react'
+import html2canvas from 'html2canvas'
+import Modal from '../ui/Modal'
+import Button from '../ui/Button'
+import { uploadWeeklyReport, cleanupOldReports } from '../../utils/graphUtils'
+import { sendToTeamsWebhook } from '../../utils/teamsUtils'
+
+export default function WeeklyReportModal({ boardRef, weekLabel, memberName, acquireToken, settings = {}, onClose }) {
+  const [status, setStatus] = useState('capturing') // capturing | preview | sending | success | error
+  const [errorMsg, setErrorMsg] = useState('')
+  const [previewUrl, setPreviewUrl] = useState(null)
+  const blobRef = useRef(null)
+
+  useEffect(() => {
+    if (!boardRef?.current) {
+      setStatus('error')
+      setErrorMsg('캡쳐할 영역을 찾을 수 없습니다.')
+      return
+    }
+    html2canvas(boardRef.current, { scale: 2, useCORS: true, backgroundColor: '#f4f5f7' })
+      .then(canvas => {
+        canvas.toBlob(blob => {
+          blobRef.current = blob
+          setPreviewUrl(URL.createObjectURL(blob))
+          setStatus('preview')
+        }, 'image/png')
+      })
+      .catch(() => {
+        setStatus('error')
+        setErrorMsg('화면 캡쳐에 실패했습니다.')
+      })
+  }, [boardRef])
+
+  const handleSend = async () => {
+    setStatus('sending')
+    try {
+      const weekKey = weekLabel.replace(/[^a-zA-Z0-9가-힣_-]/g, '-')
+      const filename = `${weekKey}-${memberName}.png`
+      const imageUrl = await uploadWeeklyReport(blobRef.current, filename, acquireToken)
+
+      const webhookUrl = settings.webhookUrl || import.meta.env.VITE_TEAMS_WEBHOOK_URL
+      if (!webhookUrl) throw new Error('Webhook URL이 설정되지 않았습니다.')
+
+      const payload = {
+        title: `${memberName} 주간 업무 계획 · ${weekLabel}`,
+        memberName,
+        message: `${memberName} 주간 업무 계획 · ${weekLabel}`,
+        imageUrl,
+        attachments: [{ contentType: 'text/html', content: `<img src="${imageUrl}" alt="주간 업무 계획" />` }],
+      }
+      const res = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) throw new Error(`전송 실패 (HTTP ${res.status})`)
+
+      await cleanupOldReports(acquireToken)
+      setStatus('success')
+    } catch (e) {
+      setErrorMsg(e.message)
+      setStatus('error')
+    }
+  }
+
+  const footer = (
+    <>
+      {status === 'success' && (
+        <span className="text-sm text-jira-green font-medium mr-auto">✅ 전송 완료</span>
+      )}
+      {status === 'error' && (
+        <span className="text-sm text-jira-red font-medium mr-auto">❌ {errorMsg}</span>
+      )}
+      {status === 'preview' && (
+        <Button variant="primary" size="sm" onClick={handleSend}>Teams 전송</Button>
+      )}
+      <Button variant="ghost" size="sm" onClick={onClose}>
+        {status === 'success' ? '닫기' : '취소'}
+      </Button>
+    </>
+  )
+
+  return (
+    <Modal title="📸 주간 업무 계획 전송" onClose={onClose} footer={footer} size="lg">
+      {status === 'capturing' && (
+        <div className="flex flex-col items-center justify-center py-12 gap-3 text-jira-muted">
+          <div className="text-3xl animate-pulse">📸</div>
+          <div className="text-sm">화면을 캡쳐하는 중...</div>
+        </div>
+      )}
+      {status === 'sending' && (
+        <div className="flex flex-col items-center justify-center py-12 gap-3 text-jira-muted">
+          <div className="text-3xl animate-pulse">📤</div>
+          <div className="text-sm">OneDrive 업로드 후 Teams로 전송 중...</div>
+        </div>
+      )}
+      {(status === 'preview' || status === 'success') && previewUrl && (
+        <div className="flex flex-col gap-2">
+          <p className="text-xs text-jira-muted">
+            아래 이미지가 Teams로 전송됩니다. ({weekLabel})
+          </p>
+          <img
+            src={previewUrl}
+            alt="주간 업무 계획 미리보기"
+            className="w-full rounded border border-jira-border"
+          />
+        </div>
+      )}
+      {status === 'error' && (
+        <div className="flex flex-col items-center justify-center py-12 gap-3">
+          <div className="text-3xl">⚠️</div>
+          <div className="text-sm text-jira-muted">{errorMsg}</div>
+        </div>
+      )}
+    </Modal>
+  )
+}

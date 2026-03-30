@@ -11,8 +11,8 @@ export function useAuth() {
   const logout = () =>
     instance.logoutPopup({ postLogoutRedirectUri: window.location.origin })
 
-  const acquireToken = async () => {
-    const res = await instance.acquireTokenSilent({ scopes: ['User.Read'], account })
+  const acquireToken = async (scopes = ['User.Read']) => {
+    const res = await instance.acquireTokenSilent({ scopes, account })
     return res.accessToken
   }
 
