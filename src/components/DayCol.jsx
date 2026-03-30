@@ -28,7 +28,7 @@ function DividerItem({ task, taskKey, canEdit, onDelete, onDropBefore }) {
       >
         <div className="flex-1 flex items-center gap-1">
           <span className="opacity-0 group-hover/div:opacity-100 text-[10px] text-gray-400 transition-opacity select-none">⠿</span>
-          <hr className="flex-1 border-t-2 border-gray-300 group-hover/div:border-jira-blue transition-colors" />
+          <hr className="flex-1 border-t border-gray-300 group-hover/div:border-t-2 group-hover/div:border-jira-blue transition-colors" />
         </div>
         {canEdit && (
           <button
