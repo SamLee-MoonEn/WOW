@@ -7,10 +7,8 @@ export default function AppSettingsModal({ settings, onSave, onClose }) {
   const [webhookUrl,    setWebhookUrl]    = useState(settings.webhookUrl    ?? import.meta.env.VITE_TEAMS_WEBHOOK_URL ?? '')
   const [reportHeader,  setReportHeader]  = useState(settings.reportHeader  ?? '')
   const [reportFooter,  setReportFooter]  = useState(settings.reportFooter  ?? '')
-  const [teamsChatId,   setTeamsChatId]   = useState(settings.teamsChatId   ?? '')
-
   const handleSave = () => {
-    onSave({ webhookUrl: webhookUrl.trim(), reportHeader: reportHeader.trim(), reportFooter: reportFooter.trim(), teamsChatId: teamsChatId.trim() })
+    onSave({ webhookUrl: webhookUrl.trim(), reportHeader: reportHeader.trim(), reportFooter: reportFooter.trim() })
     onClose()
   }
 
@@ -35,18 +33,6 @@ export default function AppSettingsModal({ settings, onSave, onClose }) {
           />
           {webhookUrl && (
             <p className="text-[11px] text-green-600 mt-1">✓ Webhook URL이 설정되어 있습니다.</p>
-          )}
-        </FormField>
-
-        {/* Teams 그룹 채팅 ID */}
-        <FormField label="Teams 그룹 채팅 ID" hint="주간 업무 계획 이미지를 전송할 그룹 채팅 ID입니다. Teams 채팅 URL에서 확인 (19:xxx@thread.v2)">
-          <Input
-            value={teamsChatId}
-            onChange={e => setTeamsChatId(e.target.value)}
-            placeholder="19:xxxxxxxxxxxxxxxxxx@thread.v2"
-          />
-          {teamsChatId && (
-            <p className="text-[11px] text-green-600 mt-1">✓ 그룹 채팅 ID가 설정되어 있습니다.</p>
           )}
         </FormField>
 
