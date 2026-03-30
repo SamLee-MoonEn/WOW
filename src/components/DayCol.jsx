@@ -55,7 +55,7 @@ export default function DayCol({ member, weekKey, dayIndex, date, canEdit, isAdm
   }
 
   const handleDragLeave = (e) => {
-    if (!e.currentTarget.contains(e.relatedTarget)) setIsDragOver(false)
+    if (!e.relatedTarget || !e.currentTarget.contains(e.relatedTarget)) setIsDragOver(false)
   }
 
   const handleDrop = (e) => {
@@ -69,12 +69,15 @@ export default function DayCol({ member, weekKey, dayIndex, date, canEdit, isAdm
     onMoveTask(fromKey, key, taskId, null)
   }
 
+  const handleDragEnd = () => setIsDragOver(false)
+
   return (
     <div
       className={`border-r border-jira-border last:border-r-0 min-h-[160px] flex flex-col transition-colors ${isDragOver ? 'bg-jira-blue-light ring-2 ring-inset ring-jira-blue' : ''}`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      onDragEnd={handleDragEnd}
     >
       <div
         className={`text-center py-1.5 px-1 text-[11px] font-semibold border-b border-jira-border ${
