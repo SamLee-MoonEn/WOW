@@ -9,12 +9,19 @@ const PRESENCE = {
 
 const PRESENCE_ORDER = { working: 0, vacation: 1, off: 2 }
 
-function MemberCard({ member }) {
+function MemberCard({ member, isMe, onUpdateWorkDesc }) {
   const p = member.presence || 'working'
   const cfg = PRESENCE[p] || PRESENCE.working
   const isOff = p === 'off'
   const [message, setMessage] = useState('')
+  const [editingDesc, setEditingDesc] = useState(false)
+  const [descDraft, setDescDraft] = useState('')
   const canContact = member.email && !isOff
+
+  const commitDesc = (value) => {
+    onUpdateWorkDesc?.(member.id, value.trim())
+    setEditingDesc(false)
+  }
 
   const handleSend = () => {
     if (!message.trim()) return
@@ -65,10 +72,39 @@ function MemberCard({ member }) {
 
       {/* 업무 설명 */}
       <div className="mt-2.5 pt-2.5 border-t border-jira-border min-h-[36px]">
-        {member.workDesc ? (
-          <p className="text-[12px] text-jira-dark leading-snug">{member.workDesc}</p>
+        {isMe ? (
+          editingDesc ? (
+            <input
+              value={descDraft}
+              onChange={e => setDescDraft(e.target.value)}
+              onBlur={() => commitDesc(descDraft)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') commitDesc(descDraft)
+                if (e.key === 'Escape') setEditingDesc(false)
+              }}
+              autoFocus
+              maxLength={60}
+              placeholder="현재 업무를 간단히 입력... (Enter 저장)"
+              className="text-[12px] text-jira-dark bg-transparent border-b border-jira-blue focus:outline-none w-full"
+            />
+          ) : (
+            <div
+              className="flex items-center gap-1 cursor-pointer group/desc"
+              onClick={() => { setEditingDesc(true); setDescDraft(member.workDesc || '') }}
+              title="클릭하여 업무 설명 편집"
+            >
+              <p className={`text-[12px] leading-snug ${member.workDesc ? 'text-jira-dark' : 'text-gray-300 italic'}`}>
+                {member.workDesc || '업무 설명 추가...'}
+              </p>
+              <span className="opacity-0 group-hover/desc:opacity-50 text-[10px] transition-opacity">✏️</span>
+            </div>
+          )
         ) : (
-          <p className="text-[12px] text-gray-300 italic">업무 설명 없음</p>
+          member.workDesc ? (
+            <p className="text-[12px] text-jira-dark leading-snug">{member.workDesc}</p>
+          ) : (
+            <p className="text-[12px] text-gray-300 italic">업무 설명 없음</p>
+          )
         )}
       </div>
 
@@ -97,7 +133,7 @@ function MemberCard({ member }) {
   )
 }
 
-function GroupSection({ label, members }) {
+function GroupSection({ label, members, myMemberId, onUpdateWorkDesc }) {
   return (
     <div>
       {label && (
@@ -107,14 +143,15 @@ function GroupSection({ label, members }) {
         </div>
       )}
       <div className="grid grid-cols-2 gap-3 max-[640px]:grid-cols-1 sm:grid-cols-3 lg:grid-cols-4">
-        {members.map(m => <MemberCard key={m.id} member={m} />)}
+        {members.map(m => <MemberCard key={m.id} member={m} isMe={m.id === myMemberId} onUpdateWorkDesc={onUpdateWorkDesc} />)}
       </div>
     </div>
   )
 }
 
-export default function ExternalSummaryView({ members }) {
+export default function ExternalSummaryView({ members, myMemberId, onUpdateWorkDesc }) {
   const [selectedTags, setSelectedTags] = useState([])
+  const [tagSearch, setTagSearch] = useState('')
 
   const RANK_ORDER = { '팀장': 0, '파트장': 1 }
   const getRankOrder = (rank) => RANK_ORDER[rank] ?? 2
@@ -131,6 +168,12 @@ export default function ExternalSummaryView({ members }) {
 
   // 전체 태그 목록
   const allTags = [...new Set(sorted.flatMap(m => m.tags || []))]
+
+  // 태그 검색 필터
+  const searchLower = tagSearch.trim().toLowerCase()
+  const visibleTags = searchLower
+    ? allTags.filter(t => t.toLowerCase().includes(searchLower))
+    : allTags
 
   // 태그 필터 적용
   const filtered = selectedTags.length === 0
@@ -177,29 +220,43 @@ export default function ExternalSummaryView({ members }) {
 
       {/* 태그 필터 */}
       {allTags.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          <span className="text-[11px] text-jira-muted font-semibold">태그 필터</span>
-          {allTags.map(t => (
-            <button
-              key={t}
-              onClick={() => toggleTag(t)}
-              className={`text-[11px] px-2.5 py-0.5 rounded-full border transition-colors ${
-                selectedTags.includes(t)
-                  ? 'bg-jira-blue text-white border-jira-blue font-semibold'
-                  : 'bg-white text-jira-muted border-jira-border hover:border-jira-blue hover:text-jira-blue'
-              }`}
-            >
-              {t}
-            </button>
-          ))}
-          {selectedTags.length > 0 && (
-            <button
-              onClick={() => setSelectedTags([])}
-              className="text-[11px] text-gray-400 hover:text-red-400 transition-colors"
-            >
-              ✕ 초기화
-            </button>
-          )}
+        <div className="flex flex-col gap-2 mb-4">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-jira-muted font-semibold flex-shrink-0">태그 필터</span>
+            <input
+              type="text"
+              value={tagSearch}
+              onChange={e => setTagSearch(e.target.value)}
+              placeholder="태그 검색..."
+              className="text-[11px] px-2.5 py-1 border border-jira-border rounded-lg focus:outline-none focus:border-jira-blue bg-white placeholder-gray-300 w-48"
+            />
+            {(selectedTags.length > 0 || tagSearch) && (
+              <button
+                onClick={() => { setSelectedTags([]); setTagSearch('') }}
+                className="text-[11px] text-gray-400 hover:text-red-400 transition-colors"
+              >
+                ✕ 초기화
+              </button>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {visibleTags.map(t => (
+              <button
+                key={t}
+                onClick={() => toggleTag(t)}
+                className={`text-[11px] px-2.5 py-0.5 rounded-full border transition-colors ${
+                  selectedTags.includes(t)
+                    ? 'bg-jira-blue text-white border-jira-blue font-semibold'
+                    : 'bg-white text-jira-muted border-jira-border hover:border-jira-blue hover:text-jira-blue'
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+            {searchLower && visibleTags.length === 0 && (
+              <span className="text-[11px] text-jira-muted italic">일치하는 태그가 없습니다</span>
+            )}
+          </div>
         </div>
       )}
 
@@ -212,11 +269,11 @@ export default function ExternalSummaryView({ members }) {
       ) : hasGroups ? (
         <div className="flex flex-col gap-6">
           {groupKeys.map(g => (
-            <GroupSection key={g || '__none__'} label={g || null} members={groupMap[g]} />
+            <GroupSection key={g || '__none__'} label={g || null} members={groupMap[g]} myMemberId={myMemberId} onUpdateWorkDesc={onUpdateWorkDesc} />
           ))}
         </div>
       ) : (
-        <GroupSection label={null} members={filtered} />
+        <GroupSection label={null} members={filtered} myMemberId={myMemberId} onUpdateWorkDesc={onUpdateWorkDesc} />
       )}
     </div>
   )

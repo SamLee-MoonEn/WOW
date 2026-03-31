@@ -204,7 +204,7 @@ function Board() {
         <InfoBanner />
 
 {isExternal || showSummaryView ? (
-          <ExternalSummaryView members={wow.state.members.filter(m => m.role !== 'external')} />
+          <ExternalSummaryView members={wow.state.members.filter(m => m.role !== 'external')} myMemberId={myMemberId} onUpdateWorkDesc={wow.updateWorkDesc} />
         ) : (
           <>
             <StatusBoard
