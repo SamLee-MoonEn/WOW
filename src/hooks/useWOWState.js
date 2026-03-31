@@ -107,6 +107,60 @@ export function useWOWState() {
     return subscribeSettings((data) => setSettings(data))
   }, [])
 
+  // ── 매일 오전 9시 자동 상태 리셋 ───────────────────────────────────
+  const dailyResetDoneRef = useRef(null)
+
+  useEffect(() => {
+    if (members.length === 0) return
+
+    const today = new Date().toISOString().split('T')[0]
+    if (dailyResetDoneRef.current === today) return
+
+    const now = new Date()
+    const hour = now.getHours()
+    if (hour < 9) return // 9시 이전에는 리셋하지 않음
+
+    let changed = false
+    const next = members.map(m => {
+      const p = m.presence || 'working'
+      // 종료 상태 → 업무 중
+      if (p === 'off') {
+        changed = true
+        return { ...m, presence: 'working', offAt: null }
+      }
+      // 휴가 종료일이 지남 → 업무 중
+      if (p === 'vacation' && m.vacationEnd && m.vacationEnd < today) {
+        changed = true
+        return { ...m, presence: 'working', vacationEnd: null }
+      }
+      return m
+    })
+
+    dailyResetDoneRef.current = today
+    if (changed) {
+      setMembers(next)
+      saveMembers(next)
+    }
+  }, [members])
+
+  // 9시 이전 진입 시 9시에 리셋 실행하도록 타이머 설정
+  useEffect(() => {
+    const now = new Date()
+    const hour = now.getHours()
+    if (hour >= 9) return // 이미 9시 이후면 위 effect에서 처리됨
+
+    const nineAm = new Date(now)
+    nineAm.setHours(9, 0, 0, 0)
+    const delay = nineAm.getTime() - now.getTime()
+
+    const timer = setTimeout(() => {
+      dailyResetDoneRef.current = null // 리셋 플래그 초기화하여 다시 실행
+      setMembers(prev => [...prev]) // 트리거 re-render
+    }, delay)
+
+    return () => clearTimeout(timer)
+  }, [])
+
   // ── 외부에 노출하는 state ──────────────────────────────────────────
   const state = { baseWeekOffset, members, tasks, settings }
 
