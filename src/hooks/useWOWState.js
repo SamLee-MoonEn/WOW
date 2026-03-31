@@ -8,6 +8,7 @@ import {
   saveSettings,
 } from '../utils/storage'
 import { uid } from '../utils/weekUtils'
+import { isWorkday } from '../utils/holidays'
 import { nextStatus } from '../utils/statusUtils'
 
 // 전체 tasks 맵에서 특정 멤버의 tasks를 short key(prefix 없음)로 추출
@@ -113,17 +114,29 @@ export function useWOWState() {
   useEffect(() => {
     if (members.length === 0) return
 
-    const today = new Date().toISOString().split('T')[0]
-    if (dailyResetDoneRef.current === today) return
-
     const now = new Date()
-    const hour = now.getHours()
-    if (hour < 9) return // 9시 이전에는 리셋하지 않음
+    const today = now.toISOString().split('T')[0]
+    if (dailyResetDoneRef.current === today) return
+    if (now.getHours() < 9) return // 9시 이전에는 리셋하지 않음
+    if (!isWorkday(now)) {
+      // 주말/공휴일에도 휴가 종료일 체크는 수행
+      dailyResetDoneRef.current = today
+      let changed = false
+      const next = members.map(m => {
+        if ((m.presence || 'working') === 'vacation' && m.vacationEnd && m.vacationEnd < today) {
+          changed = true
+          return { ...m, presence: 'working', vacationEnd: null }
+        }
+        return m
+      })
+      if (changed) { setMembers(next); saveMembers(next) }
+      return
+    }
 
     let changed = false
     const next = members.map(m => {
       const p = m.presence || 'working'
-      // 종료 상태 → 업무 중
+      // 종료 상태 → 업무 중 (업무일에만)
       if (p === 'off') {
         changed = true
         return { ...m, presence: 'working', offAt: null }
@@ -146,16 +159,15 @@ export function useWOWState() {
   // 9시 이전 진입 시 9시에 리셋 실행하도록 타이머 설정
   useEffect(() => {
     const now = new Date()
-    const hour = now.getHours()
-    if (hour >= 9) return // 이미 9시 이후면 위 effect에서 처리됨
+    if (now.getHours() >= 9) return
 
     const nineAm = new Date(now)
     nineAm.setHours(9, 0, 0, 0)
     const delay = nineAm.getTime() - now.getTime()
 
     const timer = setTimeout(() => {
-      dailyResetDoneRef.current = null // 리셋 플래그 초기화하여 다시 실행
-      setMembers(prev => [...prev]) // 트리거 re-render
+      dailyResetDoneRef.current = null
+      setMembers(prev => [...prev])
     }, delay)
 
     return () => clearTimeout(timer)
