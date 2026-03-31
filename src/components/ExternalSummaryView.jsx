@@ -116,7 +116,13 @@ function GroupSection({ label, members }) {
 export default function ExternalSummaryView({ members }) {
   const [selectedTags, setSelectedTags] = useState([])
 
+  const RANK_ORDER = { '팀장': 0, '파트장': 1 }
+  const getRankOrder = (rank) => RANK_ORDER[rank] ?? 2
+
   const sorted = [...members].sort((a, b) => {
+    const ra = getRankOrder(a.rank)
+    const rb = getRankOrder(b.rank)
+    if (ra !== rb) return ra - rb
     const pa = PRESENCE_ORDER[a.presence || 'working'] ?? 0
     const pb = PRESENCE_ORDER[b.presence || 'working'] ?? 0
     if (pa !== pb) return pa - pb
