@@ -46,8 +46,15 @@ export default function StatusBoard({ members, myMemberId, isAdmin, onUpdatePres
     ? members.filter(m => (m.group || '') === groupFilter)
     : members
 
-  // 부서별 그룹핑 + 부서 내 상태→이름순 정렬
+  // 직급 우선순위 (낮을수록 상위)
+  const RANK_ORDER = { '팀장': 0, '파트장': 1 }
+  const getRankOrder = (rank) => RANK_ORDER[rank] ?? 2
+
+  // 부서별 그룹핑 + 직급→상태→이름순 정렬
   const sortWithinGroup = (list) => [...list].sort((a, b) => {
+    const ra = getRankOrder(a.rank)
+    const rb = getRankOrder(b.rank)
+    if (ra !== rb) return ra - rb
     const pa = a.presence || 'working'
     const pb = b.presence || 'working'
     if (pa === 'working' && pb !== 'working') return -1
