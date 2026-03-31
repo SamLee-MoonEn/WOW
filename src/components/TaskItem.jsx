@@ -11,23 +11,10 @@ const styleMap = {
 
 const URL_RE = /(https?:\/\/[^\s<]+)/g
 
-function MemoWithLinks({ text }) {
-  const hasUrl = URL_RE.test(text)
-  URL_RE.lastIndex = 0
-  const urls = hasUrl ? text.match(URL_RE) : []
-  // 텍스트 부분만 (URL 제거) 잘라서 표시
-  const plainText = text.replace(URL_RE, '').trim()
-
-  return (
-    <span className="flex items-center gap-1">
-      {plainText && <span className="truncate">{plainText}</span>}
-      {urls.map((url, i) => (
-        <a key={i} href={url} target="_blank" rel="noopener noreferrer" title={url} onClick={e => e.stopPropagation()} className="inline-flex items-center text-jira-blue hover:text-blue-700 not-italic flex-shrink-0">
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-        </a>
-      ))}
-    </span>
-  )
+function getMemoUrls(text) {
+  if (!text) return []
+  const matches = text.match(URL_RE)
+  return matches || []
 }
 
 export default function TaskItem({ task, taskKey, canEdit, onEdit, onDelete, onCycleStatus, onDropBefore, onCopy }) {
@@ -57,7 +44,8 @@ export default function TaskItem({ task, taskKey, canEdit, onEdit, onDelete, onC
     if (dragId && dragId !== task.id) onDropBefore(dragId, fromKey)
   }
 
-  const hasActions = onCopy || canEdit
+  const memoUrls = getMemoUrls(task.memo)
+  const hasActions = onCopy || canEdit || memoUrls.length > 0
 
   return (
     <>
@@ -80,7 +68,7 @@ export default function TaskItem({ task, taskKey, canEdit, onEdit, onDelete, onC
             </span>
             {task.memo && (
               <span className="block text-[10.5px] text-jira-muted italic leading-snug mt-0.5 truncate">
-                <MemoWithLinks text={task.memo} />
+                {task.memo}
               </span>
             )}
           </span>
@@ -91,6 +79,22 @@ export default function TaskItem({ task, taskKey, canEdit, onEdit, onDelete, onC
           <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-[grid-template-rows] duration-150">
             <div className="overflow-hidden">
               <div className="flex items-center justify-end gap-1.5 pt-1.5 pb-0.5">
+                {memoUrls.map((url, i) => (
+                  <a
+                    key={i}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-6 h-6 flex items-center justify-center text-[13px] rounded border border-jira-border bg-white hover:bg-blue-50 hover:border-blue-300 text-jira-muted hover:text-jira-blue transition-colors"
+                    title={url}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                    </svg>
+                  </a>
+                ))}
                 {onCopy && (
                   <button
                     onClick={onCopy}
