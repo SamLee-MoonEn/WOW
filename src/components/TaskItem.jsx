@@ -93,8 +93,7 @@ export default memo(function TaskItem({ task, dayKey, canEdit, isAdmin, onEditTa
 
         {/* 액션바 — hover 시 아래로 슬라이드 */}
         {hasActions && (
-          <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-[grid-template-rows] duration-150">
-            <div className="overflow-hidden">
+          <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-[opacity] duration-100 h-0 group-hover:h-auto overflow-hidden">
               <div className="flex items-center justify-end gap-1.5 pt-1.5 pb-0.5">
                 {memoUrls.map((url, i) => (
                   <a
@@ -146,7 +145,6 @@ export default memo(function TaskItem({ task, dayKey, canEdit, isAdmin, onEditTa
                   </>
                 )}
               </div>
-            </div>
           </div>
         )}
       </div>
