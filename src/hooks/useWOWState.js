@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import {
   subscribeMembers,
   subscribeMemberTasks,
@@ -82,14 +82,24 @@ export function useWOWState() {
         member.id,
         (shortKeyTasks) => {
           setTasks((prev) => {
-            const next = { ...prev }
-            // 이 멤버의 기존 키 제거
-            for (const k of Object.keys(next)) {
-              if (k.startsWith(member.id + '_')) delete next[k]
-            }
-            // short key → full key로 복원
+            const prefix = member.id + '_'
+            // 변경 여부를 먼저 체크하여 불필요한 새 객체 생성 방지
+            const newEntries = {}
             for (const [k, v] of Object.entries(shortKeyTasks)) {
-              next[`${member.id}_${k}`] = v
+              newEntries[`${prefix}${k}`] = v
+            }
+            // 기존 키 목록과 비교
+            const prevKeys = Object.keys(prev).filter(k => k.startsWith(prefix))
+            const newKeys = Object.keys(newEntries)
+            if (prevKeys.length === newKeys.length && prevKeys.every(k => newEntries[k] === prev[k])) {
+              return prev // 변경 없으면 같은 참조 반환
+            }
+            const next = {}
+            for (const [k, v] of Object.entries(prev)) {
+              if (!k.startsWith(prefix)) next[k] = v
+            }
+            for (const [k, v] of Object.entries(newEntries)) {
+              next[k] = v
             }
             return next
           })
@@ -174,7 +184,7 @@ export function useWOWState() {
   }, [])
 
   // ── 외부에 노출하는 state ──────────────────────────────────────────
-  const state = { baseWeekOffset, members, tasks, settings }
+  const state = useMemo(() => ({ baseWeekOffset, members, tasks, settings }), [baseWeekOffset, members, tasks, settings])
 
   // 특정 멤버의 tasks를 Firestore에 저장
   const persistTasks = useCallback((memberId, newAllTasks) => {

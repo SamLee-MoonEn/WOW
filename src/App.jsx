@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { AuthenticatedTemplate, UnauthenticatedTemplate } from '@azure/msal-react'
 import Header from './components/Header'
 import InfoBanner from './components/InfoBanner'
@@ -154,40 +154,121 @@ function Board() {
   const isExternal = myMember?.role === 'external'
 
   // 외부인은 섹션 미표시, 내 섹션이 맨 위로 오도록 정렬
-  const visibleMembers = wow.state.members.filter(m => m.role !== 'external')
+  const visibleMembers = useMemo(() => wow.state.members.filter(m => m.role !== 'external'), [wow.state.members])
+
+  // 멤버별 tasks 분리 (각 MemberSection에 해당 멤버 tasks만 전달)
+  // 변경된 멤버만 새 참조를 생성하여 불필요한 리렌더 방지
+  const prevMemberTasksRef = useRef({})
+  const memberTasksMap = useMemo(() => {
+    const prev = prevMemberTasksRef.current
+    const map = {}
+    for (const m of visibleMembers) {
+      const prefix = m.id + '_'
+      const memberTasks = {}
+      for (const [key, val] of Object.entries(wow.state.tasks)) {
+        if (key.startsWith(prefix)) memberTasks[key] = val
+      }
+      // 이전과 동일하면 같은 참조 유지
+      const prevTasks = prev[m.id]
+      if (prevTasks) {
+        const prevKeys = Object.keys(prevTasks)
+        const newKeys = Object.keys(memberTasks)
+        if (prevKeys.length === newKeys.length && prevKeys.every(k => prevTasks[k] === memberTasks[k])) {
+          map[m.id] = prevTasks
+          continue
+        }
+      }
+      map[m.id] = memberTasks
+    }
+    prevMemberTasksRef.current = map
+    return map
+  }, [visibleMembers, wow.state.tasks])
 
   // Build board items with group headers
-  const myM = myMemberId && !isExternal ? visibleMembers.find(m => m.id === myMemberId) : null
-  const otherMembers = visibleMembers.filter(m => m.id !== myMemberId || isExternal)
+  const { boardItems, allGroups, hasGroups } = useMemo(() => {
+    const myM = myMemberId && !isExternal ? visibleMembers.find(m => m.id === myMemberId) : null
+    const otherMembers = visibleMembers.filter(m => m.id !== myMemberId || isExternal)
 
-  const groupMap = {}
-  for (const m of otherMembers) {
-    const g = m.group || ''
-    if (!groupMap[g]) groupMap[g] = []
-    groupMap[g].push(m)
-  }
+    const groupMap = {}
+    for (const m of otherMembers) {
+      const g = m.group || ''
+      if (!groupMap[g]) groupMap[g] = []
+      groupMap[g].push(m)
+    }
 
-  const boardItems = []
-  if (myM) boardItems.push({ type: 'member', member: myM })
+    const items = []
+    if (myM) items.push({ type: 'member', member: myM })
 
-  const groupKeys = Object.keys(groupMap).sort((a, b) => {
-    if (!a && b) return 1
-    if (a && !b) return -1
-    return a.localeCompare(b, 'ko')
-  })
+    const gKeys = Object.keys(groupMap).sort((a, b) => {
+      if (!a && b) return 1
+      if (a && !b) return -1
+      return a.localeCompare(b, 'ko')
+    })
 
-  // 부서 목록
-  const allGroups = [...new Set(visibleMembers.map(m => m.group || ''))].sort((a, b) => {
-    if (!a && b) return 1
-    if (a && !b) return -1
-    return a.localeCompare(b, 'ko')
-  })
-  const hasGroups = allGroups.some(g => g !== '')
+    for (const g of gKeys) {
+      if (g) items.push({ type: 'header', label: g })
+      for (const m of groupMap[g]) items.push({ type: 'member', member: m })
+    }
 
-  for (const g of groupKeys) {
-    if (g) boardItems.push({ type: 'header', label: g })
-    for (const m of groupMap[g]) boardItems.push({ type: 'member', member: m })
-  }
+    const groups = [...new Set(visibleMembers.map(m => m.group || ''))].sort((a, b) => {
+      if (!a && b) return 1
+      if (a && !b) return -1
+      return a.localeCompare(b, 'ko')
+    })
+
+    return { boardItems: items, allGroups: groups, hasGroups: groups.some(g => g !== '') }
+  }, [visibleMembers, myMemberId, isExternal])
+
+  // ── 필터링된 표시 항목 ──
+  const displayItems = useMemo(() => {
+    let items = boardItems
+    if (myTasksOnly) {
+      items = items.filter(item => item.type === 'member' && item.member.id === myMemberId)
+    }
+    if (groupFilter) {
+      items = items.filter(item => {
+        if (item.type === 'header') return item.label === groupFilter
+        if (item.type === 'member') return (item.member.group || '') === groupFilter || item.member.id === myMemberId
+        return true
+      })
+    }
+    return items
+  }, [boardItems, myTasksOnly, groupFilter, myMemberId])
+
+  // ── 안정적인 콜백 (MemberSection memo가 실질 작동하도록) ──
+  const handleCopyTask = useCallback((fromKey, task) => setModal({ type: 'copyTask', fromKey, task }), [])
+  const handleWeeklyReport = useCallback((el, member) => setModal({ type: 'weeklyReport', el, member }), [])
+  const handleOpenTeamsReport = useCallback(() => setModal({ type: 'teamsReport' }), [])
+  const handleEditMember = useCallback((member) => setModal({ type: 'editMember', member }), [])
+  const handleDeleteMember = useCallback((member) => openConfirm(
+    '담당자 삭제',
+    `'${member.name}'님의 모든 업무 데이터가 삭제됩니다. 계속하시겠습니까?`,
+    () => wow.deleteMember(member.id)
+  ), [wow.deleteMember])
+  const handleAddTask = useCallback((key, directData) => {
+    if (directData) {
+      wow.addTask(key, directData)
+    } else {
+      setModal({ type: 'addTask', key })
+    }
+  }, [wow.addTask])
+  const handleEditTask = useCallback((key, task) => setModal({ type: 'editTask', key, task }), [])
+  const handleDeleteTask = useCallback((key, taskId) => openConfirm(
+    '업무 삭제',
+    '이 업무를 삭제하시겠습니까?',
+    () => wow.deleteTask(key, taskId)
+  ), [wow.deleteTask])
+  const handleDeleteDivider = useCallback((key, taskId) => wow.deleteTask(key, taskId), [wow.deleteTask])
+  const handleAddCarryover = useCallback((key) => setModal({ type: 'addCarryover', key }), [])
+  const handleEditCarryover = useCallback((key, item2) => setModal({ type: 'editCarryover', key, item: item2 }), [])
+  const handleDeleteCarryover = useCallback((key, itemId) => openConfirm(
+    '이월 업무 삭제',
+    '이 이월 업무를 삭제하시겠습니까?',
+    () => wow.deleteTask(key, itemId)
+  ), [wow.deleteTask])
+  const handleEndOfDayForStatusBoard = useCallback(() => {
+    if (myMemberId) setModal({ type: 'teamsReport' })
+  }, [myMemberId])
 
   return (
     <div className="min-h-screen bg-jira-bg">
@@ -204,11 +285,11 @@ function Board() {
         <InfoBanner />
 
 {isExternal || showSummaryView ? (
-          <ExternalSummaryView members={wow.state.members.filter(m => m.role !== 'external')} myMemberId={myMemberId} onUpdateWorkDesc={wow.updateWorkDesc} />
+          <ExternalSummaryView members={visibleMembers} myMemberId={myMemberId} onUpdateWorkDesc={wow.updateWorkDesc} />
         ) : (
           <>
             <StatusBoard
-              members={wow.state.members.filter(m => m.role !== 'external')}
+              members={visibleMembers}
               myMemberId={myMemberId}
               isAdmin={isAdmin}
               onUpdatePresence={wow.updatePresence}
@@ -253,25 +334,13 @@ function Board() {
               }
             />
 
-            {(() => {
-              let displayItems = boardItems
-              if (myTasksOnly) {
-                displayItems = displayItems.filter(item => item.type === 'member' && item.member.id === myMemberId)
-              }
-              if (groupFilter) {
-                displayItems = displayItems.filter(item => {
-                  if (item.type === 'header') return item.label === groupFilter
-                  if (item.type === 'member') return (item.member.group || '') === groupFilter || item.member.id === myMemberId
-                  return true
-                })
-              }
-              if (displayItems.length === 0) return (
-                <div className="text-center py-16 text-jira-muted">
-                  <div className="text-5xl mb-3">👤</div>
-                  <div className="text-sm">{myTasksOnly ? '표시할 내 일감이 없습니다' : '담당자를 추가해주세요'}</div>
-                </div>
-              )
-              return displayItems.map((item) =>
+            {displayItems.length === 0 ? (
+              <div className="text-center py-16 text-jira-muted">
+                <div className="text-5xl mb-3">👤</div>
+                <div className="text-sm">{myTasksOnly ? '표시할 내 일감이 없습니다' : '담당자를 추가해주세요'}</div>
+              </div>
+            ) : (
+              displayItems.map((item) =>
                 item.type === 'header' ? (
                   <div key={`grp-${item.label}`} className="flex items-center gap-3 mb-2 mt-4 first:mt-0">
                     <span className="text-[12px] font-bold text-jira-muted uppercase tracking-wide">{item.label}</span>
@@ -285,43 +354,25 @@ function Board() {
                     isAdmin={isAdmin}
                     showDayGrid
                     wk={wk}
-                    tasks={wow.state.tasks}
+                    tasks={memberTasksMap[item.member.id] || {}}
                     onMoveTask={wow.moveTask}
-                    onCopyTask={(fromKey, task) => setModal({ type: 'copyTask', fromKey, task })}
-                    onWeeklyReport={(el, member) => setModal({ type: 'weeklyReport', el, member })}
-                    onEndOfDay={item.member.id === myMemberId ? () => setModal({ type: 'teamsReport' }) : undefined}
-                    onEditMember={() => setModal({ type: 'editMember', member: item.member })}
-                    onDeleteMember={() => openConfirm(
-                      '담당자 삭제',
-                      `'${item.member.name}'님의 모든 업무 데이터가 삭제됩니다. 계속하시겠습니까?`,
-                      () => wow.deleteMember(item.member.id)
-                    )}
-                    onAddTask={(key, directData) => {
-                      if (directData) {
-                        wow.addTask(key, directData)
-                      } else {
-                        setModal({ type: 'addTask', key })
-                      }
-                    }}
-                    onEditTask={(key, task) => setModal({ type: 'editTask', key, task })}
-                    onDeleteTask={(key, taskId) => openConfirm(
-                      '업무 삭제',
-                      '이 업무를 삭제하시겠습니까?',
-                      () => wow.deleteTask(key, taskId)
-                    )}
-                    onDeleteDivider={(key, taskId) => wow.deleteTask(key, taskId)}
+                    onCopyTask={handleCopyTask}
+                    onWeeklyReport={handleWeeklyReport}
+                    onEndOfDay={item.member.id === myMemberId ? handleOpenTeamsReport : undefined}
+                    onEditMember={handleEditMember}
+                    onDeleteMember={handleDeleteMember}
+                    onAddTask={handleAddTask}
+                    onEditTask={handleEditTask}
+                    onDeleteTask={handleDeleteTask}
+                    onDeleteDivider={handleDeleteDivider}
                     onCycleTaskStatus={wow.cycleStatus}
-                    onAddCarryover={(key) => setModal({ type: 'addCarryover', key })}
-                    onEditCarryover={(key, item2) => setModal({ type: 'editCarryover', key, item: item2 })}
-                    onDeleteCarryover={(key, itemId) => openConfirm(
-                      '이월 업무 삭제',
-                      '이 이월 업무를 삭제하시겠습니까?',
-                      () => wow.deleteTask(key, itemId)
-                    )}
+                    onAddCarryover={handleAddCarryover}
+                    onEditCarryover={handleEditCarryover}
+                    onDeleteCarryover={handleDeleteCarryover}
                   />
                 )
               )
-            })()}
+            )}
           </>
         )}
       </div>

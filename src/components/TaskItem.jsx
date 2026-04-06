@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import StatusBadge from './ui/StatusBadge'
 
 const styleMap = {
@@ -17,7 +17,7 @@ function getMemoUrls(text) {
   return matches || []
 }
 
-export default function TaskItem({ task, taskKey, canEdit, onEdit, onDelete, onCycleStatus, onDropBefore, onCopy }) {
+export default memo(function TaskItem({ task, taskKey, canEdit, onEdit, onDelete, onCycleStatus, onDropBefore, onCopy }) {
   const [isDragOver, setIsDragOver] = useState(false)
   const textClass = styleMap[task.style] || ''
 
@@ -135,4 +135,4 @@ export default function TaskItem({ task, taskKey, canEdit, onEdit, onDelete, onC
       </div>
     </>
   )
-}
+})

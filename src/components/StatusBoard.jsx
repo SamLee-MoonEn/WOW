@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo, memo } from 'react'
 import MemberAvatar from './ui/MemberAvatar'
 
 const PRESENCE = {
@@ -20,7 +20,7 @@ function PresenceBadge({ presence }) {
   )
 }
 
-export default function StatusBoard({ members, myMemberId, isAdmin, onUpdatePresence, onEndOfDay, onUpdateWorkDesc }) {
+export default memo(function StatusBoard({ members, myMemberId, isAdmin, onUpdatePresence, onEndOfDay, onUpdateWorkDesc }) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [editingDescId, setEditingDescId] = useState(null)
   const [descDraft, setDescDraft] = useState('')
@@ -34,11 +34,11 @@ export default function StatusBoard({ members, myMemberId, isAdmin, onUpdatePres
   const showUnreported = isWeekday && isAfterWorkHour
 
   // 부서 목록
-  const allGroups = [...new Set(members.map(m => m.group || ''))].sort((a, b) => {
+  const allGroups = useMemo(() => [...new Set(members.map(m => m.group || ''))].sort((a, b) => {
     if (!a && b) return 1
     if (a && !b) return -1
     return a.localeCompare(b, 'ko')
-  })
+  }), [members])
   const hasGroups = allGroups.some(g => g !== '')
 
   // 필터 적용
@@ -62,25 +62,30 @@ export default function StatusBoard({ members, myMemberId, isAdmin, onUpdatePres
     return a.name.localeCompare(b.name, 'ko')
   })
 
-  const groupedRows = []
-  if (hasGroups && !groupFilter) {
-    for (const g of allGroups) {
-      const groupMembers = filtered.filter(m => (m.group || '') === g)
-      if (groupMembers.length === 0) continue
-      const gWorking = groupMembers.filter(m => (m.presence || 'working') === 'working').length
-      const gVacation = groupMembers.filter(m => (m.presence || 'working') === 'vacation').length
-      const gOff = groupMembers.filter(m => (m.presence || 'working') === 'off').length
-      groupedRows.push({ type: 'header', label: g || '기타', stats: { working: gWorking, vacation: gVacation, off: gOff, total: groupMembers.length } })
-      sortWithinGroup(groupMembers).forEach(m => groupedRows.push({ type: 'member', member: m }))
+  const groupedRows = useMemo(() => {
+    const rows = []
+    if (hasGroups && !groupFilter) {
+      for (const g of allGroups) {
+        const groupMembers = filtered.filter(m => (m.group || '') === g)
+        if (groupMembers.length === 0) continue
+        const gWorking = groupMembers.filter(m => (m.presence || 'working') === 'working').length
+        const gVacation = groupMembers.filter(m => (m.presence || 'working') === 'vacation').length
+        const gOff = groupMembers.filter(m => (m.presence || 'working') === 'off').length
+        rows.push({ type: 'header', label: g || '기타', stats: { working: gWorking, vacation: gVacation, off: gOff, total: groupMembers.length } })
+        sortWithinGroup(groupMembers).forEach(m => rows.push({ type: 'member', member: m }))
+      }
+    } else {
+      sortWithinGroup(filtered).forEach(m => rows.push({ type: 'member', member: m }))
     }
-  } else {
-    sortWithinGroup(filtered).forEach(m => groupedRows.push({ type: 'member', member: m }))
-  }
+    return rows
+  }, [filtered, allGroups, hasGroups, groupFilter])
 
-  const workingCount  = members.filter(m => (m.presence || 'working') === 'working').length
-  const vacationCount = members.filter(m => (m.presence || 'working') === 'vacation').length
-  const offCount      = members.filter(m => (m.presence || 'working') === 'off').length
-  const unreportedCount = members.filter(m => (m.presence || 'working') === 'working').length
+  const { workingCount, vacationCount, offCount, unreportedCount } = useMemo(() => ({
+    workingCount: members.filter(m => (m.presence || 'working') === 'working').length,
+    vacationCount: members.filter(m => (m.presence || 'working') === 'vacation').length,
+    offCount: members.filter(m => (m.presence || 'working') === 'off').length,
+    unreportedCount: members.filter(m => (m.presence || 'working') === 'working').length,
+  }), [members])
 
   const today = now.toISOString().split('T')[0]
 
@@ -322,4 +327,4 @@ export default function StatusBoard({ members, myMemberId, isAdmin, onUpdatePres
       )}
     </div>
   )
-}
+})

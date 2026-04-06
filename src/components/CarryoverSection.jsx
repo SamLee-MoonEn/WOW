@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo, memo } from 'react'
 import StatusBadge from './ui/StatusBadge'
 
 const styleMap = {
@@ -56,21 +56,22 @@ function CarryoverItem({ item, itemKey, canEdit, onEdit, onDelete, onCycleStatus
   )
 }
 
-export default function CarryoverSection({ member, weekKey, tasks, onAddCarryover, onEditCarryover, onDeleteCarryover, onCycleStatus, onMoveTask, canEdit, isAdmin }) {
+export default memo(function CarryoverSection({ member, weekKey, tasks, onAddCarryover, onEditCarryover, onDeleteCarryover, onCycleStatus, onMoveTask, canEdit, isAdmin }) {
   const [isDragOver, setIsDragOver] = useState(false)
   const currentKey = `${member.id}_${weekKey}_carryover`
   const prefix = member.id + '_'
   const suffix = '_carryover'
 
   // 현재 주차 이하에 등록된 모든 이월 업무 집계
-  const aggregatedItems = Object.entries(tasks)
+  const aggregatedItems = useMemo(() => Object.entries(tasks)
     .filter(([k]) => {
       if (!k.startsWith(prefix) || !k.endsWith(suffix)) return false
       const mid = k.slice(prefix.length, k.length - suffix.length)
-      return mid <= weekKey // 'YYYY_WNN' 형식은 사전순 비교로 주차 비교 가능
+      return mid <= weekKey
     })
-    .sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0) // 오래된 주차 먼저
-    .flatMap(([key, items]) => items.map(item => ({ ...item, _key: key })))
+    .sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)
+    .flatMap(([key, items]) => items.map(item => ({ ...item, _key: key }))),
+  [tasks, prefix, suffix, weekKey])
 
   const handleDragOver = (e) => {
     e.preventDefault()
@@ -134,4 +135,4 @@ export default function CarryoverSection({ member, weekKey, tasks, onAddCarryove
       </div>
     </div>
   )
-}
+})

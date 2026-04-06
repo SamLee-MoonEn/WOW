@@ -1,8 +1,9 @@
+import { memo } from 'react'
 import DayCol from './DayCol'
 import CarryoverSection from './CarryoverSection'
 import { getWeekDates, formatDate, getWeekKeys } from '../utils/weekUtils'
 
-export default function WeekBlock({ member, weekKey, weekNum, monday, isCurrent, canEdit, showDayGrid = true, isAdmin, tasks, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onCycleCarryoverStatus, onMoveTask, onCopyTask }) {
+export default memo(function WeekBlock({ member, weekKey, weekNum, monday, isCurrent, canEdit, showDayGrid = true, isAdmin, tasks, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onCycleCarryoverStatus, onMoveTask, onCopyTask }) {
   const dates = getWeekDates(monday)
   const isActualCurrentWeek = weekKey === getWeekKeys(0).current
 
@@ -59,4 +60,4 @@ export default function WeekBlock({ member, weekKey, weekNum, monday, isCurrent,
       />
     </div>
   )
-}
+})

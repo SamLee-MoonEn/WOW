@@ -26,8 +26,8 @@ export default memo(function MemberSection({ member, isMe, isAdmin, showDayGrid 
           */}
           {isAdmin && (
             <>
-              <Button variant="outline" size="sm" onClick={onEditMember}>✏️ 수정</Button>
-              <Button variant="danger" size="sm" onClick={onDeleteMember}>🗑 삭제</Button>
+              <Button variant="outline" size="sm" onClick={() => onEditMember(member)}>✏️ 수정</Button>
+              <Button variant="danger" size="sm" onClick={() => onDeleteMember(member)}>🗑 삭제</Button>
             </>
           )}
         </div>

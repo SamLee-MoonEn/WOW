@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo, memo } from 'react'
 import MemberAvatar from './ui/MemberAvatar'
 
 const PRESENCE = {
@@ -149,14 +149,14 @@ function GroupSection({ label, members, myMemberId, onUpdateWorkDesc }) {
   )
 }
 
-export default function ExternalSummaryView({ members, myMemberId, onUpdateWorkDesc }) {
+export default memo(function ExternalSummaryView({ members, myMemberId, onUpdateWorkDesc }) {
   const [selectedTags, setSelectedTags] = useState([])
   const [tagSearch, setTagSearch] = useState('')
 
   const RANK_ORDER = { '팀장': 0, '파트장': 1 }
   const getRankOrder = (rank) => RANK_ORDER[rank] ?? 2
 
-  const sorted = [...members].sort((a, b) => {
+  const sorted = useMemo(() => [...members].sort((a, b) => {
     const ra = getRankOrder(a.rank)
     const rb = getRankOrder(b.rank)
     if (ra !== rb) return ra - rb
@@ -164,10 +164,10 @@ export default function ExternalSummaryView({ members, myMemberId, onUpdateWorkD
     const pb = PRESENCE_ORDER[b.presence || 'working'] ?? 0
     if (pa !== pb) return pa - pb
     return a.name.localeCompare(b.name, 'ko')
-  })
+  }), [members])
 
   // 전체 태그 목록
-  const allTags = [...new Set(sorted.flatMap(m => m.tags || []))]
+  const allTags = useMemo(() => [...new Set(sorted.flatMap(m => m.tags || []))], [sorted])
 
   // 태그 검색 필터
   const searchLower = tagSearch.trim().toLowerCase()
@@ -277,4 +277,4 @@ export default function ExternalSummaryView({ members, myMemberId, onUpdateWorkD
       )}
     </div>
   )
-}
+})

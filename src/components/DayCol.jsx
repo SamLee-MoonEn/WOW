@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import TaskItem from './TaskItem'
 import { DAYS, formatDate, formatDateFull } from '../utils/weekUtils'
 
@@ -42,7 +42,7 @@ function DividerItem({ task, taskKey, canEdit, onDelete, onDropBefore }) {
   )
 }
 
-export default function DayCol({ member, weekKey, dayIndex, date, canEdit, isAdmin, tasks, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleStatus, onMoveTask, onCopyTask }) {
+export default memo(function DayCol({ member, weekKey, dayIndex, date, canEdit, isAdmin, tasks, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleStatus, onMoveTask, onCopyTask }) {
   const [isDragOver, setIsDragOver] = useState(false)
   const key = `${member.id}_${weekKey}_${dayIndex}`
   const items = tasks[key] || []
@@ -135,4 +135,4 @@ export default function DayCol({ member, weekKey, dayIndex, date, canEdit, isAdm
       </div>
     </div>
   )
-}
+})
