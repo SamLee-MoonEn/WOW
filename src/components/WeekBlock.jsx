@@ -4,8 +4,9 @@ import CarryoverSection from './CarryoverSection'
 import { getWeekDates, formatDate, getWeekKeys } from '../utils/weekUtils'
 
 export default memo(function WeekBlock({ member, weekKey, weekNum, monday, isCurrent, canEdit, showDayGrid = true, isAdmin, tasks, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onCycleCarryoverStatus, onMoveTask, onCopyTask }) {
-  const dates = getWeekDates(monday)
-  const isActualCurrentWeek = weekKey === getWeekKeys(0).current
+  const dates = useMemo(() => getWeekDates(monday), [monday])
+  const actualCurrentWeekKey = useMemo(() => getWeekKeys(0).current, [])
+  const isActualCurrentWeek = weekKey === actualCurrentWeekKey
 
   // 요일별 items 미리 추출 — 변경 없는 요일은 같은 배열 참조 유지
   const dayItems = useMemo(() => {

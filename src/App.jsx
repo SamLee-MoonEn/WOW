@@ -23,6 +23,8 @@ import { uid } from './utils/weekUtils'
 import StatusBoard from './components/StatusBoard'
 import ExternalSummaryView from './components/ExternalSummaryView'
 
+const EMPTY_TASKS = {}
+
 function Board() {
   const wow = useWOWState()
   const { displayName, email, logout, acquireToken } = useAuth()
@@ -32,7 +34,7 @@ function Board() {
   const [myTasksOnly, setMyTasksOnly] = useState(false)
   const [groupFilter, setGroupFilter] = useState('')
 
-  const wk = getWeekKeys(wow.state.baseWeekOffset)
+  const wk = useMemo(() => getWeekKeys(wow.state.baseWeekOffset), [wow.state.baseWeekOffset])
 
   // myMemberId를 early return 및 useEffect 의존성 배열보다 앞에 선언 (TDZ 방지)
   const myMember = wow.state.members.find(m => m.email === email || m.name === displayName)
@@ -124,21 +126,22 @@ function Board() {
   // 외부인은 섹션 미표시, 내 섹션이 맨 위로 오도록 정렬
   const visibleMembers = useMemo(() => wow.state.members.filter(m => m.role !== 'external'), [wow.state.members])
 
-  // 멤버별 tasks 분리 (각 MemberSection에 해당 멤버 tasks만 전달)
-  // 변경된 멤버만 새 참조를 생성하여 불필요한 리렌더 방지
+  // 멤버별 tasks 분리 — 단일 패스로 버킷팅 후 변경된 멤버만 새 참조
   const prevMemberTasksRef = useRef({})
   const memberTasksMap = useMemo(() => {
     const prev = prevMemberTasksRef.current
+    // 1회 순회로 멤버별 버킷 생성
+    const buckets = {}
+    for (const [key, val] of Object.entries(wow.state.tasks)) {
+      const mid = key.slice(0, key.indexOf('_'))
+      if (!buckets[mid]) buckets[mid] = {}
+      buckets[mid][key] = val
+    }
     const map = {}
     for (const m of visibleMembers) {
-      const prefix = m.id + '_'
-      const memberTasks = {}
-      for (const [key, val] of Object.entries(wow.state.tasks)) {
-        if (key.startsWith(prefix)) memberTasks[key] = val
-      }
-      // 이전과 동일하면 같은 참조 유지
+      const memberTasks = buckets[m.id] || EMPTY_TASKS
       const prevTasks = prev[m.id]
-      if (prevTasks) {
+      if (prevTasks && memberTasks !== EMPTY_TASKS) {
         const prevKeys = Object.keys(prevTasks)
         const newKeys = Object.keys(memberTasks)
         if (prevKeys.length === newKeys.length && prevKeys.every(k => prevTasks[k] === memberTasks[k])) {
@@ -354,7 +357,7 @@ function Board() {
                     isAdmin={isAdmin}
                     showDayGrid
                     wk={wk}
-                    tasks={memberTasksMap[item.member.id] || {}}
+                    tasks={memberTasksMap[item.member.id] || EMPTY_TASKS}
                     onMoveTask={wow.moveTask}
                     onCopyTask={handleCopyTask}
                     onWeeklyReport={handleWeeklyReport}
