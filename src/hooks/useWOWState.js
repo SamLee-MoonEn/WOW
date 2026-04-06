@@ -26,6 +26,23 @@ function memberIdFromKey(key) {
   return key.slice(0, key.indexOf('_'))
 }
 
+// task 배열의 내용 비교 (Firestore 에코 감지용)
+function taskArraysEqual(a, b) {
+  if (a === b) return true
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false
+  for (let i = 0; i < a.length; i++) {
+    const ta = a[i], tb = b[i]
+    if (ta.id !== tb.id) return false
+    // 모든 직렬화된 필드를 비교 (id가 같으면 대부분 같지만 status/text 등이 변경 가능)
+    const ka = Object.keys(ta), kb = Object.keys(tb)
+    if (ka.length !== kb.length) return false
+    for (const k of ka) {
+      if (ta[k] !== tb[k]) return false
+    }
+  }
+  return true
+}
+
 export function useWOWState() {
   const [baseWeekOffset, setBaseWeekOffset] = useState(0)
   const [members, setMembers] = useState([])
@@ -83,16 +100,22 @@ export function useWOWState() {
         (shortKeyTasks) => {
           setTasks((prev) => {
             const prefix = member.id + '_'
-            // 변경 여부를 먼저 체크하여 불필요한 새 객체 생성 방지
             const newEntries = {}
             for (const [k, v] of Object.entries(shortKeyTasks)) {
               newEntries[`${prefix}${k}`] = v
             }
-            // 기존 키 목록과 비교
+            // deep compare: Firestore 에코(방금 쓴 데이터가 돌아옴)를 감지하여 skip
             const prevKeys = Object.keys(prev).filter(k => k.startsWith(prefix))
             const newKeys = Object.keys(newEntries)
-            if (prevKeys.length === newKeys.length && prevKeys.every(k => newEntries[k] === prev[k])) {
-              return prev // 변경 없으면 같은 참조 반환
+            if (prevKeys.length === newKeys.length) {
+              let same = true
+              for (const k of prevKeys) {
+                if (!newEntries[k] || !taskArraysEqual(prev[k], newEntries[k])) {
+                  same = false
+                  break
+                }
+              }
+              if (same) return prev
             }
             const next = {}
             for (const [k, v] of Object.entries(prev)) {

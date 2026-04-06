@@ -1,6 +1,7 @@
+import { memo } from 'react'
 import { STATUS_CONFIG } from '../../utils/statusUtils'
 
-export default function StatusBadge({ status, onClick }) {
+export default memo(function StatusBadge({ status, onClick }) {
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG['none']
 
   if (!cfg.label && !onClick) return null
@@ -15,4 +16,4 @@ export default function StatusBadge({ status, onClick }) {
       {cfg.label || '○'}
     </span>
   )
-}
+})
