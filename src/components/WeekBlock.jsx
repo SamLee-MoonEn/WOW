@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import DayCol from './DayCol'
 import CarryoverSection from './CarryoverSection'
 import { getWeekDates, formatDate, getWeekKeys } from '../utils/weekUtils'
@@ -6,6 +6,15 @@ import { getWeekDates, formatDate, getWeekKeys } from '../utils/weekUtils'
 export default memo(function WeekBlock({ member, weekKey, weekNum, monday, isCurrent, canEdit, showDayGrid = true, isAdmin, tasks, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onCycleCarryoverStatus, onMoveTask, onCopyTask }) {
   const dates = getWeekDates(monday)
   const isActualCurrentWeek = weekKey === getWeekKeys(0).current
+
+  // 요일별 items 미리 추출 — 변경 없는 요일은 같은 배열 참조 유지
+  const dayItems = useMemo(() => {
+    const result = []
+    for (let i = 0; i < 5; i++) {
+      result.push(tasks[`${member.id}_${weekKey}_${i}`] || EMPTY)
+    }
+    return result
+  }, [tasks, member.id, weekKey])
 
   return (
     <div className="border border-jira-border rounded-lg overflow-hidden">
@@ -28,7 +37,7 @@ export default memo(function WeekBlock({ member, weekKey, weekNum, monday, isCur
               date={date}
               canEdit={canEdit}
               isAdmin={isAdmin}
-              tasks={tasks}
+              items={dayItems[i]}
               onAddTask={onAddTask}
               onEditTask={onEditTask}
               onDeleteTask={onDeleteTask}
@@ -61,3 +70,5 @@ export default memo(function WeekBlock({ member, weekKey, weekNum, monday, isCur
     </div>
   )
 })
+
+const EMPTY = []

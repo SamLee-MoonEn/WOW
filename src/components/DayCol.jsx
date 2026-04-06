@@ -1,4 +1,4 @@
-import { useState, memo } from 'react'
+import { useState, useCallback, memo } from 'react'
 import TaskItem from './TaskItem'
 import { DAYS, formatDate, formatDateFull } from '../utils/weekUtils'
 
@@ -42,10 +42,9 @@ function DividerItem({ task, taskKey, canEdit, onDelete, onDropBefore }) {
   )
 }
 
-export default memo(function DayCol({ member, weekKey, dayIndex, date, canEdit, isAdmin, tasks, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleStatus, onMoveTask, onCopyTask }) {
+export default memo(function DayCol({ member, weekKey, dayIndex, date, canEdit, isAdmin, items, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleStatus, onMoveTask, onCopyTask }) {
   const [isDragOver, setIsDragOver] = useState(false)
   const key = `${member.id}_${weekKey}_${dayIndex}`
-  const items = tasks[key] || []
   const isFriday = dayIndex === 4
   const isToday = formatDateFull(date) === formatDateFull(new Date())
 
@@ -70,6 +69,11 @@ export default memo(function DayCol({ member, weekKey, dayIndex, date, canEdit, 
   }
 
   const handleDragEnd = () => setIsDragOver(false)
+
+  // 안정적인 콜백: dayKey를 클로저로 캡처 (dayKey는 렌더마다 같은 문자열)
+  const handleMoveToHere = useCallback((dragId, fromKey, beforeId) => {
+    onMoveTask(fromKey, key, dragId, beforeId)
+  }, [onMoveTask, key])
 
   return (
     <div
@@ -100,19 +104,20 @@ export default memo(function DayCol({ member, weekKey, dayIndex, date, canEdit, 
               taskKey={key}
               canEdit={canEdit}
               onDelete={() => onDeleteDivider(key, task.id)}
-              onDropBefore={(dragId, fromKey) => onMoveTask(fromKey, key, dragId, task.id)}
+              onDropBefore={(dragId, fromKey) => handleMoveToHere(dragId, fromKey, task.id)}
             />
           ) : (
             <TaskItem
               key={task.id}
               task={task}
-              taskKey={key}
+              dayKey={key}
               canEdit={canEdit}
-              onEdit={(t) => onEditTask(key, t)}
-              onDelete={onDeleteTask}
+              isAdmin={isAdmin}
+              onEditTask={onEditTask}
+              onDeleteTask={onDeleteTask}
               onCycleStatus={onCycleStatus}
-              onDropBefore={(dragId, fromKey) => onMoveTask(fromKey, key, dragId, task.id)}
-              onCopy={isAdmin ? () => onCopyTask(key, task) : undefined}
+              onMoveTask={handleMoveToHere}
+              onCopyTask={onCopyTask}
             />
           )
         ))}

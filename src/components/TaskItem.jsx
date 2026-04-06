@@ -1,4 +1,4 @@
-import { useState, memo } from 'react'
+import { useState, useCallback, memo } from 'react'
 import StatusBadge from './ui/StatusBadge'
 
 const styleMap = {
@@ -17,35 +17,52 @@ function getMemoUrls(text) {
   return matches || []
 }
 
-export default memo(function TaskItem({ task, taskKey, canEdit, onEdit, onDelete, onCycleStatus, onDropBefore, onCopy }) {
+export default memo(function TaskItem({ task, dayKey, canEdit, isAdmin, onEditTask, onDeleteTask, onCycleStatus, onMoveTask, onCopyTask }) {
   const [isDragOver, setIsDragOver] = useState(false)
   const textClass = styleMap[task.style] || ''
 
-  const handleDragStart = (e) => {
+  const handleDragStart = useCallback((e) => {
     e.dataTransfer.effectAllowed = 'move'
     e.dataTransfer.setData('taskId', task.id)
-    e.dataTransfer.setData('fromKey', taskKey)
-  }
+    e.dataTransfer.setData('fromKey', dayKey)
+  }, [task.id, dayKey])
 
-  const handleDragOver = (e) => {
+  const handleDragOver = useCallback((e) => {
     e.preventDefault()
     e.stopPropagation()
     setIsDragOver(true)
-  }
+  }, [])
 
-  const handleDragLeave = () => setIsDragOver(false)
+  const handleDragLeave = useCallback(() => setIsDragOver(false), [])
 
-  const handleDrop = (e) => {
+  const handleDrop = useCallback((e) => {
     e.preventDefault()
     e.stopPropagation()
     setIsDragOver(false)
     const dragId = e.dataTransfer.getData('taskId')
     const fromKey = e.dataTransfer.getData('fromKey')
-    if (dragId && dragId !== task.id) onDropBefore(dragId, fromKey)
-  }
+    if (dragId && dragId !== task.id) onMoveTask(dragId, fromKey, task.id)
+  }, [task.id, onMoveTask])
+
+  const handleCycleStatus = useCallback(() => {
+    onCycleStatus(dayKey, task.id)
+  }, [onCycleStatus, dayKey, task.id])
+
+  const handleEdit = useCallback(() => {
+    onEditTask(dayKey, task)
+  }, [onEditTask, dayKey, task])
+
+  const handleDelete = useCallback(() => {
+    onDeleteTask(dayKey, task.id)
+  }, [onDeleteTask, dayKey, task.id])
+
+  const handleCopy = useCallback(() => {
+    onCopyTask(dayKey, task)
+  }, [onCopyTask, dayKey, task])
 
   const memoUrls = getMemoUrls(task.memo)
-  const hasActions = onCopy || canEdit || memoUrls.length > 0
+  const showCopy = isAdmin && onCopyTask
+  const hasActions = showCopy || canEdit || memoUrls.length > 0
 
   return (
     <>
@@ -56,12 +73,12 @@ export default memo(function TaskItem({ task, taskKey, canEdit, onEdit, onDelete
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onDragEnd={() => setIsDragOver(false)}
+        onDragEnd={handleDragLeave}
         className="group px-0.5 pt-1 pb-0.5 rounded hover:bg-jira-bg cursor-grab active:cursor-grabbing active:opacity-50"
       >
         {/* 일감 본문 행 */}
         <div data-task-row className="flex items-start gap-1.5">
-          <StatusBadge status={task.status} onClick={() => onCycleStatus(taskKey, task.id)} />
+          <StatusBadge status={task.status} onClick={handleCycleStatus} />
           <span className="flex-1 min-w-0">
             <span className={`text-[11.5px] leading-snug break-words ${textClass}`}>
               {task.text}
@@ -95,9 +112,9 @@ export default memo(function TaskItem({ task, taskKey, canEdit, onEdit, onDelete
                     </svg>
                   </a>
                 ))}
-                {onCopy && (
+                {showCopy && (
                   <button
-                    onClick={onCopy}
+                    onClick={handleCopy}
                     className="w-6 h-6 flex items-center justify-center text-[13px] rounded border border-jira-border bg-white hover:bg-gray-100 hover:border-gray-300 text-jira-muted transition-colors"
                     title="다른 날로 복사"
                   >
@@ -107,14 +124,14 @@ export default memo(function TaskItem({ task, taskKey, canEdit, onEdit, onDelete
                 {canEdit && (
                   <>
                     <button
-                      onClick={() => onEdit(task)}
+                      onClick={handleEdit}
                       className="w-6 h-6 flex items-center justify-center text-[13px] rounded border border-jira-border bg-white hover:bg-gray-100 hover:border-gray-300 text-jira-muted transition-colors"
                       title="수정"
                     >
                       ✏️
                     </button>
                     <button
-                      onClick={() => onDelete(taskKey, task.id)}
+                      onClick={handleDelete}
                       className="w-6 h-6 flex items-center justify-center rounded border border-jira-border bg-white hover:bg-red-50 hover:border-red-200 hover:text-red-600 text-jira-muted transition-colors"
                       title="삭제"
                     >
