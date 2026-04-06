@@ -118,38 +118,6 @@ function Board() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myMemberId, wow.loading])
 
-  if (wow.loading) {
-    return (
-      <div className="min-h-screen bg-jira-bg flex items-center justify-center">
-        <div className="text-center text-jira-muted">
-          <div className="text-4xl mb-3">🗂</div>
-          <div className="text-sm">데이터를 불러오는 중...</div>
-        </div>
-      </div>
-    )
-  }
-
-  if (wow.fsError) {
-    return (
-      <div className="min-h-screen bg-jira-bg flex items-center justify-center">
-        <div className="text-center max-w-md px-6">
-          <div className="text-4xl mb-3">⚠️</div>
-          <div className="text-base font-bold text-jira-dark mb-2">Firestore 연결 실패</div>
-          <div className="text-sm text-jira-muted mb-1">Firestore 보안 규칙을 확인해주세요.</div>
-          <div className="text-xs font-mono bg-white border border-jira-border rounded px-3 py-2 text-red-600 mt-2">
-            {wow.fsError}
-          </div>
-          <div className="text-xs text-jira-muted mt-3">
-            Firebase 콘솔 → Firestore → 규칙 탭에서<br />
-            <code className="bg-white px-1 rounded">allow read, write: if true;</code> 로 임시 허용
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  const openConfirm = (title, message, onConfirm) => setConfirm({ title, message, onConfirm })
-
   const isAdmin = myMember?.role === 'admin'
   const isExternal = myMember?.role === 'external'
 
@@ -236,6 +204,7 @@ function Board() {
   }, [boardItems, myTasksOnly, groupFilter, myMemberId])
 
   // ── 안정적인 콜백 (MemberSection memo가 실질 작동하도록) ──
+  const openConfirm = useCallback((title, message, onConfirm) => setConfirm({ title, message, onConfirm }), [])
   const handleCopyTask = useCallback((fromKey, task) => setModal({ type: 'copyTask', fromKey, task }), [])
   const handleWeeklyReport = useCallback((el, member) => setModal({ type: 'weeklyReport', el, member }), [])
   const handleOpenTeamsReport = useCallback(() => setModal({ type: 'teamsReport' }), [])
@@ -244,7 +213,7 @@ function Board() {
     '담당자 삭제',
     `'${member.name}'님의 모든 업무 데이터가 삭제됩니다. 계속하시겠습니까?`,
     () => wow.deleteMember(member.id)
-  ), [wow.deleteMember])
+  ), [openConfirm, wow.deleteMember])
   const handleAddTask = useCallback((key, directData) => {
     if (directData) {
       wow.addTask(key, directData)
@@ -257,7 +226,7 @@ function Board() {
     '업무 삭제',
     '이 업무를 삭제하시겠습니까?',
     () => wow.deleteTask(key, taskId)
-  ), [wow.deleteTask])
+  ), [openConfirm, wow.deleteTask])
   const handleDeleteDivider = useCallback((key, taskId) => wow.deleteTask(key, taskId), [wow.deleteTask])
   const handleAddCarryover = useCallback((key) => setModal({ type: 'addCarryover', key }), [])
   const handleEditCarryover = useCallback((key, item2) => setModal({ type: 'editCarryover', key, item: item2 }), [])
@@ -265,10 +234,41 @@ function Board() {
     '이월 업무 삭제',
     '이 이월 업무를 삭제하시겠습니까?',
     () => wow.deleteTask(key, itemId)
-  ), [wow.deleteTask])
+  ), [openConfirm, wow.deleteTask])
   const handleEndOfDayForStatusBoard = useCallback(() => {
     if (myMemberId) setModal({ type: 'teamsReport' })
   }, [myMemberId])
+
+  // ── early return (모든 훅 선언 이후) ──
+  if (wow.loading) {
+    return (
+      <div className="min-h-screen bg-jira-bg flex items-center justify-center">
+        <div className="text-center text-jira-muted">
+          <div className="text-4xl mb-3">🗂</div>
+          <div className="text-sm">데이터를 불러오는 중...</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (wow.fsError) {
+    return (
+      <div className="min-h-screen bg-jira-bg flex items-center justify-center">
+        <div className="text-center max-w-md px-6">
+          <div className="text-4xl mb-3">⚠️</div>
+          <div className="text-base font-bold text-jira-dark mb-2">Firestore 연결 실패</div>
+          <div className="text-sm text-jira-muted mb-1">Firestore 보안 규칙을 확인해주세요.</div>
+          <div className="text-xs font-mono bg-white border border-jira-border rounded px-3 py-2 text-red-600 mt-2">
+            {wow.fsError}
+          </div>
+          <div className="text-xs text-jira-muted mt-3">
+            Firebase 콘솔 → Firestore → 규칙 탭에서<br />
+            <code className="bg-white px-1 rounded">allow read, write: if true;</code> 로 임시 허용
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-jira-bg">
