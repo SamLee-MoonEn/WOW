@@ -1,9 +1,9 @@
-import { useRef } from 'react'
+import { useRef, memo } from 'react'
 import WeekBlock from './WeekBlock'
 import Button from './ui/Button'
 import MemberAvatar from './ui/MemberAvatar'
 
-export default function MemberSection({ member, isMe, isAdmin, showDayGrid = true, wk, tasks, onEditMember, onDeleteMember, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onMoveTask, onCopyTask, onWeeklyReport, onEndOfDay }) {
+export default memo(function MemberSection({ member, isMe, isAdmin, showDayGrid = true, wk, tasks, onEditMember, onDeleteMember, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onMoveTask, onCopyTask, onWeeklyReport, onEndOfDay }) {
   const canEdit = (isMe || isAdmin) && showDayGrid
   const currentWeekRef = useRef(null)
 
@@ -19,9 +19,11 @@ export default function MemberSection({ member, isMe, isAdmin, showDayGrid = tru
           {isMe && onEndOfDay && (
             <Button variant="outline" size="sm" onClick={onEndOfDay}>📤 업무 종료</Button>
           )}
+          {/* TODO: 주간 계획 전송 기능 수정 후 복원
           {onWeeklyReport && (
             <Button variant="outline" size="sm" onClick={() => onWeeklyReport(currentWeekRef.current, member)}>📸 주간 계획 전송</Button>
           )}
+          */}
           {isAdmin && (
             <>
               <Button variant="outline" size="sm" onClick={onEditMember}>✏️ 수정</Button>
@@ -82,4 +84,4 @@ export default function MemberSection({ member, isMe, isAdmin, showDayGrid = tru
       </div>
     </div>
   )
-}
+})
