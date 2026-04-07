@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import MemberAvatar from '../ui/MemberAvatar'
@@ -10,7 +10,7 @@ const ROLES = [
 ]
 const ROLE_MAP = Object.fromEntries(ROLES.map(r => [r.value, r]))
 
-function DraggableList({ list, adminCount, isAdmin, onReorder, onEdit, onDelete, onChangeRole, onClose }) {
+function DraggableList({ list, adminCount, isAdmin, disableDrag, onReorder, onEdit, onDelete, onChangeRole, onClose }) {
   const draggedIdRef = useRef(null)
   const [dragOverId, setDragOverId] = useState(null)
 
@@ -51,7 +51,7 @@ function DraggableList({ list, adminCount, isAdmin, onReorder, onEdit, onDelete,
           >
             {/* 드래그 핸들 — 이 요소만 draggable */}
             <span
-              draggable
+              draggable={!disableDrag}
               onDragStart={(e) => {
                 draggedIdRef.current = m.id
                 e.dataTransfer.effectAllowed = 'move'
@@ -61,7 +61,7 @@ function DraggableList({ list, adminCount, isAdmin, onReorder, onEdit, onDelete,
                 draggedIdRef.current = null
                 setDragOverId(null)
               }}
-              className="text-gray-300 hover:text-gray-400 mr-1.5 text-[18px] leading-none cursor-grab active:cursor-grabbing flex-shrink-0 select-none px-0.5"
+              className={`mr-1.5 text-[18px] leading-none flex-shrink-0 select-none px-0.5 ${disableDrag ? 'text-gray-200 cursor-default' : 'text-gray-300 hover:text-gray-400 cursor-grab active:cursor-grabbing'}`}
               title="드래그하여 순서 변경"
             >⠿</span>
 
@@ -114,13 +114,17 @@ function DraggableList({ list, adminCount, isAdmin, onReorder, onEdit, onDelete,
 }
 
 export default function MemberManageModal({ members, myMemberId, onEdit, onDelete, onChangeRole, onClose, onReorderAll }) {
+  const [searchQuery, setSearchQuery] = useState('')
   const adminCount = members.filter(m => m.role === 'admin').length
   const isAdmin = members.find(m => m.id === myMemberId)?.role === 'admin'
 
-  const internalMembers = members.filter(m => m.role !== 'external')
-  const externalMembers = members.filter(m => m.role === 'external')
+  const q = searchQuery.trim().toLowerCase()
+  const matchesSearch = (m) => !q || m.name.toLowerCase().includes(q) || (m.rank && m.rank.toLowerCase().includes(q))
 
-  const sharedProps = { adminCount, isAdmin, onEdit, onDelete, onChangeRole, onClose }
+  const internalMembers = useMemo(() => members.filter(m => m.role !== 'external' && matchesSearch(m)), [members, q])
+  const externalMembers = useMemo(() => members.filter(m => m.role === 'external' && matchesSearch(m)), [members, q])
+
+  const sharedProps = { adminCount, isAdmin, disableDrag: !!q, onEdit, onDelete, onChangeRole, onClose }
 
   return (
     <Modal
@@ -135,10 +139,26 @@ export default function MemberManageModal({ members, myMemberId, onEdit, onDelet
         </div>
       ) : (
         <div className="flex flex-col gap-4 max-h-[480px] overflow-y-auto scrollbar-thin">
-          <p className="text-[11px] text-jira-muted flex items-center gap-1.5">
-            <span className="text-base leading-none">⠿</span>
-            <span>핸들을 드래그하여 순서를 변경할 수 있습니다</span>
-          </p>
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="이름 또는 직급으로 검색..."
+              className="w-full text-[12px] border border-jira-border rounded-lg px-3 py-1.5 pl-8 bg-white focus:outline-none focus:border-jira-blue focus:ring-1 focus:ring-jira-blue/20"
+            />
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-2.5 top-1/2 -translate-y-1/2 text-jira-muted">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+          </div>
+
+          {!q && (
+            <p className="text-[11px] text-jira-muted flex items-center gap-1.5">
+              <span className="text-base leading-none">⠿</span>
+              <span>핸들을 드래그하여 순서를 변경할 수 있습니다</span>
+            </p>
+          )}
 
           {internalMembers.length > 0 && (
             <DraggableList
@@ -160,6 +180,13 @@ export default function MemberManageModal({ members, myMemberId, onEdit, onDelet
                 onReorder={(newIds) => onReorderAll([...internalMembers.map(m => m.id), ...newIds])}
                 {...sharedProps}
               />
+            </div>
+          )}
+
+          {q && internalMembers.length === 0 && externalMembers.length === 0 && (
+            <div className="text-center py-6 text-jira-muted">
+              <div className="text-2xl mb-1">🔍</div>
+              <div className="text-[12px]">"{searchQuery}" 검색 결과가 없습니다</div>
             </div>
           )}
         </div>

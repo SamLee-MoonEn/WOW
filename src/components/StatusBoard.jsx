@@ -206,7 +206,7 @@ export default memo(function StatusBoard({ members, myMemberId, isAdmin, onUpdat
                       </div>
 
                       {/* 업무 설명 */}
-                      {isMe ? (
+                      {(isMe || isAdmin) ? (
                         editingDescId === member.id ? (
                           <input
                             value={descDraft}
