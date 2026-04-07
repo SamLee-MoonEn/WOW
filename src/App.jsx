@@ -279,7 +279,7 @@ function Board() {
         onManageMembers={isAdmin ? () => setModal({ type: 'memberManage' }) : undefined}
         displayName={displayName}
         onLogout={logout}
-        onToggleSummary={isAdmin ? () => setShowSummaryView(v => !v) : undefined}
+        onToggleSummary={!isExternal ? () => setShowSummaryView(v => !v) : undefined}
         showSummaryView={showSummaryView}
         onOpenSettings={isAdmin ? () => setModal({ type: 'appSettings' }) : undefined}
       />
