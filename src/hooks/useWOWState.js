@@ -210,9 +210,9 @@ export function useWOWState() {
   // ── 외부에 노출하는 state ──────────────────────────────────────────
   const state = useMemo(() => ({ baseWeekOffset, members, tasks, settings }), [baseWeekOffset, members, tasks, settings])
 
-  // 특정 멤버의 tasks를 Firestore에 저장 (렌더 후 비동기 실행)
-  const persistTasks = useCallback((memberId, newAllTasks) => {
-    setTimeout(() => saveMemberTasks(memberId, extractMemberTasks(memberId, newAllTasks)), 0)
+  // 특정 멤버의 tasks를 Firestore에 저장 (비동기, 항상 최신 state 기반)
+  const deferPersist = useCallback((memberId, nextState) => {
+    setTimeout(() => saveMemberTasks(memberId, extractMemberTasks(memberId, nextState)), 0)
   }, [])
 
   // ── 주간 탐색 (로컬) ──────────────────────────────────────────────
@@ -222,70 +222,64 @@ export function useWOWState() {
   // ── Tasks ─────────────────────────────────────────────────────────
   const addTask = useCallback((key, data) => {
     const memberId = memberIdFromKey(key)
-    let next
     setTasks((prev) => {
-      next = { ...prev, [key]: [...(prev[key] || []), { id: uid(), ...data }] }
+      const next = { ...prev, [key]: [...(prev[key] || []), { id: uid(), ...data }] }
+      deferPersist(memberId, next)
       return next
     })
-    persistTasks(memberId, next)
-  }, [persistTasks])
+  }, [deferPersist])
 
   const updateTask = useCallback((key, taskId, data) => {
     const memberId = memberIdFromKey(key)
-    let next
     setTasks((prev) => {
-      next = {
+      const next = {
         ...prev,
         [key]: (prev[key] || []).map((t) => (t.id === taskId ? { ...t, ...data } : t)),
       }
+      deferPersist(memberId, next)
       return next
     })
-    persistTasks(memberId, next)
-  }, [persistTasks])
+  }, [deferPersist])
 
   const deleteTask = useCallback((key, taskId) => {
     const memberId = memberIdFromKey(key)
-    let next
     setTasks((prev) => {
-      next = { ...prev, [key]: (prev[key] || []).filter((t) => t.id !== taskId) }
+      const next = { ...prev, [key]: (prev[key] || []).filter((t) => t.id !== taskId) }
+      deferPersist(memberId, next)
       return next
     })
-    persistTasks(memberId, next)
-  }, [persistTasks])
+  }, [deferPersist])
 
   const cycleStatus = useCallback((key, taskId) => {
     const memberId = memberIdFromKey(key)
-    let next
     setTasks((prev) => {
-      next = {
+      const next = {
         ...prev,
         [key]: (prev[key] || []).map((t) =>
           t.id === taskId ? { ...t, status: nextStatus(t.status) } : t
         ),
       }
+      deferPersist(memberId, next)
       return next
     })
-    persistTasks(memberId, next)
-  }, [persistTasks])
+  }, [deferPersist])
 
   const copyTask = useCallback((fromKey, toKey, taskId) => {
     const toMemberId = memberIdFromKey(toKey)
-    let next
     setTasks((prev) => {
       const task = (prev[fromKey] || []).find(t => t.id === taskId)
       if (!task) return prev
       const newTask = { ...task, id: uid() }
       const toList = [...(prev[toKey] || []), newTask]
-      next = { ...prev, [toKey]: toList }
+      const next = { ...prev, [toKey]: toList }
+      deferPersist(toMemberId, next)
       return next
     })
-    if (next) persistTasks(toMemberId, next)
-  }, [persistTasks])
+  }, [deferPersist])
 
   const moveTask = useCallback((fromKey, toKey, taskId, insertBeforeId = null) => {
     const fromMemberId = memberIdFromKey(fromKey)
     const toMemberId = memberIdFromKey(toKey)
-    let next
     setTasks((prev) => {
       const task = (prev[fromKey] || []).find((t) => t.id === taskId)
       if (!task) return prev
@@ -298,14 +292,12 @@ export function useWOWState() {
       } else {
         toList.push(task)
       }
-      next = { ...prev, [fromKey]: fromList, [toKey]: toList }
+      const next = { ...prev, [fromKey]: fromList, [toKey]: toList }
+      deferPersist(fromMemberId, next)
+      if (fromMemberId !== toMemberId) deferPersist(toMemberId, next)
       return next
     })
-    if (next) {
-      persistTasks(fromMemberId, next)
-      if (fromMemberId !== toMemberId) persistTasks(toMemberId, next)
-    }
-  }, [persistTasks])
+  }, [deferPersist])
 
   // ── Members ───────────────────────────────────────────────────────
   const addMember = useCallback((data) => {
