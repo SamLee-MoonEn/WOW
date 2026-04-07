@@ -360,6 +360,14 @@ export function useWOWState() {
     })
   }, [])
 
+  const updateMemberTags = useCallback((memberId, tags) => {
+    setMembers((prev) => {
+      const next = prev.map((m) => (m.id === memberId ? { ...m, tags } : m))
+      saveMembers(next)
+      return next
+    })
+  }, [])
+
   const updateWorkDesc = useCallback((memberId, desc) => {
     setMembers((prev) => {
       const next = prev.map((m) => (m.id === memberId ? { ...m, workDesc: desc } : m))
@@ -392,5 +400,6 @@ export function useWOWState() {
     updatePresence,
     reorderMembers,
     updateWorkDesc,
+    updateMemberTags,
   }
 }

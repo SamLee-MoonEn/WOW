@@ -9,14 +9,32 @@ const PRESENCE = {
 
 const PRESENCE_ORDER = { working: 0, vacation: 1, off: 2 }
 
-function MemberCard({ member, isMe, onUpdateWorkDesc }) {
+function MemberCard({ member, isMe, onUpdateWorkDesc, onUpdateMemberTags, existingTags }) {
   const p = member.presence || 'working'
   const cfg = PRESENCE[p] || PRESENCE.working
   const isOff = p === 'off'
   const [message, setMessage] = useState('')
   const [editingDesc, setEditingDesc] = useState(false)
   const [descDraft, setDescDraft] = useState('')
+  const [editingTags, setEditingTags] = useState(false)
+  const [tagInput, setTagInput] = useState('')
   const canContact = member.email && !isOff
+
+  const addTag = () => {
+    const t = tagInput.trim()
+    if (t && !(member.tags || []).includes(t)) {
+      onUpdateMemberTags?.(member.id, [...(member.tags || []), t])
+    }
+    setTagInput('')
+  }
+
+  const removeTag = (t) => {
+    onUpdateMemberTags?.(member.id, (member.tags || []).filter(x => x !== t))
+  }
+
+  const tagSuggestions = tagInput.trim()
+    ? (existingTags || []).filter(t => t.toLowerCase().includes(tagInput.toLowerCase()) && !(member.tags || []).includes(t))
+    : []
 
   const commitDesc = (value) => {
     onUpdateWorkDesc?.(member.id, value.trim())
@@ -62,49 +80,84 @@ function MemberCard({ member, isMe, onUpdateWorkDesc }) {
       </div>
 
       {/* 태그 */}
-      {member.tags?.length > 0 && (
-        <div className="flex flex-wrap gap-1 mt-1.5">
-          {member.tags.map(t => (
-            <span key={t} className="text-[10px] text-jira-blue bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded-full">{t}</span>
-          ))}
-        </div>
-      )}
+      <div className="mt-1.5">
+        {editingTags ? (
+          <div className="flex flex-col gap-1.5">
+            <div className="flex flex-wrap gap-1">
+              {(member.tags || []).map(t => (
+                <span key={t} className="flex items-center gap-0.5 text-[10px] text-jira-blue bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded-full">
+                  {t}
+                  <button onClick={() => removeTag(t)} className="text-blue-300 hover:text-red-400 leading-none ml-0.5">✕</button>
+                </span>
+              ))}
+            </div>
+            <div className="relative flex gap-1">
+              <input
+                type="text"
+                value={tagInput}
+                onChange={e => setTagInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag() } if (e.key === 'Escape') setEditingTags(false) }}
+                placeholder="태그 입력 후 Enter"
+                autoFocus
+                className="flex-1 text-[11px] px-2 py-1 border border-jira-border rounded-lg focus:outline-none focus:border-jira-blue bg-white"
+              />
+              <button onClick={() => setEditingTags(false)} className="text-[11px] text-jira-muted hover:text-jira-dark px-1.5">완료</button>
+              {tagSuggestions.length > 0 && (
+                <div className="absolute z-10 top-full left-0 right-12 mt-0.5 bg-white border border-jira-border rounded-lg shadow-md overflow-hidden max-h-28 overflow-y-auto">
+                  {tagSuggestions.slice(0, 5).map(t => (
+                    <button key={t} onMouseDown={() => { onUpdateMemberTags?.(member.id, [...(member.tags || []), t]); setTagInput('') }} className="w-full text-left text-[11px] px-2.5 py-1 text-jira-dark hover:bg-jira-bg">{t}</button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div
+            className="flex flex-wrap gap-1 cursor-pointer group/tags"
+            onClick={() => { setEditingTags(true); setTagInput('') }}
+            title="클릭하여 태그 편집"
+          >
+            {(member.tags || []).length > 0 ? (
+              <>
+                {member.tags.map(t => (
+                  <span key={t} className="text-[10px] text-jira-blue bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded-full">{t}</span>
+                ))}
+                <span className="opacity-0 group-hover/tags:opacity-50 text-[10px] transition-opacity self-center">✏️</span>
+              </>
+            ) : (
+              <span className="text-[10px] text-gray-300 italic group-hover/tags:text-gray-400">태그 추가...</span>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* 업무 설명 */}
       <div className="mt-2.5 pt-2.5 border-t border-jira-border min-h-[36px]">
-        {isMe ? (
-          editingDesc ? (
-            <input
-              value={descDraft}
-              onChange={e => setDescDraft(e.target.value)}
-              onBlur={() => commitDesc(descDraft)}
-              onKeyDown={e => {
-                if (e.key === 'Enter') commitDesc(descDraft)
-                if (e.key === 'Escape') setEditingDesc(false)
-              }}
-              autoFocus
-              maxLength={60}
-              placeholder="현재 업무를 간단히 입력... (Enter 저장)"
-              className="text-[12px] text-jira-dark bg-transparent border-b border-jira-blue focus:outline-none w-full"
-            />
-          ) : (
-            <div
-              className="flex items-center gap-1 cursor-pointer group/desc"
-              onClick={() => { setEditingDesc(true); setDescDraft(member.workDesc || '') }}
-              title="클릭하여 업무 설명 편집"
-            >
-              <p className={`text-[12px] leading-snug ${member.workDesc ? 'text-jira-dark' : 'text-gray-300 italic'}`}>
-                {member.workDesc || '업무 설명 추가...'}
-              </p>
-              <span className="opacity-0 group-hover/desc:opacity-50 text-[10px] transition-opacity">✏️</span>
-            </div>
-          )
+        {editingDesc ? (
+          <input
+            value={descDraft}
+            onChange={e => setDescDraft(e.target.value)}
+            onBlur={() => commitDesc(descDraft)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') commitDesc(descDraft)
+              if (e.key === 'Escape') setEditingDesc(false)
+            }}
+            autoFocus
+            maxLength={60}
+            placeholder="현재 업무를 간단히 입력... (Enter 저장)"
+            className="text-[12px] text-jira-dark bg-transparent border-b border-jira-blue focus:outline-none w-full"
+          />
         ) : (
-          member.workDesc ? (
-            <p className="text-[12px] text-jira-dark leading-snug">{member.workDesc}</p>
-          ) : (
-            <p className="text-[12px] text-gray-300 italic">업무 설명 없음</p>
-          )
+          <div
+            className="flex items-center gap-1 cursor-pointer group/desc"
+            onClick={() => { setEditingDesc(true); setDescDraft(member.workDesc || '') }}
+            title="클릭하여 업무 설명 편집"
+          >
+            <p className={`text-[12px] leading-snug ${member.workDesc ? 'text-jira-dark' : 'text-gray-300 italic'}`}>
+              {member.workDesc || '업무 설명 추가...'}
+            </p>
+            <span className="opacity-0 group-hover/desc:opacity-50 text-[10px] transition-opacity">✏️</span>
+          </div>
         )}
       </div>
 
@@ -133,7 +186,7 @@ function MemberCard({ member, isMe, onUpdateWorkDesc }) {
   )
 }
 
-function GroupSection({ label, members, myMemberId, onUpdateWorkDesc }) {
+function GroupSection({ label, members, myMemberId, onUpdateWorkDesc, onUpdateMemberTags, existingTags }) {
   return (
     <div>
       {label && (
@@ -143,13 +196,13 @@ function GroupSection({ label, members, myMemberId, onUpdateWorkDesc }) {
         </div>
       )}
       <div className="grid grid-cols-2 gap-3 max-[640px]:grid-cols-1 sm:grid-cols-3 lg:grid-cols-4">
-        {members.map(m => <MemberCard key={m.id} member={m} isMe={m.id === myMemberId} onUpdateWorkDesc={onUpdateWorkDesc} />)}
+        {members.map(m => <MemberCard key={m.id} member={m} isMe={m.id === myMemberId} onUpdateWorkDesc={onUpdateWorkDesc} onUpdateMemberTags={onUpdateMemberTags} existingTags={existingTags} />)}
       </div>
     </div>
   )
 }
 
-export default memo(function ExternalSummaryView({ members, myMemberId, onUpdateWorkDesc }) {
+export default memo(function ExternalSummaryView({ members, myMemberId, onUpdateWorkDesc, onUpdateMemberTags }) {
   const [selectedTags, setSelectedTags] = useState([])
   const [tagSearch, setTagSearch] = useState('')
 
@@ -269,11 +322,11 @@ export default memo(function ExternalSummaryView({ members, myMemberId, onUpdate
       ) : hasGroups ? (
         <div className="flex flex-col gap-6">
           {groupKeys.map(g => (
-            <GroupSection key={g || '__none__'} label={g || null} members={groupMap[g]} myMemberId={myMemberId} onUpdateWorkDesc={onUpdateWorkDesc} />
+            <GroupSection key={g || '__none__'} label={g || null} members={groupMap[g]} myMemberId={myMemberId} onUpdateWorkDesc={onUpdateWorkDesc} onUpdateMemberTags={onUpdateMemberTags} existingTags={allTags} />
           ))}
         </div>
       ) : (
-        <GroupSection label={null} members={filtered} myMemberId={myMemberId} onUpdateWorkDesc={onUpdateWorkDesc} />
+        <GroupSection label={null} members={filtered} myMemberId={myMemberId} onUpdateWorkDesc={onUpdateWorkDesc} onUpdateMemberTags={onUpdateMemberTags} existingTags={allTags} />
       )}
     </div>
   )

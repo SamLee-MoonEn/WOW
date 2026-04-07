@@ -288,7 +288,7 @@ function Board() {
         <InfoBanner />
 
 {isExternal || showSummaryView ? (
-          <ExternalSummaryView members={visibleMembers} myMemberId={myMemberId} onUpdateWorkDesc={wow.updateWorkDesc} />
+          <ExternalSummaryView members={visibleMembers} myMemberId={myMemberId} onUpdateWorkDesc={wow.updateWorkDesc} onUpdateMemberTags={wow.updateMemberTags} />
         ) : (
           <>
             <StatusBoard
