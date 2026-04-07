@@ -19,7 +19,7 @@ export function subscribeMembers(callback, onError) {
 export function subscribeMemberTasks(memberId, callback) {
   return onSnapshot(
     taskRef(memberId),
-    (snap) => callback(snap.exists() ? snap.data() : {}),
+    (snap) => callback(snap.exists() ? (snap.data() || {}) : {}),
     (err) => console.error('[Firestore] tasks 구독 실패:', memberId, err.code)
   )
 }

@@ -98,6 +98,7 @@ export function useWOWState() {
       taskUnsubsRef.current[member.id] = subscribeMemberTasks(
         member.id,
         (shortKeyTasks) => {
+          if (!shortKeyTasks) return
           setTasks((prev) => {
             const prefix = member.id + '_'
             const newEntries = {}
