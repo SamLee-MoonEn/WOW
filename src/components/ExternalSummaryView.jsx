@@ -9,7 +9,7 @@ const PRESENCE = {
 
 const PRESENCE_ORDER = { working: 0, vacation: 1, off: 2 }
 
-function MemberCard({ member, isMe, onUpdateWorkDesc, onUpdateMemberTags, existingTags }) {
+function MemberCard({ member, isMe, isAdmin, onUpdateWorkDesc, onUpdateMemberTags, existingTags }) {
   const p = member.presence || 'working'
   const cfg = PRESENCE[p] || PRESENCE.working
   const isOff = p === 'off'
@@ -18,6 +18,7 @@ function MemberCard({ member, isMe, onUpdateWorkDesc, onUpdateMemberTags, existi
   const [descDraft, setDescDraft] = useState('')
   const [editingTags, setEditingTags] = useState(false)
   const [tagInput, setTagInput] = useState('')
+  const canEdit = isMe || isAdmin
   const canContact = member.email && !isOff
 
   const addTag = () => {
@@ -111,7 +112,7 @@ function MemberCard({ member, isMe, onUpdateWorkDesc, onUpdateMemberTags, existi
               )}
             </div>
           </div>
-        ) : (
+        ) : canEdit ? (
           <div
             className="flex flex-wrap gap-1 cursor-pointer group/tags"
             onClick={() => { setEditingTags(true); setTagInput('') }}
@@ -128,36 +129,48 @@ function MemberCard({ member, isMe, onUpdateWorkDesc, onUpdateMemberTags, existi
               <span className="text-[10px] text-gray-300 italic group-hover/tags:text-gray-400">태그 추가...</span>
             )}
           </div>
+        ) : (
+          <div className="flex flex-wrap gap-1">
+            {(member.tags || []).map(t => (
+              <span key={t} className="text-[10px] text-jira-blue bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded-full">{t}</span>
+            ))}
+          </div>
         )}
       </div>
 
       {/* 업무 설명 */}
       <div className="mt-2.5 pt-2.5 border-t border-jira-border min-h-[36px]">
-        {editingDesc ? (
-          <input
-            value={descDraft}
-            onChange={e => setDescDraft(e.target.value)}
-            onBlur={() => commitDesc(descDraft)}
-            onKeyDown={e => {
-              if (e.key === 'Enter') commitDesc(descDraft)
-              if (e.key === 'Escape') setEditingDesc(false)
-            }}
-            autoFocus
-            maxLength={60}
-            placeholder="현재 업무를 간단히 입력... (Enter 저장)"
-            className="text-[12px] text-jira-dark bg-transparent border-b border-jira-blue focus:outline-none w-full"
-          />
+        {canEdit ? (
+          editingDesc ? (
+            <input
+              value={descDraft}
+              onChange={e => setDescDraft(e.target.value)}
+              onBlur={() => commitDesc(descDraft)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') commitDesc(descDraft)
+                if (e.key === 'Escape') setEditingDesc(false)
+              }}
+              autoFocus
+              maxLength={60}
+              placeholder="현재 업무를 간단히 입력... (Enter 저장)"
+              className="text-[12px] text-jira-dark bg-transparent border-b border-jira-blue focus:outline-none w-full"
+            />
+          ) : (
+            <div
+              className="flex items-center gap-1 cursor-pointer group/desc"
+              onClick={() => { setEditingDesc(true); setDescDraft(member.workDesc || '') }}
+              title="클릭하여 업무 설명 편집"
+            >
+              <p className={`text-[12px] leading-snug ${member.workDesc ? 'text-jira-dark' : 'text-gray-300 italic'}`}>
+                {member.workDesc || '업무 설명 추가...'}
+              </p>
+              <span className="opacity-0 group-hover/desc:opacity-50 text-[10px] transition-opacity">✏️</span>
+            </div>
+          )
         ) : (
-          <div
-            className="flex items-center gap-1 cursor-pointer group/desc"
-            onClick={() => { setEditingDesc(true); setDescDraft(member.workDesc || '') }}
-            title="클릭하여 업무 설명 편집"
-          >
-            <p className={`text-[12px] leading-snug ${member.workDesc ? 'text-jira-dark' : 'text-gray-300 italic'}`}>
-              {member.workDesc || '업무 설명 추가...'}
-            </p>
-            <span className="opacity-0 group-hover/desc:opacity-50 text-[10px] transition-opacity">✏️</span>
-          </div>
+          <p className={`text-[12px] leading-snug ${member.workDesc ? 'text-jira-dark' : 'text-gray-300 italic'}`}>
+            {member.workDesc || '업무 설명 없음'}
+          </p>
         )}
       </div>
 
@@ -186,7 +199,7 @@ function MemberCard({ member, isMe, onUpdateWorkDesc, onUpdateMemberTags, existi
   )
 }
 
-function GroupSection({ label, members, myMemberId, onUpdateWorkDesc, onUpdateMemberTags, existingTags }) {
+function GroupSection({ label, members, myMemberId, isAdmin, onUpdateWorkDesc, onUpdateMemberTags, existingTags }) {
   return (
     <div>
       {label && (
@@ -196,13 +209,13 @@ function GroupSection({ label, members, myMemberId, onUpdateWorkDesc, onUpdateMe
         </div>
       )}
       <div className="grid grid-cols-2 gap-3 max-[640px]:grid-cols-1 sm:grid-cols-3 lg:grid-cols-4">
-        {members.map(m => <MemberCard key={m.id} member={m} isMe={m.id === myMemberId} onUpdateWorkDesc={onUpdateWorkDesc} onUpdateMemberTags={onUpdateMemberTags} existingTags={existingTags} />)}
+        {members.map(m => <MemberCard key={m.id} member={m} isMe={m.id === myMemberId} isAdmin={isAdmin} onUpdateWorkDesc={onUpdateWorkDesc} onUpdateMemberTags={onUpdateMemberTags} existingTags={existingTags} />)}
       </div>
     </div>
   )
 }
 
-export default memo(function ExternalSummaryView({ members, myMemberId, onUpdateWorkDesc, onUpdateMemberTags }) {
+export default memo(function ExternalSummaryView({ members, myMemberId, isAdmin, onUpdateWorkDesc, onUpdateMemberTags }) {
   const [selectedTags, setSelectedTags] = useState([])
   const [tagSearch, setTagSearch] = useState('')
 
@@ -322,11 +335,11 @@ export default memo(function ExternalSummaryView({ members, myMemberId, onUpdate
       ) : hasGroups ? (
         <div className="flex flex-col gap-6">
           {groupKeys.map(g => (
-            <GroupSection key={g || '__none__'} label={g || null} members={groupMap[g]} myMemberId={myMemberId} onUpdateWorkDesc={onUpdateWorkDesc} onUpdateMemberTags={onUpdateMemberTags} existingTags={allTags} />
+            <GroupSection key={g || '__none__'} label={g || null} members={groupMap[g]} myMemberId={myMemberId} isAdmin={isAdmin} onUpdateWorkDesc={onUpdateWorkDesc} onUpdateMemberTags={onUpdateMemberTags} existingTags={allTags} />
           ))}
         </div>
       ) : (
-        <GroupSection label={null} members={filtered} myMemberId={myMemberId} onUpdateWorkDesc={onUpdateWorkDesc} onUpdateMemberTags={onUpdateMemberTags} existingTags={allTags} />
+        <GroupSection label={null} members={filtered} myMemberId={myMemberId} isAdmin={isAdmin} onUpdateWorkDesc={onUpdateWorkDesc} onUpdateMemberTags={onUpdateMemberTags} existingTags={allTags} />
       )}
     </div>
   )
