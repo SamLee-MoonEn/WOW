@@ -114,6 +114,7 @@ function DraggableList({ list, adminCount, isAdmin, disableDrag, onReorder, onEd
 }
 
 export default function MemberManageModal({ members, myMemberId, onEdit, onDelete, onChangeRole, onClose, onReorderAll }) {
+  const [searchInput, setSearchInput] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const adminCount = members.filter(m => m.role === 'admin').length
   const isAdmin = members.find(m => m.id === myMemberId)?.role === 'admin'
@@ -142,9 +143,13 @@ export default function MemberManageModal({ members, myMemberId, onEdit, onDelet
           <div className="relative">
             <input
               type="text"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              placeholder="이름 또는 직급으로 검색..."
+              value={searchInput}
+              onChange={e => {
+                setSearchInput(e.target.value)
+                if (!e.target.value.trim()) setSearchQuery('')
+              }}
+              onKeyDown={e => { if (e.key === 'Enter') setSearchQuery(searchInput) }}
+              placeholder="이름 또는 직급 입력 후 Enter..."
               className="w-full text-[12px] border border-jira-border rounded-lg px-3 py-1.5 pl-8 bg-white focus:outline-none focus:border-jira-blue focus:ring-1 focus:ring-jira-blue/20"
             />
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-2.5 top-1/2 -translate-y-1/2 text-jira-muted">
@@ -186,7 +191,7 @@ export default function MemberManageModal({ members, myMemberId, onEdit, onDelet
           {q && internalMembers.length === 0 && externalMembers.length === 0 && (
             <div className="text-center py-6 text-jira-muted">
               <div className="text-2xl mb-1">🔍</div>
-              <div className="text-[12px]">"{searchQuery}" 검색 결과가 없습니다</div>
+              <div className="text-[12px]">"{searchQuery.trim()}" 검색 결과가 없습니다</div>
             </div>
           )}
         </div>
