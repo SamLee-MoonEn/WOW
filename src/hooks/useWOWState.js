@@ -60,10 +60,8 @@ export function useWOWState() {
       (data) => {
         if (data !== null) {
           setMembers(data)
-        } else {
-          // 최초 실행: 빈 멤버 문서 생성
-          saveMembers([])
         }
+        // data가 null이면 문서 미존재 → 첫 멤버 추가 시 자동 생성됨
         setLoading(false)
       },
       (err) => {

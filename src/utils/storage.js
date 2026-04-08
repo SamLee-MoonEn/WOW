@@ -8,7 +8,11 @@ const taskRef = (memberId) => doc(db, 'wow', `tasks_${memberId}`)
 export function subscribeMembers(callback, onError) {
   return onSnapshot(
     membersRef,
-    (snap) => callback(snap.exists() ? snap.data().members ?? [] : null),
+    (snap) => {
+      const members = snap.exists() ? snap.data().members ?? [] : null
+      if (members && members.length > 0) _lastKnownMemberCount = members.length
+      return callback(members)
+    },
     (err) => {
       console.error('[Firestore] members 구독 실패:', err.code, err.message)
       if (onError) onError(err)
@@ -24,7 +28,15 @@ export function subscribeMemberTasks(memberId, callback) {
   )
 }
 
+let _lastKnownMemberCount = 0
+
 export function saveMembers(members) {
+  // 기존에 멤버가 있었는데 빈 배열로 덮어쓰기 방지
+  if (members.length === 0 && _lastKnownMemberCount > 0) {
+    console.warn('[Firestore] 멤버 데이터 전체 삭제 시도 차단 (기존 멤버 수:', _lastKnownMemberCount, ')')
+    return
+  }
+  _lastKnownMemberCount = Math.max(_lastKnownMemberCount, members.length)
   setDoc(membersRef, { members })
 }
 
