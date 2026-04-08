@@ -18,7 +18,7 @@ import { getTodayTasks } from './utils/teamsUtils'
 import { fetchProfilePhoto } from './utils/graphUtils'
 import { useWOWState } from './hooks/useWOWState'
 import { useAuth } from './auth/useAuth'
-import { getWeekKeys } from './utils/weekUtils'
+import { getWeekKeys, formatDateFull } from './utils/weekUtils'
 import { uid } from './utils/weekUtils'
 import StatusBoard from './components/StatusBoard'
 import ExternalSummaryView from './components/ExternalSummaryView'
@@ -35,6 +35,7 @@ function Board() {
   const [groupFilter, setGroupFilter] = useState('')
 
   const wk = useMemo(() => getWeekKeys(wow.state.baseWeekOffset), [wow.state.baseWeekOffset])
+  const todayStr = useMemo(() => formatDateFull(new Date()), [])
 
   // myMemberId를 early return 및 useEffect 의존성 배열보다 앞에 선언 (TDZ 방지)
   const myMember = wow.state.members.find(m => m.email === email || m.name === displayName)
@@ -241,6 +242,8 @@ function Board() {
   const handleEndOfDayForStatusBoard = useCallback(() => {
     if (myMemberId) setModal({ type: 'teamsReport' })
   }, [myMemberId])
+  const handleWeekPrev = useCallback(() => wow.shiftWeeks(-1), [wow.shiftWeeks])
+  const handleWeekNext = useCallback(() => wow.shiftWeeks(1), [wow.shiftWeeks])
 
   // ── early return (모든 훅 선언 이후) ──
   if (wow.loading) {
@@ -302,8 +305,8 @@ function Board() {
 
             <WeekNav
               wk={wk}
-              onPrev={() => wow.shiftWeeks(-1)}
-              onNext={() => wow.shiftWeeks(1)}
+              onPrev={handleWeekPrev}
+              onNext={handleWeekNext}
               onToday={wow.goToCurrentWeek}
               isCurrentWeek={wow.state.baseWeekOffset === 0}
               rightSlot={
@@ -358,6 +361,7 @@ function Board() {
                     showDayGrid
                     wk={wk}
                     tasks={memberTasksMap[item.member.id] || EMPTY_TASKS}
+                    todayStr={todayStr}
                     onMoveTask={wow.moveTask}
                     onCopyTask={handleCopyTask}
                     onWeeklyReport={handleWeeklyReport}

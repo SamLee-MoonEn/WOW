@@ -42,11 +42,11 @@ function DividerItem({ task, taskKey, canEdit, onDelete, onDropBefore }) {
   )
 }
 
-export default memo(function DayCol({ member, weekKey, dayIndex, date, canEdit, isAdmin, items, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleStatus, onMoveTask, onCopyTask }) {
+export default memo(function DayCol({ member, weekKey, dayIndex, date, canEdit, isAdmin, items, todayStr, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleStatus, onMoveTask, onCopyTask }) {
   const [isDragOver, setIsDragOver] = useState(false)
   const key = `${member.id}_${weekKey}_${dayIndex}`
   const isFriday = dayIndex === 4
-  const isToday = formatDateFull(date) === formatDateFull(new Date())
+  const isToday = formatDateFull(date) === todayStr
 
   const handleDragOver = (e) => {
     e.preventDefault()

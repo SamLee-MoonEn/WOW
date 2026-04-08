@@ -1,4 +1,4 @@
-import { useState, useMemo, memo } from 'react'
+import { useState, memo } from 'react'
 import StatusBadge from './ui/StatusBadge'
 
 const styleMap = {
@@ -56,22 +56,9 @@ function CarryoverItem({ item, itemKey, canEdit, onEdit, onDelete, onCycleStatus
   )
 }
 
-export default memo(function CarryoverSection({ member, weekKey, tasks, onAddCarryover, onEditCarryover, onDeleteCarryover, onCycleStatus, onMoveTask, canEdit, isAdmin }) {
+export default memo(function CarryoverSection({ member, weekKey, carryoverItems, onAddCarryover, onEditCarryover, onDeleteCarryover, onCycleStatus, onMoveTask, canEdit, isAdmin }) {
   const [isDragOver, setIsDragOver] = useState(false)
   const currentKey = `${member.id}_${weekKey}_carryover`
-  const prefix = member.id + '_'
-  const suffix = '_carryover'
-
-  // 현재 주차 이하에 등록된 모든 이월 업무 집계
-  const aggregatedItems = useMemo(() => Object.entries(tasks)
-    .filter(([k]) => {
-      if (!k.startsWith(prefix) || !k.endsWith(suffix)) return false
-      const mid = k.slice(prefix.length, k.length - suffix.length)
-      return mid <= weekKey
-    })
-    .sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)
-    .flatMap(([key, items]) => items.map(item => ({ ...item, _key: key }))),
-  [tasks, prefix, suffix, weekKey])
 
   const handleDragOver = (e) => {
     e.preventDefault()
@@ -117,10 +104,10 @@ export default memo(function CarryoverSection({ member, weekKey, tasks, onAddCar
         )}
       </div>
       <div>
-        {aggregatedItems.length === 0 ? (
+        {carryoverItems.length === 0 ? (
           <span className="text-[11px] text-gray-400">이월 업무 없음</span>
         ) : (
-          aggregatedItems.map(item => (
+          carryoverItems.map(item => (
             <CarryoverItem
               key={item.id}
               item={item}

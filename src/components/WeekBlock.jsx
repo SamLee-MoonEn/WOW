@@ -3,7 +3,7 @@ import DayCol from './DayCol'
 import CarryoverSection from './CarryoverSection'
 import { getWeekDates, formatDate, getWeekKeys } from '../utils/weekUtils'
 
-export default memo(function WeekBlock({ member, weekKey, weekNum, monday, isCurrent, canEdit, showDayGrid = true, isAdmin, tasks, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onCycleCarryoverStatus, onMoveTask, onCopyTask }) {
+export default memo(function WeekBlock({ member, weekKey, weekNum, monday, isCurrent, canEdit, showDayGrid = true, isAdmin, tasks, todayStr, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onCycleCarryoverStatus, onMoveTask, onCopyTask }) {
   const dates = useMemo(() => getWeekDates(monday), [monday])
   const actualCurrentWeekKey = useMemo(() => getWeekKeys(0).current, [])
   const isActualCurrentWeek = weekKey === actualCurrentWeekKey
@@ -15,6 +15,24 @@ export default memo(function WeekBlock({ member, weekKey, weekNum, monday, isCur
       result.push(tasks[`${member.id}_${weekKey}_${i}`] || EMPTY)
     }
     return result
+  }, [tasks, member.id, weekKey])
+
+  // carryover items 집계 — 현재 주차 이하의 모든 이월 업무
+  const carryoverItems = useMemo(() => {
+    const prefix = member.id + '_'
+    const suffix = '_carryover'
+    const entries = []
+    for (const k in tasks) {
+      if (!k.startsWith(prefix) || !k.endsWith(suffix)) continue
+      const mid = k.slice(prefix.length, k.length - suffix.length)
+      if (mid <= weekKey) entries.push([k, tasks[k]])
+    }
+    entries.sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)
+    const items = []
+    for (const [key, arr] of entries) {
+      for (const item of arr) items.push({ ...item, _key: key })
+    }
+    return items
   }, [tasks, member.id, weekKey])
 
   return (
@@ -39,6 +57,7 @@ export default memo(function WeekBlock({ member, weekKey, weekNum, monday, isCur
               canEdit={canEdit}
               isAdmin={isAdmin}
               items={dayItems[i]}
+              todayStr={todayStr}
               onAddTask={onAddTask}
               onEditTask={onEditTask}
               onDeleteTask={onDeleteTask}
@@ -59,7 +78,7 @@ export default memo(function WeekBlock({ member, weekKey, weekNum, monday, isCur
       <CarryoverSection
         member={member}
         weekKey={weekKey}
-        tasks={tasks}
+        carryoverItems={carryoverItems}
         onAddCarryover={onAddCarryover}
         onEditCarryover={onEditCarryover}
         onDeleteCarryover={onDeleteCarryover}

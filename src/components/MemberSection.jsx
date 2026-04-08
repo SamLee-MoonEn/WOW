@@ -3,7 +3,7 @@ import WeekBlock from './WeekBlock'
 import Button from './ui/Button'
 import MemberAvatar from './ui/MemberAvatar'
 
-export default memo(function MemberSection({ member, isMe, isAdmin, showDayGrid = true, wk, tasks, onEditMember, onDeleteMember, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onMoveTask, onCopyTask, onWeeklyReport, onEndOfDay }) {
+export default memo(function MemberSection({ member, isMe, isAdmin, showDayGrid = true, wk, tasks, todayStr, onEditMember, onDeleteMember, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onMoveTask, onCopyTask, onWeeklyReport, onEndOfDay }) {
   const canEdit = (isMe || isAdmin) && showDayGrid
   const currentWeekRef = useRef(null)
 
@@ -45,6 +45,7 @@ export default memo(function MemberSection({ member, isMe, isAdmin, showDayGrid 
             showDayGrid={showDayGrid}
             isAdmin={isAdmin}
             tasks={tasks}
+            todayStr={todayStr}
             onAddTask={onAddTask}
             onEditTask={onEditTask}
             onDeleteTask={onDeleteTask}
@@ -68,6 +69,7 @@ export default memo(function MemberSection({ member, isMe, isAdmin, showDayGrid 
             showDayGrid={showDayGrid}
             isAdmin={isAdmin}
             tasks={tasks}
+            todayStr={todayStr}
             onAddTask={onAddTask}
             onEditTask={onEditTask}
             onDeleteTask={onDeleteTask}
