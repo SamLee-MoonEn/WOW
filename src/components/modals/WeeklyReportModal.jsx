@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import html2canvas from 'html2canvas'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
-import { uploadWeeklyReport } from '../../utils/graphUtils'
+import { uploadWeeklyReport, sendWeeklyReportToChat } from '../../utils/graphUtils'
 
 export default function WeeklyReportModal({ targetEl, weekLabel, memberName, acquireToken, settings = {}, onClose }) {
   const [status, setStatus] = useState('capturing')
@@ -92,31 +92,13 @@ export default function WeeklyReportModal({ targetEl, weekLabel, memberName, acq
   const handleSend = async () => {
     setStatus('sending')
     try {
-      const webhookUrl = settings.webhookUrl || import.meta.env.VITE_TEAMS_WEBHOOK_URL
-      if (!webhookUrl) throw new Error('설정에서 Webhook URL을 입력해주세요.')
+      const chatId = settings.weeklyReportChatId
+      if (!chatId) throw new Error('설정에서 Teams 채팅 ID를 입력해주세요.')
 
       const filename = `${weekLabel.replace(/[^a-zA-Z0-9가-힣_-]/g, '-')}-${memberName}.png`
-
-      // OneDrive에 업로드 후 공유 URL 획득
       const imageUrl = await uploadWeeklyReport(blobRef.current, filename, acquireToken)
-
       const title = `${memberName} 주간 업무 계획 · ${weekLabel}`
-      const htmlContent = `<img src="${imageUrl}" alt="${title}" style="max-width:100%;" />`
-
-      const res = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title,
-          date: weekLabel,
-          memberName,
-          message: htmlContent,
-          attachments: [
-            { contentType: 'text/html', content: htmlContent },
-          ],
-        }),
-      })
-      if (!res.ok) throw new Error(`전송 실패 (HTTP ${res.status})`)
+      await sendWeeklyReportToChat(chatId, title, imageUrl, acquireToken)
       setStatus('success')
     } catch (e) {
       setErrorMsg(e.message)

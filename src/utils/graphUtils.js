@@ -12,21 +12,26 @@ export async function uploadWeeklyReport(blob, filename, acquireToken) {
   )
   if (!res.ok) throw new Error(`OneDrive 업로드 실패 (${res.status})`)
   const item = await res.json()
-
-  // 익명 조회 가능한 공유 링크 생성 (downloadUrl은 임시라 만료됨)
-  const shareRes = await fetch(
-    `${GRAPH}/me/drive/items/${item.id}/createLink`,
-    {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'view', scope: 'organization' }),
-    }
-  )
-  if (shareRes.ok) {
-    const shareData = await shareRes.json()
-    return shareData.link?.webUrl ?? item['@microsoft.graph.downloadUrl'] ?? item.webUrl
-  }
   return item['@microsoft.graph.downloadUrl'] ?? item.webUrl
+}
+
+export async function sendWeeklyReportToChat(chatId, title, imageUrl, acquireToken) {
+  const token = await acquireToken(['Chat.ReadWrite'])
+  const html = `<h3>${title}</h3><img src="${imageUrl}" alt="${title}" style="max-width:100%;" />`
+  const res = await fetch(`${GRAPH}/chats/${chatId}/messages`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      body: { contentType: 'html', content: html },
+    }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err?.error?.message || `Teams 전송 실패 (HTTP ${res.status})`)
+  }
 }
 
 export async function fetchProfilePhoto(acquireToken) {
