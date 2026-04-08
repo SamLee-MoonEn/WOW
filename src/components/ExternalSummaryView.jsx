@@ -1,5 +1,6 @@
 import { useState, useMemo, memo } from 'react'
 import MemberAvatar from './ui/MemberAvatar'
+import { sendDirectMessage } from '../utils/graphUtils'
 
 const PRESENCE = {
   working:  { label: '업무 중', dot: 'bg-green-500', badge: 'bg-green-50 border-green-200 text-green-700', pulse: true },
@@ -9,7 +10,7 @@ const PRESENCE = {
 
 const PRESENCE_ORDER = { working: 0, vacation: 1, off: 2 }
 
-function MemberCard({ member, isMe, isAdmin, onUpdateWorkDesc, onUpdateMemberTags, existingTags }) {
+function MemberCard({ member, isMe, isAdmin, onUpdateWorkDesc, onUpdateMemberTags, existingTags, acquireToken }) {
   const p = member.presence || 'working'
   const cfg = PRESENCE[p] || PRESENCE.working
   const isOff = p === 'off'
@@ -42,10 +43,20 @@ function MemberCard({ member, isMe, isAdmin, onUpdateWorkDesc, onUpdateMemberTag
     setEditingDesc(false)
   }
 
-  const handleSend = () => {
-    if (!message.trim()) return
-    const url = `msteams://teams.microsoft.com/l/chat/0/0?users=${encodeURIComponent(member.email)}&message=${encodeURIComponent(message.trim())}`
-    window.location.href = url
+  const [sendStatus, setSendStatus] = useState('idle') // idle | sending | success | error
+
+  const handleSend = async () => {
+    if (!message.trim() || !acquireToken) return
+    setSendStatus('sending')
+    try {
+      await sendDirectMessage(member.email, message.trim(), acquireToken)
+      setSendStatus('success')
+      setMessage('')
+      setTimeout(() => setSendStatus('idle'), 2000)
+    } catch {
+      setSendStatus('error')
+      setTimeout(() => setSendStatus('idle'), 3000)
+    }
   }
 
   return (
@@ -176,30 +187,35 @@ function MemberCard({ member, isMe, isAdmin, onUpdateWorkDesc, onUpdateMemberTag
 
       {/* Teams 메시지 입력 */}
       {canContact && (
-        <div className="mt-3 flex gap-1.5">
-          <input
-            type="text"
-            value={message}
-            onChange={e => setMessage(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleSend()}
-            placeholder="메시지 입력 후 전송..."
-            maxLength={200}
-            className="flex-1 text-[11px] px-2.5 py-1.5 border border-jira-border rounded-lg focus:outline-none focus:border-jira-blue bg-jira-bg placeholder-gray-300"
-          />
-          <button
-            onClick={handleSend}
-            disabled={!message.trim()}
-            className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg border transition-colors bg-jira-blue text-white border-jira-blue hover:bg-blue-700 disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0"
-          >
-            💬
-          </button>
+        <div className="mt-3">
+          <div className="flex gap-1.5">
+            <input
+              type="text"
+              value={message}
+              onChange={e => setMessage(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSend()}
+              placeholder="메시지 입력 후 전송..."
+              maxLength={200}
+              disabled={sendStatus === 'sending'}
+              className="flex-1 text-[11px] px-2.5 py-1.5 border border-jira-border rounded-lg focus:outline-none focus:border-jira-blue bg-jira-bg placeholder-gray-300 disabled:opacity-50"
+            />
+            <button
+              onClick={handleSend}
+              disabled={!message.trim() || sendStatus === 'sending'}
+              className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg border transition-colors bg-jira-blue text-white border-jira-blue hover:bg-blue-700 disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0"
+            >
+              {sendStatus === 'sending' ? '...' : '💬'}
+            </button>
+          </div>
+          {sendStatus === 'success' && <p className="text-[10px] text-green-600 mt-1">전송 완료</p>}
+          {sendStatus === 'error' && <p className="text-[10px] text-red-500 mt-1">전송 실패</p>}
         </div>
       )}
     </div>
   )
 }
 
-function GroupSection({ label, members, myMemberId, isAdmin, onUpdateWorkDesc, onUpdateMemberTags, existingTags }) {
+function GroupSection({ label, members, myMemberId, isAdmin, onUpdateWorkDesc, onUpdateMemberTags, existingTags, acquireToken }) {
   return (
     <div>
       {label && (
@@ -209,13 +225,13 @@ function GroupSection({ label, members, myMemberId, isAdmin, onUpdateWorkDesc, o
         </div>
       )}
       <div className="grid grid-cols-2 gap-3 max-[640px]:grid-cols-1 sm:grid-cols-3 lg:grid-cols-4">
-        {members.map(m => <MemberCard key={m.id} member={m} isMe={m.id === myMemberId} isAdmin={isAdmin} onUpdateWorkDesc={onUpdateWorkDesc} onUpdateMemberTags={onUpdateMemberTags} existingTags={existingTags} />)}
+        {members.map(m => <MemberCard key={m.id} member={m} isMe={m.id === myMemberId} isAdmin={isAdmin} onUpdateWorkDesc={onUpdateWorkDesc} onUpdateMemberTags={onUpdateMemberTags} existingTags={existingTags} acquireToken={acquireToken} />)}
       </div>
     </div>
   )
 }
 
-export default memo(function ExternalSummaryView({ members, myMemberId, isAdmin, onUpdateWorkDesc, onUpdateMemberTags }) {
+export default memo(function ExternalSummaryView({ members, myMemberId, isAdmin, onUpdateWorkDesc, onUpdateMemberTags, acquireToken }) {
   const [selectedTags, setSelectedTags] = useState([])
   const [tagSearch, setTagSearch] = useState('')
 
@@ -335,11 +351,11 @@ export default memo(function ExternalSummaryView({ members, myMemberId, isAdmin,
       ) : hasGroups ? (
         <div className="flex flex-col gap-6">
           {groupKeys.map(g => (
-            <GroupSection key={g || '__none__'} label={g || null} members={groupMap[g]} myMemberId={myMemberId} isAdmin={isAdmin} onUpdateWorkDesc={onUpdateWorkDesc} onUpdateMemberTags={onUpdateMemberTags} existingTags={allTags} />
+            <GroupSection key={g || '__none__'} label={g || null} members={groupMap[g]} myMemberId={myMemberId} isAdmin={isAdmin} onUpdateWorkDesc={onUpdateWorkDesc} onUpdateMemberTags={onUpdateMemberTags} existingTags={allTags} acquireToken={acquireToken} />
           ))}
         </div>
       ) : (
-        <GroupSection label={null} members={filtered} myMemberId={myMemberId} isAdmin={isAdmin} onUpdateWorkDesc={onUpdateWorkDesc} onUpdateMemberTags={onUpdateMemberTags} existingTags={allTags} />
+        <GroupSection label={null} members={filtered} myMemberId={myMemberId} isAdmin={isAdmin} onUpdateWorkDesc={onUpdateWorkDesc} onUpdateMemberTags={onUpdateMemberTags} existingTags={allTags} acquireToken={acquireToken} />
       )}
     </div>
   )

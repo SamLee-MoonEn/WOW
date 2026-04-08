@@ -33,6 +33,38 @@ export async function sendChatMessage(chatId, html, acquireToken) {
   }
 }
 
+export async function sendDirectMessage(recipientEmail, message, acquireToken) {
+  const token = await acquireToken(['Chat.ReadWrite'])
+  // 1:1 채팅 생성 (이미 존재하면 기존 chatId 반환)
+  const chatRes = await fetch(`${GRAPH}/chats`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chatType: 'oneOnOne',
+      members: [
+        { '@odata.type': '#microsoft.graph.aadUserConversationMember', roles: ['owner'], 'user@odata.bind': `${GRAPH}/me` },
+        { '@odata.type': '#microsoft.graph.aadUserConversationMember', roles: ['owner'], 'user@odata.bind': `${GRAPH}/users/${recipientEmail}` },
+      ],
+    }),
+  })
+  if (!chatRes.ok) {
+    const err = await chatRes.json().catch(() => ({}))
+    throw new Error(err?.error?.message || `채팅 생성 실패 (HTTP ${chatRes.status})`)
+  }
+  const chat = await chatRes.json()
+  // 메시지 전송
+  const html = message.replace(/\n/g, '<br>')
+  const msgRes = await fetch(`${GRAPH}/chats/${chat.id}/messages`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ body: { contentType: 'html', content: html } }),
+  })
+  if (!msgRes.ok) {
+    const err = await msgRes.json().catch(() => ({}))
+    throw new Error(err?.error?.message || `메시지 전송 실패 (HTTP ${msgRes.status})`)
+  }
+}
+
 export async function fetchProfilePhoto(acquireToken) {
   try {
     const token = await acquireToken()
