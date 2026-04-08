@@ -8,7 +8,7 @@ export default memo(function MemberSection({ member, isMe, isAdmin, showDayGrid 
   const currentWeekRef = useRef(null)
 
   return (
-    <div className={`bg-white rounded-xl mb-6 overflow-hidden ${isMe ? 'shadow-md ring-2 ring-jira-blue ring-offset-1' : 'shadow-sm'}`}>
+    <div style={{ contain: 'layout style paint' }} className={`bg-white rounded-xl mb-6 overflow-hidden ${isMe ? 'shadow-md ring-2 ring-jira-blue ring-offset-1' : 'shadow-sm'}`}>
       <div className={`group/header flex items-center justify-between px-5 py-3.5 border-b-2 ${isMe ? 'bg-jira-blue-light border-blue-200' : 'bg-jira-bg-alt border-jira-bg'}`}>
         <div className="text-lg font-bold flex items-center gap-2">
           <MemberAvatar member={member} size="md" /> {member.name}

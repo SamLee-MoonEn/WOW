@@ -1,4 +1,4 @@
-import { useState, useCallback, memo } from 'react'
+import { useRef, useCallback, memo } from 'react'
 import TaskItem from './TaskItem'
 import { DAYS, formatDate, formatDateFull } from '../utils/weekUtils'
 
@@ -42,42 +42,47 @@ function DividerItem({ task, taskKey, canEdit, onDelete, onDropBefore }) {
   )
 }
 
+const DRAG_OVER_CLS = 'bg-jira-blue-light ring-2 ring-inset ring-jira-blue'
+
 export default memo(function DayCol({ member, weekKey, dayIndex, date, canEdit, isAdmin, items, todayStr, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleStatus, onMoveTask, onCopyTask }) {
-  const [isDragOver, setIsDragOver] = useState(false)
+  const colRef = useRef(null)
   const key = `${member.id}_${weekKey}_${dayIndex}`
   const isFriday = dayIndex === 4
   const isToday = formatDateFull(date) === todayStr
 
-  const handleDragOver = (e) => {
+  const handleDragOver = useCallback((e) => {
     e.preventDefault()
-    setIsDragOver(true)
-  }
+    colRef.current?.classList.add(...DRAG_OVER_CLS.split(' '))
+  }, [])
 
-  const handleDragLeave = (e) => {
-    if (!e.relatedTarget || !e.currentTarget.contains(e.relatedTarget)) setIsDragOver(false)
-  }
+  const handleDragLeave = useCallback((e) => {
+    if (!e.relatedTarget || !e.currentTarget.contains(e.relatedTarget)) {
+      colRef.current?.classList.remove(...DRAG_OVER_CLS.split(' '))
+    }
+  }, [])
 
-  const handleDrop = (e) => {
+  const handleDrop = useCallback((e) => {
     e.preventDefault()
-    setIsDragOver(false)
+    colRef.current?.classList.remove(...DRAG_OVER_CLS.split(' '))
     const fromKey = e.dataTransfer.getData('fromKey')
     const taskId = e.dataTransfer.getData('taskId')
     if (!fromKey) return
-    // 관리자가 아닌 경우 다른 멤버 카드 드롭 거부
     if (!isAdmin && !fromKey.startsWith(member.id + '_')) return
     onMoveTask(fromKey, key, taskId, null)
-  }
+  }, [isAdmin, member.id, key, onMoveTask])
 
-  const handleDragEnd = () => setIsDragOver(false)
+  const handleDragEnd = useCallback(() => {
+    colRef.current?.classList.remove(...DRAG_OVER_CLS.split(' '))
+  }, [])
 
-  // 안정적인 콜백: dayKey를 클로저로 캡처 (dayKey는 렌더마다 같은 문자열)
   const handleMoveToHere = useCallback((dragId, fromKey, beforeId) => {
     onMoveTask(fromKey, key, dragId, beforeId)
   }, [onMoveTask, key])
 
   return (
     <div
-      className={`border-r border-jira-border last:border-r-0 min-h-[160px] flex flex-col transition-colors ${isDragOver ? 'bg-jira-blue-light ring-2 ring-inset ring-jira-blue' : ''}`}
+      ref={colRef}
+      className="border-r border-jira-border last:border-r-0 min-h-[160px] flex flex-col"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}

@@ -1,4 +1,4 @@
-import { useState, memo } from 'react'
+import { useRef, useCallback, memo } from 'react'
 import StatusBadge from './ui/StatusBadge'
 
 const styleMap = {
@@ -56,35 +56,40 @@ function CarryoverItem({ item, itemKey, canEdit, onEdit, onDelete, onCycleStatus
   )
 }
 
+const CARRY_DRAG_CLS = 'bg-orange-100 ring-2 ring-inset ring-orange-300'
+
 export default memo(function CarryoverSection({ member, weekKey, carryoverItems, onAddCarryover, onEditCarryover, onDeleteCarryover, onCycleStatus, onMoveTask, canEdit, isAdmin }) {
-  const [isDragOver, setIsDragOver] = useState(false)
+  const sectionRef = useRef(null)
   const currentKey = `${member.id}_${weekKey}_carryover`
 
-  const handleDragOver = (e) => {
+  const handleDragOver = useCallback((e) => {
     e.preventDefault()
-    const fromKey = e.dataTransfer.types.includes('text/plain') ? null : undefined
-    // fromKey 체크는 drop 시에만 가능, 여기선 일단 허용 표시
-    setIsDragOver(true)
-  }
+    const el = sectionRef.current
+    if (el) { el.classList.remove('bg-jira-orange-light'); el.classList.add(...CARRY_DRAG_CLS.split(' ')) }
+  }, [])
 
-  const handleDragLeave = (e) => {
-    if (!e.currentTarget.contains(e.relatedTarget)) setIsDragOver(false)
-  }
+  const handleDragLeave = useCallback((e) => {
+    if (!e.currentTarget.contains(e.relatedTarget)) {
+      const el = sectionRef.current
+      if (el) { el.classList.remove(...CARRY_DRAG_CLS.split(' ')); el.classList.add('bg-jira-orange-light') }
+    }
+  }, [])
 
-  const handleDrop = (e) => {
+  const handleDrop = useCallback((e) => {
     e.preventDefault()
-    setIsDragOver(false)
+    const el = sectionRef.current
+    if (el) { el.classList.remove(...CARRY_DRAG_CLS.split(' ')); el.classList.add('bg-jira-orange-light') }
     const fromKey = e.dataTransfer.getData('fromKey')
     const taskId = e.dataTransfer.getData('taskId')
-    // carryover → carryover 이동 제외, 관리자가 아닌 경우 다른 멤버 드롭 거부
     if (!fromKey || fromKey.endsWith('_carryover')) return
     if (!isAdmin && !fromKey.startsWith(member.id + '_')) return
     if (onMoveTask) onMoveTask(fromKey, currentKey, taskId, null)
-  }
+  }, [isAdmin, member.id, currentKey, onMoveTask])
 
   return (
     <div
-      className={`px-3 py-2 border-t border-jira-border transition-colors ${isDragOver ? 'bg-orange-100 ring-2 ring-inset ring-orange-300' : 'bg-jira-orange-light'}`}
+      ref={sectionRef}
+      className="px-3 py-2 border-t border-jira-border bg-jira-orange-light"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -92,7 +97,6 @@ export default memo(function CarryoverSection({ member, weekKey, carryoverItems,
       <div className="flex items-center justify-between mb-1.5">
         <span className="text-[11px] font-bold text-jira-orange">
           📌 이월 / 추가 업무
-          {isDragOver && <span className="ml-1.5 font-normal text-orange-500">여기에 놓으면 이월됩니다</span>}
         </span>
         {canEdit && (
           <button
