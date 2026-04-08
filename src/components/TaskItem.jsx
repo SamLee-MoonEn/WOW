@@ -61,7 +61,7 @@ export default memo(function TaskItem({ task, dayKey, canEdit, isAdmin, onEditTa
   }, [onCopyTask, dayKey, task])
 
   const memoUrls = getMemoUrls(task.memo)
-  const showCopy = isAdmin && onCopyTask
+  const showCopy = (canEdit || isAdmin) && onCopyTask
   const hasActions = showCopy || canEdit || memoUrls.length > 0
 
   return (
