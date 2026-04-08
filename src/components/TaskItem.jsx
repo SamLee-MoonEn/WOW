@@ -74,7 +74,7 @@ export default memo(function TaskItem({ task, dayKey, canEdit, isAdmin, onEditTa
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onDragEnd={handleDragLeave}
-        className="group px-0.5 pt-1 pb-0.5 rounded hover:bg-jira-bg cursor-grab active:cursor-grabbing active:opacity-50"
+        className="group relative px-0.5 pt-1 pb-0.5 rounded hover:bg-jira-bg cursor-grab active:cursor-grabbing active:opacity-50"
       >
         {/* 일감 본문 행 */}
         <div data-task-row className="flex items-start gap-1.5">
@@ -91,10 +91,10 @@ export default memo(function TaskItem({ task, dayKey, canEdit, isAdmin, onEditTa
           </span>
         </div>
 
-        {/* 액션바 — hover 시 아래로 슬라이드 */}
+        {/* 액션바 — hover 시 표시 (absolute로 레이아웃 영향 없음) */}
         {hasActions && (
-          <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-[opacity] duration-100 h-0 group-hover:h-auto overflow-hidden">
-              <div className="flex items-center justify-end gap-1.5 pt-1.5 pb-0.5">
+          <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-100 absolute right-0.5 top-full z-10">
+              <div className="flex items-center gap-1 py-0.5 px-1 bg-white/95 rounded-md shadow-sm border border-jira-border">
                 {memoUrls.map((url, i) => (
                   <a
                     key={i}
