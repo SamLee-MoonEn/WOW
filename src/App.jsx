@@ -486,6 +486,7 @@ function Board() {
           onClose={() => setModal(null)}
           onConfirmEnd={() => { wow.updatePresence(myMemberId, 'off'); setModal(null) }}
           settings={wow.state.settings}
+          acquireToken={acquireToken}
         />
       )}
 

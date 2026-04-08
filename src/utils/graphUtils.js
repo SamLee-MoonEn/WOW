@@ -15,9 +15,8 @@ export async function uploadWeeklyReport(blob, filename, acquireToken) {
   return item['@microsoft.graph.downloadUrl'] ?? item.webUrl
 }
 
-export async function sendWeeklyReportToChat(chatId, title, imageUrl, acquireToken) {
+export async function sendChatMessage(chatId, html, acquireToken) {
   const token = await acquireToken(['Chat.ReadWrite'])
-  const html = `<h3>${title}</h3><img src="${imageUrl}" alt="${title}" style="max-width:100%;" />`
   const res = await fetch(`${GRAPH}/chats/${chatId}/messages`, {
     method: 'POST',
     headers: {

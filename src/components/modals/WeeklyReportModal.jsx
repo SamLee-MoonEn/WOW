@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import html2canvas from 'html2canvas'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
-import { uploadWeeklyReport, sendWeeklyReportToChat } from '../../utils/graphUtils'
+import { uploadWeeklyReport, sendChatMessage } from '../../utils/graphUtils'
 
 export default function WeeklyReportModal({ targetEl, weekLabel, memberName, acquireToken, settings = {}, onClose }) {
   const [status, setStatus] = useState('capturing')
@@ -98,7 +98,8 @@ export default function WeeklyReportModal({ targetEl, weekLabel, memberName, acq
       const filename = `${weekLabel.replace(/[^a-zA-Z0-9가-힣_-]/g, '-')}-${memberName}.png`
       const imageUrl = await uploadWeeklyReport(blobRef.current, filename, acquireToken)
       const title = `${memberName} 주간 업무 계획 · ${weekLabel}`
-      await sendWeeklyReportToChat(chatId, title, imageUrl, acquireToken)
+      const html = `<h3>${title}</h3><img src="${imageUrl}" alt="${title}" style="max-width:100%;" />`
+      await sendChatMessage(chatId, html, acquireToken)
       setStatus('success')
     } catch (e) {
       setErrorMsg(e.message)

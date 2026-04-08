@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
-import { formatTeamsText, getTodayLabel, sendToTeamsWebhook } from '../../utils/teamsUtils'
+import { formatTeamsText, getTodayLabel } from '../../utils/teamsUtils'
+import { sendChatMessage } from '../../utils/graphUtils'
 
-export default function TeamsReportModal({ memberName, todayTasks, onClose, onConfirmEnd, settings = {} }) {
+export default function TeamsReportModal({ memberName, todayTasks, onClose, onConfirmEnd, settings = {}, acquireToken }) {
   const [sendStatus, setSendStatus] = useState('idle') // idle | sending | success | error
   const [copied, setCopied] = useState(false)
 
@@ -21,8 +22,10 @@ export default function TeamsReportModal({ memberName, todayTasks, onClose, onCo
   const handleSend = async () => {
     setSendStatus('sending')
     try {
-      const webhookUrl = settings.webhookUrl || import.meta.env.VITE_TEAMS_WEBHOOK_URL
-      await sendToTeamsWebhook(webhookUrl, memberName, todayTasks, dateLabel, text)
+      const chatId = settings.dailyReportChatId
+      if (!chatId) throw new Error('설정에서 업무 종료 보고 채팅 ID를 입력해주세요.')
+      const htmlText = text.replace(/\n/g, '<br>')
+      await sendChatMessage(chatId, htmlText, acquireToken)
       setSendStatus('success')
       onConfirmEnd?.()
     } catch {
@@ -40,7 +43,7 @@ export default function TeamsReportModal({ memberName, todayTasks, onClose, onCo
     onConfirmEnd?.()
   }
 
-  const webhookUrl = settings.webhookUrl || import.meta.env.VITE_TEAMS_WEBHOOK_URL
+  const hasChatId = !!settings.dailyReportChatId
 
   const footer = (
     <>
@@ -56,7 +59,7 @@ export default function TeamsReportModal({ memberName, todayTasks, onClose, onCo
       <Button variant="outline" size="sm" onClick={handleCopy}>
         {copied ? '✓ 복사됨' : '📋 복사'}
       </Button>
-      {webhookUrl && sendStatus !== 'success' && (
+      {hasChatId && sendStatus !== 'success' && (
         <Button
           variant="primary"
           size="sm"
@@ -82,9 +85,9 @@ export default function TeamsReportModal({ memberName, todayTasks, onClose, onCo
       <div className="flex items-center justify-between mb-2">
         <p className="text-xs text-jira-muted">
           오늘({dateLabel}) 업무 목록을 Teams로 전송합니다.
-          {!webhookUrl && (
+          {!hasChatId && (
             <span className="ml-1 text-amber-600 font-medium">
-              (VITE_TEAMS_WEBHOOK_URL 미설정 — 복사 후 수동 전송)
+              (채팅 ID 미설정 — 복사 후 수동 전송)
             </span>
           )}
         </p>

@@ -4,12 +4,12 @@ import Button from '../ui/Button'
 import { FormField, Input } from '../ui/FormField'
 
 export default function AppSettingsModal({ settings, onSave, onClose }) {
-  const [webhookUrl,          setWebhookUrl]          = useState(settings.webhookUrl    ?? import.meta.env.VITE_TEAMS_WEBHOOK_URL ?? '')
+  const [dailyReportChatId,   setDailyReportChatId]   = useState(settings.dailyReportChatId ?? '')
   const [weeklyReportChatId,  setWeeklyReportChatId]  = useState(settings.weeklyReportChatId ?? '')
   const [reportHeader,        setReportHeader]        = useState(settings.reportHeader  ?? '')
   const [reportFooter,        setReportFooter]        = useState(settings.reportFooter  ?? '')
   const handleSave = () => {
-    onSave({ webhookUrl: webhookUrl.trim(), weeklyReportChatId: weeklyReportChatId.trim(), reportHeader: reportHeader.trim(), reportFooter: reportFooter.trim() })
+    onSave({ dailyReportChatId: dailyReportChatId.trim(), weeklyReportChatId: weeklyReportChatId.trim(), reportHeader: reportHeader.trim(), reportFooter: reportFooter.trim() })
     onClose()
   }
 
@@ -25,15 +25,15 @@ export default function AppSettingsModal({ settings, onSave, onClose }) {
       }
     >
       <div className="flex flex-col gap-4">
-        {/* Webhook URL */}
-        <FormField label="Teams Webhook URL" hint="Power Automate HTTP 트리거 URL을 입력하세요.">
+        {/* 업무 종료 보고 Teams 채팅 ID */}
+        <FormField label="업무 종료 보고 — Teams 채팅 ID" hint="업무 종료 보고를 전송할 Teams 채팅 ID를 입력하세요.">
           <Input
-            value={webhookUrl}
-            onChange={e => setWebhookUrl(e.target.value)}
-            placeholder="https://prod-xx.westus.logic.azure.com/..."
+            value={dailyReportChatId}
+            onChange={e => setDailyReportChatId(e.target.value)}
+            placeholder="19:xxxxxxxx@thread.v2"
           />
-          {webhookUrl && (
-            <p className="text-[11px] text-green-600 mt-1">✓ Webhook URL이 설정되어 있습니다.</p>
+          {dailyReportChatId && (
+            <p className="text-[11px] text-green-600 mt-1">✓ 채팅 ID가 설정되어 있습니다.</p>
           )}
         </FormField>
 
