@@ -34,7 +34,11 @@ export async function sendChatMessage(chatId, html, acquireToken) {
 }
 
 export async function sendDirectMessage(recipientEmail, message, acquireToken) {
-  const token = await acquireToken(['Chat.ReadWrite'])
+  const token = await acquireToken(['Chat.ReadWrite', 'User.Read'])
+  // 현재 사용자 ID 조회
+  const meRes = await fetch(`${GRAPH}/me?$select=id`, { headers: { Authorization: `Bearer ${token}` } })
+  if (!meRes.ok) throw new Error('사용자 정보 조회 실패')
+  const me = await meRes.json()
   // 1:1 채팅 생성 (이미 존재하면 기존 chatId 반환)
   const chatRes = await fetch(`${GRAPH}/chats`, {
     method: 'POST',
@@ -42,7 +46,7 @@ export async function sendDirectMessage(recipientEmail, message, acquireToken) {
     body: JSON.stringify({
       chatType: 'oneOnOne',
       members: [
-        { '@odata.type': '#microsoft.graph.aadUserConversationMember', roles: ['owner'], 'user@odata.bind': `${GRAPH}/me` },
+        { '@odata.type': '#microsoft.graph.aadUserConversationMember', roles: ['owner'], 'user@odata.bind': `${GRAPH}/users/${me.id}` },
         { '@odata.type': '#microsoft.graph.aadUserConversationMember', roles: ['owner'], 'user@odata.bind': `${GRAPH}/users/${recipientEmail}` },
       ],
     }),
