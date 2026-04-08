@@ -1,4 +1,4 @@
-import { useRef, useCallback, memo } from 'react'
+import { useState, useRef, useCallback, memo } from 'react'
 import StatusBadge from './ui/StatusBadge'
 
 const styleMap = {
