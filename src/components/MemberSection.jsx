@@ -19,11 +19,9 @@ export default memo(function MemberSection({ member, isMe, isAdmin, showDayGrid 
           {isMe && onEndOfDay && (
             <Button variant="outline" size="sm" onClick={onEndOfDay}>📤 업무 종료</Button>
           )}
-          {/* TODO: 주간 계획 전송 기능 수정 후 복원
           {onWeeklyReport && (
             <Button variant="outline" size="sm" onClick={() => onWeeklyReport(currentWeekRef.current, member)}>📸 주간 계획 전송</Button>
           )}
-          */}
           {isAdmin && (
             <>
               <Button variant="outline" size="sm" onClick={() => onEditMember(member)}>✏️ 수정</Button>
