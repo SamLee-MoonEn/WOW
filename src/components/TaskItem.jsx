@@ -93,7 +93,7 @@ export default memo(function TaskItem({ task, dayKey, canEdit, isAdmin, onEditTa
 
         {/* 액션바 — hover 시 표시 (absolute로 레이아웃 영향 없음) */}
         {hasActions && (
-          <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-100 absolute right-0.5 top-full z-10">
+          <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-100 absolute right-0.5 bottom-full z-10 mb-0.5">
               <div className="flex items-center gap-1 py-0.5 px-1 bg-white/95 rounded-md shadow-sm border border-jira-border">
                 {memoUrls.map((url, i) => (
                   <a
