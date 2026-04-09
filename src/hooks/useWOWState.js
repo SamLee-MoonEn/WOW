@@ -6,6 +6,7 @@ import {
   saveMemberTasks,
   subscribeSettings,
   saveSettings,
+  autoBackupToLocal,
 } from '../utils/storage'
 import { uid } from '../utils/weekUtils'
 import { isWorkday } from '../utils/holidays'
@@ -139,6 +140,24 @@ export function useWOWState() {
   useEffect(() => {
     return subscribeSettings((data) => setSettings(data))
   }, [])
+
+  // ── 앱 로드 시 LocalStorage 자동 백업 ─────────────────────────────
+  const autoBackupDoneRef = useRef(false)
+  useEffect(() => {
+    if (loading || members.length === 0 || autoBackupDoneRef.current) return
+    autoBackupDoneRef.current = true
+    // tasks를 멤버별로 분리하여 백업
+    const tasksByMember = {}
+    for (const m of members) {
+      const prefix = m.id + '_'
+      const memberTasks = {}
+      for (const [k, v] of Object.entries(tasks)) {
+        if (k.startsWith(prefix)) memberTasks[k.slice(prefix.length)] = v
+      }
+      if (Object.keys(memberTasks).length > 0) tasksByMember[m.id] = memberTasks
+    }
+    autoBackupToLocal(members, tasksByMember, settings)
+  }, [loading, members, tasks, settings])
 
   // ── 매일 오전 9시 자동 상태 리셋 ───────────────────────────────────
   const dailyResetDoneRef = useRef(null)

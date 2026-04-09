@@ -58,6 +58,43 @@ export function saveMemberTasks(memberId, shortKeyTasks) {
   setDoc(taskRef(memberId), shortKeyTasks)
 }
 
+// ── LocalStorage 자동 백업 ────────────────────────────────────────────
+
+const LS_BACKUP_KEY = 'wow_auto_backup'
+const LS_BACKUP_PREV_KEY = 'wow_auto_backup_prev'
+
+export function autoBackupToLocal(members, tasks, settings) {
+  if (!members || members.length === 0) return
+  try {
+    // 기존 백업을 이전 백업으로 이동 (2세대 보관)
+    const existing = localStorage.getItem(LS_BACKUP_KEY)
+    if (existing) localStorage.setItem(LS_BACKUP_PREV_KEY, existing)
+
+    const data = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      members,
+      settings,
+      tasks,
+    }
+    localStorage.setItem(LS_BACKUP_KEY, JSON.stringify(data))
+  } catch { /* localStorage 용량 초과 등 무시 */ }
+}
+
+export function getLocalBackup() {
+  try {
+    const raw = localStorage.getItem(LS_BACKUP_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch { return null }
+}
+
+export function getPrevLocalBackup() {
+  try {
+    const raw = localStorage.getItem(LS_BACKUP_PREV_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch { return null }
+}
+
 // ── 백업/복원 ────────────────────────────────────────────────────────
 
 export async function exportBackup() {

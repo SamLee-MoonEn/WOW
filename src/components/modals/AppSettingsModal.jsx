@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import { FormField, Input } from '../ui/FormField'
-import { exportBackup, importBackup } from '../../utils/storage'
+import { exportBackup, importBackup, getLocalBackup, getPrevLocalBackup } from '../../utils/storage'
 
 function BackupSection() {
   const [status, setStatus] = useState('')
@@ -53,15 +53,54 @@ function BackupSection() {
     fileRef.current.value = ''
   }
 
+  const handleRestoreLocal = async (getter, label) => {
+    const data = getter()
+    if (!data) { setStatus(`${label} 백업이 없습니다.`); return }
+    const memberCount = data.members?.length ?? 0
+    const confirmed = window.confirm(
+      `${label} 백업 복원:\n` +
+      `- 백업 일시: ${data.exportedAt ?? '알 수 없음'}\n` +
+      `- 멤버: ${memberCount}명\n\n` +
+      `현재 데이터를 이 백업으로 덮어씁니다. 계속하시겠습니까?`
+    )
+    if (!confirmed) return
+    setStatus('복원 중...')
+    try {
+      await importBackup(data)
+      setStatus('복원 완료. 새로고침합니다...')
+      setTimeout(() => window.location.reload(), 1000)
+    } catch (e) { setStatus(`복원 실패: ${e.message}`) }
+  }
+
+  const localBackup = getLocalBackup()
+  const prevBackup = getPrevLocalBackup()
+
   return (
     <div className="border-t border-jira-border pt-4">
       <p className="text-[12px] font-semibold text-jira-dark mb-1">데이터 백업 / 복원</p>
-      <p className="text-[11px] text-jira-muted mb-3">멤버, 설정, 업무 데이터를 JSON 파일로 백업하거나 복원합니다.</p>
-      <div className="flex items-center gap-2">
+      <p className="text-[11px] text-jira-muted mb-3">멤버, 설정, 업무 데이터를 JSON 파일로 백업하거나 복원합니다. 앱 실행 시 자동으로 브라우저에 백업됩니다.</p>
+      <div className="flex items-center gap-2 flex-wrap">
         <Button variant="outline" size="sm" onClick={handleExport}>📥 백업 다운로드</Button>
-        <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>📤 백업 복원</Button>
+        <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>📤 파일에서 복원</Button>
         <input ref={fileRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
       </div>
+      {(localBackup || prevBackup) && (
+        <div className="mt-2 flex flex-col gap-1">
+          <p className="text-[11px] font-medium text-jira-dark">자동 백업 (브라우저 저장)</p>
+          {localBackup && (
+            <div className="flex items-center gap-2 text-[11px]">
+              <span className="text-jira-muted">최신: {new Date(localBackup.exportedAt).toLocaleString('ko')} ({localBackup.members?.length}명)</span>
+              <button onClick={() => handleRestoreLocal(getLocalBackup, '최신')} className="text-jira-blue hover:underline">복원</button>
+            </div>
+          )}
+          {prevBackup && (
+            <div className="flex items-center gap-2 text-[11px]">
+              <span className="text-jira-muted">이전: {new Date(prevBackup.exportedAt).toLocaleString('ko')} ({prevBackup.members?.length}명)</span>
+              <button onClick={() => handleRestoreLocal(getPrevLocalBackup, '이전')} className="text-jira-blue hover:underline">복원</button>
+            </div>
+          )}
+        </div>
+      )}
       {status && <p className="text-[11px] text-jira-muted mt-2">{status}</p>}
     </div>
   )
