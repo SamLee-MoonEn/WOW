@@ -10,7 +10,9 @@ export function subscribeMembers(callback, onError) {
     membersRef,
     (snap) => {
       const members = snap.exists() ? snap.data().members ?? [] : null
-      if (members && members.length > 0) _lastKnownMemberCount = members.length
+      if (members && members.length > 0) {
+        setKnownMemberCount(Math.max(getKnownMemberCount(), members.length))
+      }
       return callback(members)
     },
     (err) => {
@@ -28,15 +30,23 @@ export function subscribeMemberTasks(memberId, callback) {
   )
 }
 
-let _lastKnownMemberCount = 0
+const LS_MEMBER_COUNT_KEY = 'wow_known_member_count'
 
-export function saveMembers(members) {
-  // 기존에 멤버가 있었는데 빈 배열로 덮어쓰기 방지
-  if (members.length === 0 && _lastKnownMemberCount > 0) {
-    console.warn('[Firestore] 멤버 데이터 전체 삭제 시도 차단 (기존 멤버 수:', _lastKnownMemberCount, ')')
+function getKnownMemberCount() {
+  try { return parseInt(localStorage.getItem(LS_MEMBER_COUNT_KEY)) || 0 } catch { return 0 }
+}
+function setKnownMemberCount(n) {
+  try { localStorage.setItem(LS_MEMBER_COUNT_KEY, String(n)) } catch {}
+}
+
+export function saveMembers(members, { force = false } = {}) {
+  const known = getKnownMemberCount()
+  // 기존에 멤버가 2명 이상 있었는데 절반 이하로 줄어드는 쓰기 차단
+  if (!force && known >= 2 && members.length < known * 0.5) {
+    console.warn('[Firestore] 멤버 데이터 대량 삭제 시도 차단 (기존:', known, '→ 시도:', members.length, ')')
     return
   }
-  _lastKnownMemberCount = Math.max(_lastKnownMemberCount, members.length)
+  if (members.length > 0) setKnownMemberCount(Math.max(known, members.length))
   setDoc(membersRef, { members })
 }
 
@@ -124,8 +134,8 @@ export async function importBackup(data) {
     throw new Error('유효하지 않은 백업 파일입니다.')
   }
 
-  // 멤버 복원
-  _lastKnownMemberCount = data.members.length
+  // 멤버 복원 (가드 우회)
+  setKnownMemberCount(data.members.length)
   await setDoc(membersRef, { members: data.members })
 
   // 설정 복원
