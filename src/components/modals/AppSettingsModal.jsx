@@ -1,7 +1,71 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import { FormField, Input } from '../ui/FormField'
+import { exportBackup, importBackup } from '../../utils/storage'
+
+function BackupSection() {
+  const [status, setStatus] = useState('')
+  const fileRef = useRef(null)
+
+  const handleExport = async () => {
+    setStatus('백업 중...')
+    try {
+      const data = await exportBackup()
+      const json = JSON.stringify(data, null, 2)
+      const blob = new Blob([json], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      const date = new Date().toISOString().slice(0, 10).replace(/-/g, '')
+      a.href = url
+      a.download = `wow-backup-${date}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+      setStatus(`백업 완료 (멤버 ${data.members.length}명)`)
+    } catch (e) {
+      setStatus(`백업 실패: ${e.message}`)
+    }
+  }
+
+  const handleImport = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      const text = await file.text()
+      const data = JSON.parse(text)
+      const memberCount = data.members?.length ?? 0
+      const taskCount = data.tasks ? Object.keys(data.tasks).length : 0
+      const confirmed = window.confirm(
+        `백업 파일 정보:\n` +
+        `- 백업 일시: ${data.exportedAt ?? '알 수 없음'}\n` +
+        `- 멤버: ${memberCount}명\n` +
+        `- 태스크: ${taskCount}명분\n\n` +
+        `현재 데이터를 이 백업으로 덮어씁니다. 계속하시겠습니까?`
+      )
+      if (!confirmed) { fileRef.current.value = ''; return }
+      setStatus('복원 중...')
+      await importBackup(data)
+      setStatus('복원 완료. 새로고침합니다...')
+      setTimeout(() => window.location.reload(), 1000)
+    } catch (e) {
+      setStatus(`복원 실패: ${e.message}`)
+    }
+    fileRef.current.value = ''
+  }
+
+  return (
+    <div className="border-t border-jira-border pt-4">
+      <p className="text-[12px] font-semibold text-jira-dark mb-1">데이터 백업 / 복원</p>
+      <p className="text-[11px] text-jira-muted mb-3">멤버, 설정, 업무 데이터를 JSON 파일로 백업하거나 복원합니다.</p>
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" onClick={handleExport}>📥 백업 다운로드</Button>
+        <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>📤 백업 복원</Button>
+        <input ref={fileRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
+      </div>
+      {status && <p className="text-[11px] text-jira-muted mt-2">{status}</p>}
+    </div>
+  )
+}
 
 export default function AppSettingsModal({ settings, onSave, onClose }) {
   const [dailyReportChatId,   setDailyReportChatId]   = useState(settings.dailyReportChatId ?? '')
@@ -70,6 +134,9 @@ export default function AppSettingsModal({ settings, onSave, onClose }) {
             className="w-full text-[13px] px-3 py-2 border border-jira-border rounded-lg focus:outline-none focus:border-jira-blue resize-none bg-jira-bg"
           />
         </FormField>
+
+        {/* 데이터 백업/복원 */}
+        <BackupSection />
       </div>
     </Modal>
   )
