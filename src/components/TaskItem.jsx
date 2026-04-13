@@ -93,15 +93,15 @@ export default memo(function TaskItem({ task, dayKey, canEdit, isAdmin, onEditTa
 
         {/* 액션바 — hover 시 표시 (absolute로 레이아웃 영향 없음) */}
         {hasActions && (
-          <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-100 absolute right-0.5 bottom-full z-10 mb-0.5">
-              <div className="flex items-center gap-1 py-0.5 px-1 bg-white/95 rounded-md shadow-sm border border-jira-border">
+          <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-100 absolute right-0 bottom-full z-10 mb-1">
+              <div className="flex items-center gap-1.5 py-1 px-1.5 bg-white/95 rounded-lg shadow-md border border-jira-border">
                 {memoUrls.map((url, i) => (
                   <a
                     key={i}
                     href={url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-6 h-6 flex items-center justify-center text-[13px] rounded border border-jira-border bg-white hover:bg-blue-50 hover:border-blue-300 text-jira-muted hover:text-jira-blue transition-colors"
+                    className="w-8 h-8 flex items-center justify-center text-[13px] rounded-md border border-jira-border bg-white hover:bg-blue-50 hover:border-blue-300 text-jira-muted hover:text-jira-blue transition-colors"
                     title={url}
                     onClick={(e) => e.stopPropagation()}
                   >
@@ -114,7 +114,7 @@ export default memo(function TaskItem({ task, dayKey, canEdit, isAdmin, onEditTa
                 {showCopy && (
                   <button
                     onClick={handleCopy}
-                    className="w-6 h-6 flex items-center justify-center text-[13px] rounded border border-jira-border bg-white hover:bg-gray-100 hover:border-gray-300 text-jira-muted transition-colors"
+                    className="w-8 h-8 flex items-center justify-center text-[13px] rounded-md border border-jira-border bg-white hover:bg-gray-100 hover:border-gray-300 text-jira-muted transition-colors"
                     title="다른 날로 복사"
                   >
                     📋
@@ -124,14 +124,14 @@ export default memo(function TaskItem({ task, dayKey, canEdit, isAdmin, onEditTa
                   <>
                     <button
                       onClick={handleEdit}
-                      className="w-6 h-6 flex items-center justify-center text-[13px] rounded border border-jira-border bg-white hover:bg-gray-100 hover:border-gray-300 text-jira-muted transition-colors"
+                      className="w-8 h-8 flex items-center justify-center text-[13px] rounded-md border border-jira-border bg-white hover:bg-gray-100 hover:border-gray-300 text-jira-muted transition-colors"
                       title="수정"
                     >
                       ✏️
                     </button>
                     <button
                       onClick={handleDelete}
-                      className="w-6 h-6 flex items-center justify-center rounded border border-jira-border bg-white hover:bg-red-50 hover:border-red-200 hover:text-red-600 text-jira-muted transition-colors"
+                      className="w-8 h-8 flex items-center justify-center rounded-md border border-jira-border bg-white hover:bg-red-50 hover:border-red-200 hover:text-red-600 text-jira-muted transition-colors"
                       title="삭제"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
