@@ -1,4 +1,4 @@
-import { doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore'
+import { doc, getDoc, onSnapshot, setDoc, runTransaction } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 
 const membersRef  = doc(db, 'wow', 'members')
@@ -39,9 +39,32 @@ function setKnownMemberCount(n) {
   try { localStorage.setItem(LS_MEMBER_COUNT_KEY, String(n)) } catch {}
 }
 
+/**
+ * 멤버 데이터를 안전하게 저장 (Firestore 트랜잭션 사용)
+ * @param {Function} updater - (currentMembers) => newMembers 형태의 변환 함수
+ * @param {object} opts - { force: boolean }
+ * @returns {Promise<Array>} 저장된 최종 멤버 배열
+ */
+export async function saveMembersWithTransaction(updater, { force = false } = {}) {
+  return runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(membersRef)
+    const current = snap.exists() ? snap.data().members ?? [] : []
+    const next = updater(current)
+
+    const known = getKnownMemberCount()
+    if (!force && known >= 2 && next.length < known * 0.5) {
+      throw new Error(`[Firestore] 멤버 데이터 대량 삭제 시도 차단 (기존: ${known} → 시도: ${next.length})`)
+    }
+    if (next.length > 0) setKnownMemberCount(Math.max(known, next.length))
+
+    transaction.set(membersRef, { members: next })
+    return next
+  })
+}
+
+/** 하위호환용 — 단순 덮어쓰기 (백업 복원 등 force 용도) */
 export function saveMembers(members, { force = false } = {}) {
   const known = getKnownMemberCount()
-  // 기존에 멤버가 2명 이상 있었는데 절반 이하로 줄어드는 쓰기 차단
   if (!force && known >= 2 && members.length < known * 0.5) {
     console.warn('[Firestore] 멤버 데이터 대량 삭제 시도 차단 (기존:', known, '→ 시도:', members.length, ')')
     return
