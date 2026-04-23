@@ -4,34 +4,54 @@ async function queryJira(settings, jql, maxResults = 50) {
     throw new Error('Jira 설정이 완료되지 않았습니다. 앱 설정에서 Jira 정보를 입력해주세요.')
   }
 
-  const res = await fetch('/api/jira', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ domain: jiraDomain, token: jiraToken, jql, maxResults }),
+  const url = `https://${jiraDomain}/rest/api/2/search?jql=${encodeURIComponent(jql)}&maxResults=${maxResults}&fields=summary,status,priority,assignee`
+
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${jiraToken}`,
+      Accept: 'application/json',
+    },
   })
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(err.error || `Jira 조회 실패 (HTTP ${res.status})`)
+    const err = await res.text().catch(() => '')
+    throw new Error(err || `Jira 조회 실패 (HTTP ${res.status})`)
   }
 
   const data = await res.json()
-  return data.issues || []
+  return (data.issues || []).map((issue) => ({
+    key: issue.key,
+    summary: issue.fields.summary,
+    statusName: issue.fields.status?.name || '',
+    priorityName: issue.fields.priority?.name || '',
+    assigneeEmail: issue.fields.assignee?.emailAddress || '',
+    assigneeName: issue.fields.assignee?.name || '',
+  }))
 }
 
 export async function fetchJiraProjects(settings) {
   const { jiraDomain, jiraToken } = settings
   if (!jiraDomain || !jiraToken) return []
 
-  const res = await fetch('/api/jira-projects', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ domain: jiraDomain, token: jiraToken }),
-  })
+  const url = `https://${jiraDomain}/rest/api/2/project`
 
-  if (!res.ok) return []
-  const data = await res.json()
-  return data.projects || []
+  try {
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${jiraToken}`,
+        Accept: 'application/json',
+      },
+    })
+
+    if (!res.ok) return []
+    const data = await res.json()
+    return (data || []).map((p) => ({
+      key: p.key,
+      name: p.name,
+    }))
+  } catch {
+    return []
+  }
 }
 
 export async function fetchMyJiraIssues(settings, userEmail, projectKey = '') {
