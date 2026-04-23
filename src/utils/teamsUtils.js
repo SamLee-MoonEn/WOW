@@ -40,7 +40,11 @@ export function formatTeamsText(memberName, todayTasks, dateLabel, header = '', 
     tasks.forEach(t => {
       lines.push(`· ${t.text}`)
       const raw = (t.memo || '').trim()
-      if (raw) lines.push(`    ${raw}`)
+      if (raw) {
+        raw.split('\n').forEach(line => {
+          lines.push(`    ${line}`)
+        })
+      }
     })
     lines.push('')
   }
@@ -55,7 +59,10 @@ export function formatTeamsText(memberName, todayTasks, dateLabel, header = '', 
 
 export async function sendToTeamsWebhook(webhookUrl, memberName, todayTasks, dateLabel, customText) {
   const text = customText ?? formatTeamsText(memberName, todayTasks, dateLabel)
-  const htmlText = text.replace(/\n/g, '<br>')
+  const htmlText = text
+    .split('\n')
+    .map(line => line.startsWith('    ') ? '&nbsp;&nbsp;&nbsp;&nbsp;' + line.slice(4) : line)
+    .join('<br>')
 
   // Power Automate의 For_each가 attachments 배열을 순회하는 구조에 맞춤
   const payload = {
