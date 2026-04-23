@@ -44,7 +44,7 @@ function DividerItem({ task, taskKey, canEdit, onDelete, onDropBefore }) {
 
 const DRAG_OVER_CLS = 'bg-jira-blue-light ring-2 ring-inset ring-jira-blue'
 
-export default memo(function DayCol({ member, weekKey, dayIndex, date, canEdit, isAdmin, items, todayStr, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleStatus, onMoveTask, onCopyTask }) {
+export default memo(function DayCol({ member, weekKey, dayIndex, date, canEdit, isAdmin, items, todayStr, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleStatus, onMoveTask, onCopyTask, onJiraImport, jiraDomain }) {
   const colRef = useRef(null)
   const key = `${member.id}_${weekKey}_${dayIndex}`
   const isFriday = dayIndex === 4
@@ -123,6 +123,7 @@ export default memo(function DayCol({ member, weekKey, dayIndex, date, canEdit, 
               onCycleStatus={onCycleStatus}
               onMoveTask={handleMoveToHere}
               onCopyTask={onCopyTask}
+              jiraDomain={jiraDomain}
             />
           )
         ))}
@@ -140,6 +141,14 @@ export default memo(function DayCol({ member, weekKey, dayIndex, date, canEdit, 
             >
               ― 구분선
             </button>
+            {onJiraImport && (
+              <button
+                onClick={() => onJiraImport(key)}
+                className="flex items-center gap-1 text-jira-muted text-[11px] px-1 py-1 rounded border border-dashed border-transparent hover:text-jira-blue hover:border-jira-blue hover:bg-jira-blue-light w-full text-left transition-all"
+              >
+                🔗 Jira 가져오기
+              </button>
+            )}
           </div>
         )}
       </div>

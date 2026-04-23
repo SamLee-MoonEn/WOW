@@ -3,7 +3,7 @@ import WeekBlock from './WeekBlock'
 import Button from './ui/Button'
 import MemberAvatar from './ui/MemberAvatar'
 
-export default memo(function MemberSection({ member, isMe, isAdmin, showDayGrid = true, wk, tasks, todayStr, onEditMember, onDeleteMember, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onMoveTask, onCopyTask, onWeeklyReport, onEndOfDay }) {
+export default memo(function MemberSection({ member, isMe, isAdmin, showDayGrid = true, wk, tasks, todayStr, onEditMember, onDeleteMember, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onMoveTask, onCopyTask, onWeeklyReport, onEndOfDay, onJiraImport, jiraDomain }) {
   const canEdit = (isMe || isAdmin) && showDayGrid
   const currentWeekRef = useRef(null)
 
@@ -55,6 +55,8 @@ export default memo(function MemberSection({ member, isMe, isAdmin, showDayGrid 
             onCycleCarryoverStatus={onCycleTaskStatus}
             onMoveTask={onMoveTask}
             onCopyTask={onCopyTask}
+            onJiraImport={onJiraImport}
+            jiraDomain={jiraDomain}
           />
           </div>
           <WeekBlock
@@ -79,6 +81,8 @@ export default memo(function MemberSection({ member, isMe, isAdmin, showDayGrid 
             onCycleCarryoverStatus={onCycleTaskStatus}
             onMoveTask={onMoveTask}
             onCopyTask={onCopyTask}
+            onJiraImport={onJiraImport}
+            jiraDomain={jiraDomain}
           />
         </div>
       </div>

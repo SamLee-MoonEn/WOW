@@ -3,7 +3,7 @@ import DayCol from './DayCol'
 import CarryoverSection from './CarryoverSection'
 import { getWeekDates, formatDate, getWeekKeys } from '../utils/weekUtils'
 
-export default memo(function WeekBlock({ member, weekKey, weekNum, monday, isCurrent, canEdit, showDayGrid = true, isAdmin, tasks, todayStr, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onCycleCarryoverStatus, onMoveTask, onCopyTask }) {
+export default memo(function WeekBlock({ member, weekKey, weekNum, monday, isCurrent, canEdit, showDayGrid = true, isAdmin, tasks, todayStr, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onCycleCarryoverStatus, onMoveTask, onCopyTask, onJiraImport, jiraDomain }) {
   const dates = useMemo(() => getWeekDates(monday), [monday])
   const actualCurrentWeekKey = useMemo(() => getWeekKeys(0).current, [])
   const isActualCurrentWeek = weekKey === actualCurrentWeekKey
@@ -65,6 +65,8 @@ export default memo(function WeekBlock({ member, weekKey, weekNum, monday, isCur
               onCycleStatus={onCycleTaskStatus}
               onMoveTask={onMoveTask}
               onCopyTask={onCopyTask}
+              onJiraImport={onJiraImport}
+              jiraDomain={jiraDomain}
             />
           ))}
         </div>

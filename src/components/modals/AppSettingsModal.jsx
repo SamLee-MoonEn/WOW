@@ -111,8 +111,17 @@ export default function AppSettingsModal({ settings, onSave, onClose }) {
   const [weeklyReportChatId,  setWeeklyReportChatId]  = useState(settings.weeklyReportChatId ?? '')
   const [reportHeader,        setReportHeader]        = useState(settings.reportHeader  ?? '')
   const [reportFooter,        setReportFooter]        = useState(settings.reportFooter  ?? '')
+  const [jiraDomain,          setJiraDomain]          = useState(settings.jiraDomain    ?? '')
+  const [jiraToken,           setJiraToken]           = useState(settings.jiraToken     ?? '')
   const handleSave = () => {
-    onSave({ dailyReportChatId: dailyReportChatId.trim(), weeklyReportChatId: weeklyReportChatId.trim(), reportHeader: reportHeader.trim(), reportFooter: reportFooter.trim() })
+    onSave({
+      dailyReportChatId: dailyReportChatId.trim(),
+      weeklyReportChatId: weeklyReportChatId.trim(),
+      reportHeader: reportHeader.trim(),
+      reportFooter: reportFooter.trim(),
+      jiraDomain: jiraDomain.trim(),
+      jiraToken: jiraToken.trim(),
+    })
     onClose()
   }
 
@@ -173,6 +182,32 @@ export default function AppSettingsModal({ settings, onSave, onClose }) {
             className="w-full text-[13px] px-3 py-2 border border-jira-border rounded-lg focus:outline-none focus:border-jira-blue resize-none bg-jira-bg"
           />
         </FormField>
+
+        {/* Jira 연동 */}
+        <div className="border-t border-jira-border pt-4">
+          <p className="text-[12px] font-semibold text-jira-dark mb-1">Jira 연동</p>
+          <p className="text-[11px] text-jira-muted mb-3">Jira 이슈를 WOW 업무로 가져오려면 아래 정보를 입력하세요. 모든 팀원이 공유합니다.</p>
+          <div className="flex flex-col gap-3">
+            <FormField label="Jira 도메인" hint="예: jira.yourcompany.com">
+              <Input
+                value={jiraDomain}
+                onChange={e => setJiraDomain(e.target.value)}
+                placeholder="jira.yourcompany.com"
+              />
+            </FormField>
+            <FormField label="Jira PAT (Personal Access Token)" hint="Jira 프로필 → Personal Access Tokens에서 발급">
+              <Input
+                type="password"
+                value={jiraToken}
+                onChange={e => setJiraToken(e.target.value)}
+                placeholder="PAT 토큰 입력"
+              />
+            </FormField>
+            {jiraDomain && jiraToken && (
+              <p className="text-[11px] text-green-600">✓ Jira 연동이 설정되어 있습니다.</p>
+            )}
+          </div>
+        </div>
 
         {/* 데이터 백업/복원 */}
         <BackupSection />

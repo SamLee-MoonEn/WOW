@@ -38,9 +38,9 @@ export function formatTeamsText(memberName, todayTasks, dateLabel, header = '', 
     hasAny = true
     lines.push(label)
     tasks.forEach(t => {
+      lines.push(`· ${t.text}`)
       const raw = (t.memo || '').trim()
-      const memo = raw ? ` (${raw})` : ''
-      lines.push(`· ${t.text}${memo}`)
+      if (raw) lines.push(`    ${raw}`)
     })
     lines.push('')
   }

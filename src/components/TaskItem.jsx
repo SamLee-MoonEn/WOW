@@ -17,7 +17,7 @@ function getMemoUrls(text) {
   return matches || []
 }
 
-export default memo(function TaskItem({ task, dayKey, canEdit, isAdmin, onEditTask, onDeleteTask, onCycleStatus, onMoveTask, onCopyTask }) {
+export default memo(function TaskItem({ task, dayKey, canEdit, isAdmin, onEditTask, onDeleteTask, onCycleStatus, onMoveTask, onCopyTask, jiraDomain }) {
   const [isDragOver, setIsDragOver] = useState(false)
   const textClass = styleMap[task.style] || ''
 
@@ -83,6 +83,17 @@ export default memo(function TaskItem({ task, dayKey, canEdit, isAdmin, onEditTa
             <span className={`text-[11.5px] leading-snug break-words ${textClass}`}>
               {task.text}
             </span>
+            {task.jiraKey && jiraDomain && (
+              <a
+                href={`https://${jiraDomain}/browse/${task.jiraKey}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="inline-block text-[9px] font-mono text-jira-muted hover:text-jira-blue mt-0.5 transition-colors"
+              >
+                {task.jiraKey}
+              </a>
+            )}
             {task.memo && (
               <span className="block text-[10.5px] text-jira-muted italic leading-snug mt-0.5 truncate">
                 {task.memo}

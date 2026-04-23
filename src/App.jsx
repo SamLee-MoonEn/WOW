@@ -14,6 +14,7 @@ import TeamsReportModal from './components/modals/TeamsReportModal'
 import AppSettingsModal from './components/modals/AppSettingsModal'
 import CopyTaskModal from './components/modals/CopyTaskModal'
 import WeeklyReportModal from './components/modals/WeeklyReportModal'
+import JiraImportModal from './components/modals/JiraImportModal'
 import { getTodayTasks } from './utils/teamsUtils'
 import { fetchProfilePhoto } from './utils/graphUtils'
 import { useWOWState } from './hooks/useWOWState'
@@ -242,6 +243,7 @@ function Board() {
   const handleEndOfDayForStatusBoard = useCallback(() => {
     if (myMemberId) setModal({ type: 'teamsReport' })
   }, [myMemberId])
+  const handleJiraImport = useCallback((key) => setModal({ type: 'jiraImport', key }), [])
   const handleWeekPrev = useCallback(() => wow.shiftWeeks(-1), [wow.shiftWeeks])
   const handleWeekNext = useCallback(() => wow.shiftWeeks(1), [wow.shiftWeeks])
 
@@ -376,6 +378,8 @@ function Board() {
                     onAddCarryover={handleAddCarryover}
                     onEditCarryover={handleEditCarryover}
                     onDeleteCarryover={handleDeleteCarryover}
+                    onJiraImport={(item.member.id === myMemberId || isAdmin) && wow.state.settings?.jiraDomain ? handleJiraImport : undefined}
+                    jiraDomain={wow.state.settings?.jiraDomain}
                   />
                 )
               )
@@ -473,6 +477,29 @@ function Board() {
               const weekInfo = getWeekKeys(wow.state.baseWeekOffset + swo + w)
               days.forEach(d => wow.copyTask(modal.fromKey, `${mid}_${weekInfo.current}_${d}`, modal.task.id))
             }
+            setModal(null)
+          }}
+          onClose={() => setModal(null)}
+        />
+      )}
+
+      {modal?.type === 'jiraImport' && (
+        <JiraImportModal
+          userEmail={email}
+          settings={wow.state.settings}
+          existingJiraKeys={new Set(
+            Object.values(wow.state.tasks).flat().map(t => t.jiraKey).filter(Boolean)
+          )}
+          onImport={(issues) => {
+            const domain = wow.state.settings?.jiraDomain
+            issues.forEach((issue) => {
+              wow.addTask(modal.key, {
+                text: issue.summary,
+                jiraKey: issue.key,
+                memo: domain ? `https://${domain}/browse/${issue.key}` : '',
+                status: 'none',
+              })
+            })
             setModal(null)
           }}
           onClose={() => setModal(null)}

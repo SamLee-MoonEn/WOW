@@ -7,7 +7,7 @@ export default function Modal({ title, onClose, children, footer, size = 'md' })
     return () => document.removeEventListener('keydown', handler)
   }, [onClose])
 
-  const sizeClass = size === 'sm' ? 'w-96' : 'w-[520px]'
+  const sizeClass = size === 'lg' ? 'w-[640px]' : size === 'sm' ? 'w-96' : 'w-[520px]'
 
   return (
     <div
