@@ -12,7 +12,7 @@ const styleMap = {
   'bold red-text': 'font-semibold text-[#de350b]',
 }
 
-const DAY_LABELS = ['월', '화', '수', '목', '금']
+const DAY_LABELS = ['월', '화', '수', '목', '금', '토', '일']
 
 export default function TaskModal({ isEdit, task, onSave, onClose }) {
   const [text, setText] = useState(task?.text || '')

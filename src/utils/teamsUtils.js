@@ -3,8 +3,7 @@ import { getWeekKeys, formatDateFull } from './weekUtils'
 export function getTodayTasks(memberId, tasks) {
   const wk = getWeekKeys(0)
   const today = new Date()
-  const dayIndex = (today.getDay() + 6) % 7 // Mon=0 ... Fri=4, Sat=5, Sun=6
-  if (dayIndex > 4) return [] // 주말은 업무 없음
+  const dayIndex = (today.getDay() + 6) % 7
   const key = `${memberId}_${wk.current}_${dayIndex}`
   return tasks[key] || []
 }

@@ -1,4 +1,5 @@
-export const DAYS = ['월', '화', '수', '목', '금']
+export const DAYS = ['월', '화', '수', '목', '금', '토', '일']
+export const WEEKDAY_COUNT = 5
 
 export function getISOWeek(date) {
   const d = new Date(date)
@@ -24,7 +25,7 @@ export function getMondayOfWeek(isoWeek, year) {
 }
 
 export function getWeekDates(mondayDate) {
-  return Array.from({ length: 5 }, (_, i) => {
+  return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(mondayDate)
     d.setDate(mondayDate.getDate() + i)
     return d

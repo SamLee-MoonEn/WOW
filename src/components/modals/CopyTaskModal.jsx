@@ -3,7 +3,7 @@ import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import { DAYS, getWeekKeys } from '../../utils/weekUtils'
 
-const DAY_LABELS = ['월', '화', '수', '목', '금']
+const DAY_LABELS = ['월', '화', '수', '목', '금', '토', '일']
 
 export default function CopyTaskModal({ task, fromKey, members, myMemberId, wk, baseWeekOffset, onCopy, onClose }) {
   const fromParts = fromKey.split('_')
@@ -135,7 +135,7 @@ export default function CopyTaskModal({ task, fromKey, members, myMemberId, wk, 
         {!multiDay && (
           <div>
             <label className="block text-[12px] font-semibold text-jira-dark mb-1.5">요일</label>
-            <div className="grid grid-cols-5 gap-1.5">
+            <div className="grid grid-cols-7 gap-1.5">
               {DAYS.map((d, i) => (
                 <button
                   key={i}

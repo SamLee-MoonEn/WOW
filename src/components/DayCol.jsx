@@ -47,7 +47,7 @@ const DRAG_OVER_CLS = 'bg-jira-blue-light ring-2 ring-inset ring-jira-blue'
 export default memo(function DayCol({ member, weekKey, dayIndex, date, canEdit, isAdmin, items, todayStr, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleStatus, onMoveTask, onCopyTask, onJiraImport, jiraDomain }) {
   const colRef = useRef(null)
   const key = `${member.id}_${weekKey}_${dayIndex}`
-  const isFriday = dayIndex === 4
+  const isWeekend = dayIndex >= 5
   const isToday = formatDateFull(date) === todayStr
 
   const handleDragOver = useCallback((e) => {
@@ -92,8 +92,8 @@ export default memo(function DayCol({ member, weekKey, dayIndex, date, canEdit, 
         className={`text-center py-1.5 px-1 text-[11px] font-semibold border-b border-jira-border ${
           isToday
             ? 'bg-jira-blue-light text-jira-blue'
-            : isFriday
-            ? 'bg-gray-200 text-jira-muted'
+            : isWeekend
+            ? 'bg-amber-50 text-amber-600'
             : 'bg-jira-bg text-jira-mid'
         }`}
       >
