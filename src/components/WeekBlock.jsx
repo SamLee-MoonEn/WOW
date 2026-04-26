@@ -1,4 +1,4 @@
-import { memo, useMemo, useState } from 'react'
+import { memo, useMemo, useState, useEffect } from 'react'
 import DayCol from './DayCol'
 import CarryoverSection from './CarryoverSection'
 import { getWeekDates, formatDate, getWeekKeys, WEEKDAY_COUNT } from '../utils/weekUtils'
@@ -26,6 +26,13 @@ export default memo(function WeekBlock({ member, weekKey, weekNum, monday, isCur
   const [satHidden, setSatHidden] = useState(false)
   const [sunHidden, setSunHidden] = useState(false)
   const [weekendConfirm, setWeekendConfirm] = useState(null)
+
+  useEffect(() => {
+    setSatOpen(false)
+    setSunOpen(false)
+    setSatHidden(false)
+    setSunHidden(false)
+  }, [weekKey])
   const showSat = satOpen || (hasWeekendData.sat && !satHidden)
   const showSun = sunOpen || (hasWeekendData.sun && !sunHidden)
 
