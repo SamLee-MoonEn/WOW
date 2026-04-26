@@ -258,6 +258,15 @@ export function useWOWState() {
     })
   }, [deferPersist])
 
+  const clearDay = useCallback((key) => {
+    const memberId = memberIdFromKey(key)
+    setTasks((prev) => {
+      const next = { ...prev, [key]: [] }
+      deferPersist(memberId, next)
+      return next
+    })
+  }, [deferPersist])
+
   const cycleStatus = useCallback((key, taskId) => {
     const memberId = memberIdFromKey(key)
     setTasks((prev) => {
@@ -389,6 +398,7 @@ export function useWOWState() {
     deleteMember,
     moveTask,
     copyTask,
+    clearDay,
     updatePresence,
     reorderMembers,
     updateWorkDesc,

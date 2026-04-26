@@ -373,6 +373,7 @@ function Board() {
                     onAddTask={handleAddTask}
                     onEditTask={handleEditTask}
                     onDeleteTask={handleDeleteTask}
+                    onClearDay={wow.clearDay}
                     onDeleteDivider={handleDeleteDivider}
                     onCycleTaskStatus={wow.cycleStatus}
                     onAddCarryover={handleAddCarryover}

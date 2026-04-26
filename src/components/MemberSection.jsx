@@ -3,12 +3,12 @@ import WeekBlock from './WeekBlock'
 import Button from './ui/Button'
 import MemberAvatar from './ui/MemberAvatar'
 
-export default memo(function MemberSection({ member, isMe, isAdmin, showDayGrid = true, wk, tasks, todayStr, onEditMember, onDeleteMember, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onMoveTask, onCopyTask, onWeeklyReport, onEndOfDay, onJiraImport, jiraDomain }) {
+export default memo(function MemberSection({ member, isMe, isAdmin, showDayGrid = true, wk, tasks, todayStr, onEditMember, onDeleteMember, onAddTask, onEditTask, onDeleteTask, onClearDay, onDeleteDivider, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onMoveTask, onCopyTask, onWeeklyReport, onEndOfDay, onJiraImport, jiraDomain }) {
   const canEdit = (isMe || isAdmin) && showDayGrid
   const currentWeekRef = useRef(null)
 
   return (
-    <div style={{ contain: 'layout style paint' }} className={`bg-white rounded-xl mb-6 overflow-hidden ${isMe ? 'shadow-md ring-2 ring-jira-blue ring-offset-1' : 'shadow-sm'}`}>
+    <div style={{ contain: 'layout style paint', contentVisibility: 'auto', containIntrinsicSize: 'auto 500px' }} className={`bg-white rounded-xl mb-6 overflow-hidden ${isMe ? 'shadow-md ring-2 ring-jira-blue ring-offset-1' : 'shadow-sm'}`}>
       <div className={`group/header flex items-center justify-between px-5 py-3.5 border-b-2 ${isMe ? 'bg-jira-blue-light border-blue-200' : 'bg-jira-bg-alt border-jira-bg'}`}>
         <div className="text-lg font-bold flex items-center gap-2">
           <MemberAvatar member={member} size="md" /> {member.name}
@@ -47,6 +47,7 @@ export default memo(function MemberSection({ member, isMe, isAdmin, showDayGrid 
             onAddTask={onAddTask}
             onEditTask={onEditTask}
             onDeleteTask={onDeleteTask}
+            onClearDay={onClearDay}
             onDeleteDivider={onDeleteDivider}
             onCycleTaskStatus={onCycleTaskStatus}
             onAddCarryover={onAddCarryover}
@@ -73,6 +74,7 @@ export default memo(function MemberSection({ member, isMe, isAdmin, showDayGrid 
             onAddTask={onAddTask}
             onEditTask={onEditTask}
             onDeleteTask={onDeleteTask}
+            onClearDay={onClearDay}
             onDeleteDivider={onDeleteDivider}
             onCycleTaskStatus={onCycleTaskStatus}
             onAddCarryover={onAddCarryover}

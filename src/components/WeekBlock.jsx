@@ -1,9 +1,9 @@
-import { memo, useMemo, useState, useEffect } from 'react'
+import { memo, useMemo, useState, useEffect, useTransition } from 'react'
 import DayCol from './DayCol'
 import CarryoverSection from './CarryoverSection'
 import { getWeekDates, formatDate, getWeekKeys, WEEKDAY_COUNT } from '../utils/weekUtils'
 
-export default memo(function WeekBlock({ member, weekKey, weekNum, monday, isCurrent, canEdit, showDayGrid = true, isAdmin, tasks, todayStr, onAddTask, onEditTask, onDeleteTask, onDeleteDivider, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onCycleCarryoverStatus, onMoveTask, onCopyTask, onJiraImport, jiraDomain }) {
+export default memo(function WeekBlock({ member, weekKey, weekNum, monday, isCurrent, canEdit, showDayGrid = true, isAdmin, tasks, todayStr, onAddTask, onEditTask, onDeleteTask, onClearDay, onDeleteDivider, onCycleTaskStatus, onAddCarryover, onEditCarryover, onDeleteCarryover, onCycleCarryoverStatus, onMoveTask, onCopyTask, onJiraImport, jiraDomain }) {
   const dates = useMemo(() => getWeekDates(monday), [monday])
   const actualCurrentWeekKey = useMemo(() => getWeekKeys(0).current, [])
   const isActualCurrentWeek = weekKey === actualCurrentWeekKey
@@ -23,18 +23,15 @@ export default memo(function WeekBlock({ member, weekKey, weekNum, monday, isCur
 
   const [satOpen, setSatOpen] = useState(false)
   const [sunOpen, setSunOpen] = useState(false)
-  const [satHidden, setSatHidden] = useState(false)
-  const [sunHidden, setSunHidden] = useState(false)
   const [weekendConfirm, setWeekendConfirm] = useState(null)
+  const [, startTransition] = useTransition()
 
   useEffect(() => {
     setSatOpen(false)
     setSunOpen(false)
-    setSatHidden(false)
-    setSunHidden(false)
   }, [weekKey])
-  const showSat = satOpen || (hasWeekendData.sat && !satHidden)
-  const showSun = sunOpen || (hasWeekendData.sun && !sunHidden)
+  const showSat = satOpen || hasWeekendData.sat
+  const showSun = sunOpen || hasWeekendData.sun
 
   const colCount = WEEKDAY_COUNT + (showSat ? 1 : 0) + (showSun ? 1 : 0)
   const gridClass = colCount === 7 ? 'grid-cols-7' : colCount === 6 ? 'grid-cols-6' : 'grid-cols-5'
@@ -77,7 +74,7 @@ export default memo(function WeekBlock({ member, weekKey, weekNum, monday, isCur
             <div className="flex gap-1">
               {!showSat ? (
                 <button
-                  onClick={() => { setSatOpen(true); setSatHidden(false) }}
+                  onClick={() => startTransition(() => setSatOpen(true))}
                   className="text-[10px] text-jira-muted hover:text-amber-600 hover:bg-amber-50 px-1.5 py-0.5 rounded border border-dashed border-jira-border hover:border-amber-300 transition-colors"
                 >
                   + 토
@@ -88,7 +85,7 @@ export default memo(function WeekBlock({ member, weekKey, weekNum, monday, isCur
                     if (hasWeekendData.sat) {
                       setWeekendConfirm({ day: 'sat', label: '토요일', count: dayItems[5].length })
                     } else {
-                      setSatOpen(false)
+                      startTransition(() => setSatOpen(false))
                     }
                   }}
                   className="text-[10px] text-amber-600 hover:text-red-500 hover:bg-red-50 px-1.5 py-0.5 rounded border border-amber-200 hover:border-red-300 transition-colors"
@@ -98,7 +95,7 @@ export default memo(function WeekBlock({ member, weekKey, weekNum, monday, isCur
               )}
               {!showSun ? (
                 <button
-                  onClick={() => { setSunOpen(true); setSunHidden(false) }}
+                  onClick={() => startTransition(() => setSunOpen(true))}
                   className="text-[10px] text-jira-muted hover:text-amber-600 hover:bg-amber-50 px-1.5 py-0.5 rounded border border-dashed border-jira-border hover:border-amber-300 transition-colors"
                 >
                   + 일
@@ -109,7 +106,7 @@ export default memo(function WeekBlock({ member, weekKey, weekNum, monday, isCur
                     if (hasWeekendData.sun) {
                       setWeekendConfirm({ day: 'sun', label: '일요일', count: dayItems[6].length })
                     } else {
-                      setSunOpen(false)
+                      startTransition(() => setSunOpen(false))
                     }
                   }}
                   className="text-[10px] text-amber-600 hover:text-red-500 hover:bg-red-50 px-1.5 py-0.5 rounded border border-amber-200 hover:border-red-300 transition-colors"
@@ -125,7 +122,7 @@ export default memo(function WeekBlock({ member, weekKey, weekNum, monday, isCur
         </div>
       </div>
       {showDayGrid ? (
-        <div className={`grid ${gridClass} border-b border-jira-border`}>
+        <div style={{ contain: 'layout style' }} className={`grid ${gridClass} border-b border-jira-border`}>
           {visibleDays.map((i) => (
             <DayCol
               key={i}
@@ -171,9 +168,9 @@ export default memo(function WeekBlock({ member, weekKey, weekNum, monday, isCur
       {weekendConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(9,30,66,0.54)]" onClick={() => setWeekendConfirm(null)}>
           <div className="bg-white rounded-lg shadow-2xl w-80 p-5" onClick={(e) => e.stopPropagation()}>
-            <div className="text-sm font-bold text-jira-dark mb-2">{weekendConfirm.label} 컬럼 숨기기</div>
+            <div className="text-sm font-bold text-jira-dark mb-2">{weekendConfirm.label} 컬럼 삭제</div>
             <div className="text-[12px] text-jira-mid mb-4">
-              {weekendConfirm.label}에 {weekendConfirm.count}개의 일감이 있습니다.<br />컬럼을 숨기시겠습니까? (일감 데이터는 유지됩니다)
+              {weekendConfirm.label}에 {weekendConfirm.count}개의 일감이 있습니다.<br />일감을 모두 삭제하고 컬럼을 닫으시겠습니까?
             </div>
             <div className="flex justify-end gap-2">
               <button
@@ -184,13 +181,16 @@ export default memo(function WeekBlock({ member, weekKey, weekNum, monday, isCur
               </button>
               <button
                 onClick={() => {
-                  if (weekendConfirm.day === 'sat') { setSatOpen(false); setSatHidden(true) }
-                  else { setSunOpen(false); setSunHidden(true) }
+                  const idx = weekendConfirm.day === 'sat' ? 5 : 6
+                  const dayKey = `${member.id}_${weekKey}_${idx}`
+                  onClearDay(dayKey)
+                  if (weekendConfirm.day === 'sat') setSatOpen(false)
+                  else setSunOpen(false)
                   setWeekendConfirm(null)
                 }}
-                className="text-[12px] px-3 py-1.5 rounded bg-jira-blue text-white hover:bg-jira-blue-dark transition-colors"
+                className="text-[12px] px-3 py-1.5 rounded bg-red-600 text-white hover:bg-red-700 transition-colors"
               >
-                숨기기
+                삭제
               </button>
             </div>
           </div>

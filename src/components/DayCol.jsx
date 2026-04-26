@@ -82,6 +82,7 @@ export default memo(function DayCol({ member, weekKey, dayIndex, date, canEdit, 
   return (
     <div
       ref={colRef}
+      style={{ contain: 'layout style' }}
       className="border-r border-jira-border last:border-r-0 min-h-[160px] flex flex-col"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
