@@ -22,8 +22,11 @@ export default function WeeklyReportModal({ targetEl, weekLabel, memberName, acq
       backgroundColor: '#ffffff',
       logging: false,
       onclone: (doc) => {
-        // html2canvas는 inline-flex 텍스트 정렬을 렌더링 못함
-        // → 배지를 캔버스로 미리 그린 이미지로 교체
+        doc.querySelectorAll('*').forEach(el => {
+          if (el.style.contentVisibility) el.style.contentVisibility = 'visible'
+          if (el.style.contain) el.style.contain = 'none'
+          if (el.style.containIntrinsicSize) el.style.containIntrinsicSize = 'auto'
+        })
         doc.querySelectorAll('[data-status-badge]').forEach(el => {
           const text = el.textContent.trim()
           if (!text) return
