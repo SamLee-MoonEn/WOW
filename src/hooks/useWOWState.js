@@ -179,7 +179,14 @@ export function useWOWState() {
         }
         return m
       }
-      if (p === 'off') return { ...m, presence: 'working', offAt: null }
+      if (p === 'off') {
+        // 어제 이전에 종료한 경우만 리셋 (오늘 종료는 보존)
+        const offDate = m.offAt ? new Date(m.offAt).toISOString().split('T')[0] : null
+        if (!offDate || offDate < today) {
+          return { ...m, presence: 'working', offAt: null }
+        }
+        return m
+      }
       if (p === 'vacation' && m.vacationEnd && m.vacationEnd < today) {
         return { ...m, presence: 'working', vacationEnd: null }
       }
