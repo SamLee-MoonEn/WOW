@@ -15,6 +15,8 @@ import AppSettingsModal from './components/modals/AppSettingsModal'
 import CopyTaskModal from './components/modals/CopyTaskModal'
 import WeeklyReportModal from './components/modals/WeeklyReportModal'
 import JiraImportModal from './components/modals/JiraImportModal'
+import RecurringTaskDeleteModal from './components/modals/RecurringTaskDeleteModal'
+import { findRecurringGroup, splitByToday } from './utils/recurringUtils'
 import { getTodayTasks } from './utils/teamsUtils'
 import { fetchProfilePhoto } from './utils/graphUtils'
 import { useWOWState } from './hooks/useWOWState'
@@ -227,11 +229,18 @@ function Board() {
     }
   }, [wow.addTask])
   const handleEditTask = useCallback((key, task) => setModal({ type: 'editTask', key, task }), [])
-  const handleDeleteTask = useCallback((key, taskId) => openConfirm(
-    '업무 삭제',
-    '이 업무를 삭제하시겠습니까?',
-    () => wow.deleteTask(key, taskId)
-  ), [openConfirm, wow.deleteTask])
+  const handleDeleteTask = useCallback((key, taskId) => {
+    const { matches, isFallback } = findRecurringGroup(wow.state.tasks, key, taskId)
+    if (matches.length > 1) {
+      setModal({ type: 'deleteRecurring', key, taskId, matches, isFallback })
+      return
+    }
+    openConfirm(
+      '업무 삭제',
+      '이 업무를 삭제하시겠습니까?',
+      () => wow.deleteTask(key, taskId)
+    )
+  }, [openConfirm, wow.deleteTask, wow.state.tasks])
   const handleDeleteDivider = useCallback((key, taskId) => wow.deleteTask(key, taskId), [wow.deleteTask])
   const handleAddCarryover = useCallback((key) => setModal({ type: 'addCarryover', key }), [])
   const handleEditCarryover = useCallback((key, item2) => setModal({ type: 'editCarryover', key, item: item2 }), [])
@@ -400,9 +409,12 @@ function Board() {
               // 여러 날 + 매주 반복
               const { selectedDays, repeatWeeks = 1, ...taskData } = data
               const memberId = modal.key.split('_')[0]
+              const totalCopies = selectedDays.length * repeatWeeks
+              const recurringId = totalCopies > 1 ? uid() : undefined
+              const payload = recurringId ? { ...taskData, recurringId } : taskData
               for (let w = 0; w < repeatWeeks; w++) {
                 const weekInfo = getWeekKeys(wow.state.baseWeekOffset + w)
-                selectedDays.forEach(d => wow.addTask(`${memberId}_${weekInfo.current}_${d}`, taskData))
+                selectedDays.forEach(d => wow.addTask(`${memberId}_${weekInfo.current}_${d}`, payload))
               }
             } else {
               wow.addTask(modal.key, data)
@@ -477,6 +489,28 @@ function Board() {
             for (let w = 0; w < rw; w++) {
               const weekInfo = getWeekKeys(wow.state.baseWeekOffset + swo + w)
               days.forEach(d => wow.copyTask(modal.fromKey, `${mid}_${weekInfo.current}_${d}`, modal.task.id))
+            }
+            setModal(null)
+          }}
+          onClose={() => setModal(null)}
+        />
+      )}
+
+      {modal?.type === 'deleteRecurring' && (
+        <RecurringTaskDeleteModal
+          taskKey={modal.key}
+          taskId={modal.taskId}
+          matches={modal.matches}
+          isFallback={modal.isFallback}
+          anchorTask={(wow.state.tasks[modal.key] || []).find(t => t.id === modal.taskId)}
+          onDelete={(scope) => {
+            if (scope === 'single') {
+              wow.deleteTask(modal.key, modal.taskId)
+            } else if (scope === 'fromToday') {
+              const { fromToday } = splitByToday(modal.matches)
+              wow.deleteTasksBatch(fromToday.map(({ key, taskId }) => ({ key, taskId })))
+            } else if (scope === 'all') {
+              wow.deleteTasksBatch(modal.matches.map(({ key, taskId }) => ({ key, taskId })))
             }
             setModal(null)
           }}

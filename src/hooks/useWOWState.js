@@ -265,6 +265,27 @@ export function useWOWState() {
     })
   }, [deferPersist])
 
+  // 여러 (key, taskId) 쌍을 한 번에 삭제. 멤버별로 묶어 persist 1회씩만 호출.
+  const deleteTasksBatch = useCallback((deletions) => {
+    if (!Array.isArray(deletions) || deletions.length === 0) return
+    setTasks((prev) => {
+      const next = { ...prev }
+      const memberIds = new Set()
+      const byKey = new Map()
+      for (const { key, taskId } of deletions) {
+        if (!key || !taskId) continue
+        memberIds.add(memberIdFromKey(key))
+        if (!byKey.has(key)) byKey.set(key, new Set())
+        byKey.get(key).add(taskId)
+      }
+      for (const [key, ids] of byKey) {
+        next[key] = (next[key] || []).filter((t) => !ids.has(t.id))
+      }
+      for (const mid of memberIds) deferPersist(mid, next)
+      return next
+    })
+  }, [deferPersist])
+
   const clearDay = useCallback((key) => {
     const memberId = memberIdFromKey(key)
     setTasks((prev) => {
@@ -399,6 +420,7 @@ export function useWOWState() {
     addTask,
     updateTask,
     deleteTask,
+    deleteTasksBatch,
     cycleStatus,
     addMember,
     updateMember,
