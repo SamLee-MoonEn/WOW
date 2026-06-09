@@ -265,6 +265,28 @@ export function useWOWState() {
     })
   }, [deferPersist])
 
+  // 여러 (key, taskId) 쌍에 동일 변경(data)을 한 번에 적용. 멤버별로 묶어 persist 1회씩만 호출.
+  const updateTasksBatch = useCallback((updates, data) => {
+    if (!Array.isArray(updates) || updates.length === 0) return
+    if (!data || Object.keys(data).length === 0) return
+    setTasks((prev) => {
+      const next = { ...prev }
+      const memberIds = new Set()
+      const byKey = new Map()
+      for (const { key, taskId } of updates) {
+        if (!key || !taskId) continue
+        memberIds.add(memberIdFromKey(key))
+        if (!byKey.has(key)) byKey.set(key, new Set())
+        byKey.get(key).add(taskId)
+      }
+      for (const [key, ids] of byKey) {
+        next[key] = (next[key] || []).map((t) => (ids.has(t.id) ? { ...t, ...data } : t))
+      }
+      for (const mid of memberIds) deferPersist(mid, next)
+      return next
+    })
+  }, [deferPersist])
+
   // 여러 (key, taskId) 쌍을 한 번에 삭제. 멤버별로 묶어 persist 1회씩만 호출.
   const deleteTasksBatch = useCallback((deletions) => {
     if (!Array.isArray(deletions) || deletions.length === 0) return
@@ -419,6 +441,7 @@ export function useWOWState() {
     goToCurrentWeek,
     addTask,
     updateTask,
+    updateTasksBatch,
     deleteTask,
     deleteTasksBatch,
     cycleStatus,

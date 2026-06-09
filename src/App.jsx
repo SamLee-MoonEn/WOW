@@ -16,6 +16,7 @@ import CopyTaskModal from './components/modals/CopyTaskModal'
 import WeeklyReportModal from './components/modals/WeeklyReportModal'
 import JiraImportModal from './components/modals/JiraImportModal'
 import RecurringTaskDeleteModal from './components/modals/RecurringTaskDeleteModal'
+import RecurringTaskEditScopeModal from './components/modals/RecurringTaskEditScopeModal'
 import { findRecurringGroup, splitByToday } from './utils/recurringUtils'
 import { getTodayTasks } from './utils/teamsUtils'
 import { fetchProfilePhoto } from './utils/graphUtils'
@@ -404,6 +405,30 @@ function Board() {
           task={modal.task}
           onSave={(data) => {
             if (modal.type === 'editTask') {
+              // 변경된 필드만 추출 (text/status/style/memo)
+              const fields = ['text', 'status', 'style', 'memo']
+              const changed = {}
+              for (const f of fields) {
+                if ((modal.task[f] || '') !== (data[f] || '')) changed[f] = data[f] || ''
+              }
+              if (Object.keys(changed).length === 0) {
+                setModal(null)
+                return
+              }
+              // 반복 그룹 확인
+              const { matches, isFallback } = findRecurringGroup(wow.state.tasks, modal.key, modal.task.id)
+              if (matches.length > 1) {
+                setModal({
+                  type: 'editRecurringScope',
+                  key: modal.key,
+                  taskId: modal.task.id,
+                  matches,
+                  isFallback,
+                  changed,
+                  anchorTask: modal.task,
+                })
+                return
+              }
               wow.updateTask(modal.key, modal.task.id, data)
             } else if (data.selectedDays) {
               // 여러 날 + 매주 반복
@@ -489,6 +514,35 @@ function Board() {
             for (let w = 0; w < rw; w++) {
               const weekInfo = getWeekKeys(wow.state.baseWeekOffset + swo + w)
               days.forEach(d => wow.copyTask(modal.fromKey, `${mid}_${weekInfo.current}_${d}`, modal.task.id))
+            }
+            setModal(null)
+          }}
+          onClose={() => setModal(null)}
+        />
+      )}
+
+      {modal?.type === 'editRecurringScope' && (
+        <RecurringTaskEditScopeModal
+          taskKey={modal.key}
+          taskId={modal.taskId}
+          matches={modal.matches}
+          isFallback={modal.isFallback}
+          anchorTask={modal.anchorTask}
+          changed={modal.changed}
+          onApply={(scope) => {
+            if (scope === 'single') {
+              wow.updateTask(modal.key, modal.taskId, modal.changed)
+            } else if (scope === 'fromToday') {
+              const { fromToday } = splitByToday(modal.matches)
+              wow.updateTasksBatch(
+                fromToday.map(({ key, taskId }) => ({ key, taskId })),
+                modal.changed
+              )
+            } else if (scope === 'all') {
+              wow.updateTasksBatch(
+                modal.matches.map(({ key, taskId }) => ({ key, taskId })),
+                modal.changed
+              )
             }
             setModal(null)
           }}
