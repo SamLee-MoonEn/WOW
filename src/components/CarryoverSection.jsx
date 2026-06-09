@@ -34,8 +34,15 @@ function CarryoverItem({ item, itemKey, canEdit, onEdit, onDelete, onCycleStatus
           </span>
         )}
         <StatusBadge status={item.status} onClick={() => onCycleStatus(itemKey, item.id)} />
-        <span className={`flex-1 text-[11.5px] leading-snug break-words ${textClass}`}>
-          {item.text}
+        <span className="flex-1 min-w-0">
+          <span className={`text-[11.5px] leading-snug break-words ${textClass}`}>
+            {item.text}
+          </span>
+          {item.memo && (
+            <span className="block text-[10.5px] text-jira-muted italic leading-snug mt-0.5 truncate">
+              {item.memo}
+            </span>
+          )}
         </span>
         {canEdit && (
           <span className="flex items-center gap-0.5 absolute right-0.5 top-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">

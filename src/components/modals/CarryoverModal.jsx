@@ -8,10 +8,11 @@ export default function CarryoverModal({ isEdit, item, onSave, onClose }) {
   const [date, setDate] = useState(item?.date || '')
   const [status, setStatus] = useState(item?.status || 'none')
   const [style, setStyle] = useState(item?.style || '')
+  const [memo, setMemo] = useState(item?.memo || '')
 
   const handleSave = () => {
     if (!text.trim()) { alert('업무 내용을 입력해주세요.'); return }
-    onSave({ text: text.trim(), date, status, style })
+    onSave({ text: text.trim(), date, status, style, memo })
   }
 
   return (
@@ -55,6 +56,14 @@ export default function CarryoverModal({ isEdit, item, onSave, onClose }) {
           <option value="blue-text">파란색</option>
           <option value="bold blue-text">굵게 + 파란색</option>
         </Select>
+      </FormField>
+      <FormField label="메모">
+        <Textarea
+          value={memo}
+          onChange={e => setMemo(e.target.value)}
+          placeholder="상세 내용, 참고 사항, URL 등..."
+          rows={3}
+        />
       </FormField>
     </Modal>
   )
