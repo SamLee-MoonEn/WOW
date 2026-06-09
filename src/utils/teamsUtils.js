@@ -41,7 +41,7 @@ export function formatTeamsText(memberName, todayTasks, dateLabel, header = '', 
       const raw = (t.memo || '').trim()
       if (raw) {
         raw.split('\n').forEach(line => {
-          lines.push(`    ${line}`)
+          lines.push(`        ${line}`)
         })
       }
     })
@@ -56,12 +56,21 @@ export function formatTeamsText(memberName, todayTasks, dateLabel, header = '', 
   return result
 }
 
+// 줄 단위로 leading whitespace를 &nbsp;로 변환하여 HTML/Teams에서 들여쓰기를 보존
+export function preserveIndentToHtml(text) {
+  return text
+    .split('\n')
+    .map(line => {
+      const m = line.match(/^( +)(.*)$/)
+      if (!m) return line
+      return '&nbsp;'.repeat(m[1].length) + m[2]
+    })
+    .join('<br>')
+}
+
 export async function sendToTeamsWebhook(webhookUrl, memberName, todayTasks, dateLabel, customText) {
   const text = customText ?? formatTeamsText(memberName, todayTasks, dateLabel)
-  const htmlText = text
-    .split('\n')
-    .map(line => line.startsWith('    ') ? '&nbsp;&nbsp;&nbsp;&nbsp;' + line.slice(4) : line)
-    .join('<br>')
+  const htmlText = preserveIndentToHtml(text)
 
   // Power Automate의 For_each가 attachments 배열을 순회하는 구조에 맞춤
   const payload = {

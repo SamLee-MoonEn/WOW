@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
-import { formatTeamsText, getTodayLabel } from '../../utils/teamsUtils'
+import { formatTeamsText, getTodayLabel, preserveIndentToHtml } from '../../utils/teamsUtils'
 import { sendChatMessage } from '../../utils/graphUtils'
 
 export default function TeamsReportModal({ memberName, todayTasks, onClose, onConfirmEnd, settings = {}, acquireToken }) {
@@ -24,7 +24,7 @@ export default function TeamsReportModal({ memberName, todayTasks, onClose, onCo
     try {
       const chatId = settings.dailyReportChatId
       if (!chatId) throw new Error('설정에서 업무 종료 보고 채팅 ID를 입력해주세요.')
-      const htmlText = text.replace(/\n/g, '<br>')
+      const htmlText = preserveIndentToHtml(text)
       await sendChatMessage(chatId, htmlText, acquireToken)
       setSendStatus('success')
       onConfirmEnd?.()
