@@ -255,20 +255,23 @@ export default function JiraImportModal({ userEmail, settings, existingJiraKeys,
                   <label
                     key={issue.key}
                     className={`flex items-center gap-2.5 px-2 py-2 rounded cursor-pointer transition-colors ${
-                      alreadyImported ? 'opacity-40 cursor-not-allowed' : selected.has(issue.key) ? 'bg-jira-blue-light' : 'hover:bg-jira-bg'
+                      selected.has(issue.key)
+                        ? 'bg-jira-blue-light'
+                        : alreadyImported
+                          ? 'bg-amber-50/50 hover:bg-amber-50'
+                          : 'hover:bg-jira-bg'
                     }`}
                   >
                     <input
                       type="checkbox"
                       checked={selected.has(issue.key)}
-                      onChange={() => !alreadyImported && toggle(issue.key)}
-                      disabled={alreadyImported}
+                      onChange={() => toggle(issue.key)}
                       className="w-3.5 h-3.5 rounded accent-jira-blue shrink-0"
                     />
                     <span className="text-[11px] font-mono font-semibold text-jira-blue shrink-0 w-[80px]">
                       {issue.key}
                     </span>
-                    <span className="text-[12px] text-jira-dark flex-1 min-w-0 truncate">
+                    <span className={`text-[12px] flex-1 min-w-0 truncate ${alreadyImported ? 'text-jira-muted' : 'text-jira-dark'}`}>
                       {issue.summary}
                     </span>
                     <span className="text-[10px] text-jira-muted bg-jira-bg px-1.5 py-0.5 rounded shrink-0">
@@ -278,7 +281,9 @@ export default function JiraImportModal({ userEmail, settings, existingJiraKeys,
                       {issue.priorityName}
                     </span>
                     {alreadyImported && (
-                      <span className="text-[10px] text-amber-600 shrink-0">이미 추가됨</span>
+                      <span className="text-[10px] text-amber-600 shrink-0" title="이미 가져온 이슈입니다. 다시 가져오면 새 일감으로 추가됩니다.">
+                        이미 추가됨
+                      </span>
                     )}
                   </label>
                 )
